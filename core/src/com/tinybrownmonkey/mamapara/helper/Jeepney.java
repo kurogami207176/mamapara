@@ -1,22 +1,19 @@
 package com.tinybrownmonkey.mamapara.helper;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.math.Polygon;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
-import com.badlogic.gdx.physics.box2d.Fixture;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
-import com.badlogic.gdx.physics.box2d.Shape;
-import com.badlogic.gdx.physics.box2d.World;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by AlainAnne on 13-Jun-17.
  */
 
-public class Jeepney extends Sprite{
+public class Jeepney extends Sprite implements MovingObject{
     private boolean laneTrans = false;
     private int targetLane;
     private float transitionSpeed;
@@ -24,16 +21,30 @@ public class Jeepney extends Sprite{
     private float targetLaneX;
     private float targetLaneY;
     private float currAngle = 0;
-    private static float maxAngle = 15;
-    private Box2DDebugRenderer debugRenderer;
+    private int maxPassengersPerSide;
+    private int maxPassengers;
 
-    public Jeepney(Texture texture, float x, float y, float transitionSpeed, float angleSpeed){
+    private static float maxAngle = 15;
+    private static float grabberDX = -10;
+    private static float grabberDY = 20;
+    private static float sitStartOffset = 10;
+    private static float sitLength = 50;
+
+    private Box2DDebugRenderer debugRenderer;
+    private Grabber grabber;
+    private Set<MovingObject> passengers;
+
+    public Jeepney(Texture texture, float x, float y, float transitionSpeed, float angleSpeed, float grabberRange, float grabberSpeed, int maxPassengersPerSide){
         super(texture);
         setPosition(x, y);
         this.transitionSpeed = transitionSpeed;
         this.angleSpeed = angleSpeed;
         this.targetLaneX = x;
         this.targetLaneY = y;
+        this.grabber = new Grabber(x + grabberDX, y + grabberDY, grabberRange, grabberSpeed);
+        this.maxPassengersPerSide = maxPassengersPerSide;
+        this.maxPassengers = maxPassengersPerSide * 2;
+        passengers = new HashSet<MovingObject>(maxPassengers);
     }
 
     public boolean isLaneTrans(){
@@ -109,6 +120,136 @@ public class Jeepney extends Sprite{
             }
             setRotation(currAngle);
         }
+//        System.out.println("j.x=" + getX());
+//        System.out.println("j.y=" + getY());
+//        System.out.println("j.ox=" + getOriginX());
+//        System.out.println("j.oy=" + getOriginY());
+        grabber.setPosition(getX() + grabberDX, getY() + grabberDY);
+        int i = 0;
+        Set<MovingObject> removable = new HashSet<MovingObject>();
+        for( MovingObject movingObject : passengers){
+            movingObject.setOrigin(getOriginX(), getOriginY());
+            movingObject.setRotation(getRotation());
+            float sideOffsetX = 0;
+            float sideOffsetY = 0;
+            if(i%2 == 0)
+            {
+                sideOffsetX = 3;
+                sideOffsetY = 3;
+            }
+            float interval = sitLength / maxPassengersPerSide;
+            movingObject.setX(getX() + (interval * (i % maxPassengers)) + sideOffsetX );
+
+            movingObject.setY(getY() + grabberDY + sideOffsetY);
+            movingObject.setCountdownTime(movingObject.getCountdownTime() - deltaTime);
+            i++;
+            if(movingObject.getCountdownTime() <= 0){
+                removable.add(movingObject);
+            }
+        }
+        for(MovingObject rem: removable){
+            ((Person)rem).setAttachement(null);
+        }
+        passengers.removeAll(removable);
     }
 
+    public boolean grab(MovingObject sprite){
+        return grabber.grab(sprite);
+    }
+
+    public Grabber getGrabber(){
+        return grabber;
+    }
+
+    private float speedX;
+    private float speedY;
+
+
+    @Override
+    public float getSpeedX() {
+        return speedX;
+    }
+
+    @Override
+    public void setSpeedX(float speedX) {
+        this.speedX = speedX;
+    }
+
+    @Override
+    public float getSpeedY() {
+        return speedY;
+    }
+
+    @Override
+    public float getCountdownTime() {
+        return 0;
+    }
+
+
+    @Override
+    public void setSpeedY(float speedY) {
+        this.speedY = speedY;
+    }
+
+    @Override
+    public void setCountdownTime(float countdownTime) {
+
+    }
+
+    @Override
+    public boolean isSprite() {
+        return true;
+    }
+
+    public boolean addPassenger(MovingObject person){
+        if(!isFull()){
+            passengers.add(person);
+            ((Person)person).setAttachement(this);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isPassenger(MovingObject person)
+    {
+        return passengers.contains(person);
+    }
+
+    public void removeAllPassengers(){
+        for(MovingObject rem: passengers){
+            ((Person)rem).setAttachement(null);
+        }
+        passengers.clear();
+    }
+
+    public boolean isFull(){
+        return passengers.size() >= maxPassengers;
+    }
+
+    @Override public String getId(){return "jeep";}
+
+    public float[] getCollisionVertices(){
+        float x1 = getX() + getWidth() - 20;
+        float y1 = getY();
+        float x2 = getX() + getWidth();
+        float y2 = getY() + getHeight()-20;
+        return new float[] {
+                aX(x1, y1, getX(), getY(), getRotation()),
+                aY(x1, y1, getX(), getY(), getRotation()),
+                aX(x1, y2, getX(), getY(), getRotation()),
+                aY(x1, y2, getX(), getY(), getRotation()),
+                aX(x2, y2, getX(), getY(), getRotation()),
+                aY(x2, y2, getX(), getY(), getRotation()),
+                aX(x2, y1, getX(), getY(), getRotation()),
+                aY(x2, y1, getX(), getY(), getRotation())};
+    }
+
+    private float aX(float x, float y, float xC, float yC, float angle){
+        float xRet = (x - xC) * MathUtils.cosDeg(angle) - (y - yC) * MathUtils.sinDeg(angle) + xC;
+        return xRet;
+    }
+    private float aY(float x, float y, float xC, float yC, float angle){
+        float yRet = (y - yC) * MathUtils.cosDeg(angle) + (x - xC) * MathUtils.sinDeg(angle) + yC;
+        return yRet;
+    }
 }

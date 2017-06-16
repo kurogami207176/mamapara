@@ -1,6 +1,11 @@
 package com.tinybrownmonkey.mamapara.helper;
 
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Intersector;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by alaguipo on 15/06/2017.
@@ -8,14 +13,48 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 
 public class Util {
     public static float[] getVertices(Sprite sprite){
-//        float x1 = sprite.getX() - sprite.getWidth() / 2;
-//        float y1 = sprite.getY() - sprite.getHeight() / 2;
-//        float x2 = sprite.getX() + sprite.getWidth() / 2;
-//        float y2 = sprite.getY() + sprite.getHeight() / 2;
         float x1 = sprite.getX();
         float y1 = sprite.getY();
-        float x2 = sprite.getX() - sprite.getWidth() / 2;
-        float y2 = sprite.getY() + sprite.getHeight() / 2;
+        float x2 = sprite.getX() + sprite.getWidth();
+        float y2 = sprite.getY() + sprite.getHeight();
         return new float[] {x1,y1, x1,y2, x2,y2, x2,y1};
     }
+
+    public static float[] getVertices(MovingObject movingObject){
+        float x1 = movingObject.getX();
+        float y1 = movingObject.getY();
+        float x2 = movingObject.getX() + movingObject.getWidth();
+        float y2 = movingObject.getY() + movingObject.getHeight();
+        return new float[] {x1,y1, x1,y2, x2,y2, x2,y1};
+    }
+
+    public static Circle getCircle(Sprite sprite){
+        return new Circle(sprite.getX() + sprite.getWidth() / 2,
+                sprite.getY() + sprite.getHeight() / 2,
+                sprite.getWidth() > sprite.getHeight()? sprite.getWidth() / 2 : sprite.getHeight() / 2);
+    }
+
+    public static Circle getCircle(MovingObject sprite){
+        return new Circle(sprite.getX() + sprite.getWidth() / 2,
+                sprite.getY() + sprite.getHeight() / 2,
+                sprite.getWidth() > sprite.getHeight()? sprite.getWidth() / 2 : sprite.getHeight() / 2);
+    }
+
+    public static boolean checkCollisions(MovingObject main, MovingObject other){
+        return(Intersector.overlapConvexPolygons(Util.getVertices(main), Util.getVertices(other), null));
+    }
+
+    public static boolean checkCollisions(float[] main, float[] other){
+        return(Intersector.overlapConvexPolygons(main, other, null));
+    }
+
+    public boolean isOffscreen(MovingObject obj, float buffer){
+        if(obj.getX() + obj.getHeight() + buffer < 0
+        || obj.getY() + obj.getWidth() + buffer < 0)
+        {
+            return true;
+        }
+        return false;
+    }
+
 }

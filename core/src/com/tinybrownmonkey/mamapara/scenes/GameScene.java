@@ -23,11 +23,14 @@ import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.tinybrownmonkey.mamapara.MamaParaGame;
 import com.tinybrownmonkey.mamapara.helper.GameInfo;
+import com.tinybrownmonkey.mamapara.helper.Grabber;
 import com.tinybrownmonkey.mamapara.helper.GroundMover;
 import com.tinybrownmonkey.mamapara.helper.Jeepney;
+import com.tinybrownmonkey.mamapara.helper.MovingObject;
 import com.tinybrownmonkey.mamapara.helper.Person;
 import com.tinybrownmonkey.mamapara.helper.Util;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,12 +56,14 @@ public class GameScene implements Screen {
     //private Sprite jeep;
     private Jeepney jeep;
     private Texture personTx;
+    private List<MovingObject> persons;
 
     private GameState currState;
-    private GroundMover<Person> groundMoverUp;
-    private GroundMover<Person> groundMoverDown;
+    private GroundMover<Person> groundMover;
     private float groundSpeed = initGroundSpeed;
     private float skySpeed = initSkySpeed;
+
+    private int maxPassngersPerSide = 8;
 
     private float timeoutToGameOverAccum = 0;
     private boolean timeoutToGameOverBool = false;
@@ -73,6 +78,8 @@ public class GameScene implements Screen {
     private static int laneIndex = 1;
     private static float groundSpeedIncrement = 50;
     private static float angleSpeed = 100;
+    private static float grabberRange = 200;
+    private static float grabberSpeed = 100;
 
     private float bumpX = 200f;
     private float bumpY = 200f;
@@ -140,12 +147,14 @@ public class GameScene implements Screen {
             skyBg.add(sprite);
         }
         Texture jeepTexture = new Texture("jeepney_side.png");
-        jeep = new Jeepney(jeepTexture, -jeepTexture.getWidth(), lanePositions[laneIndex], changeLaneSpeed, angleSpeed);
+        jeep = new Jeepney(jeepTexture, -jeepTexture.getWidth(), lanePositions[laneIndex],
+                changeLaneSpeed, angleSpeed, grabberRange, grabberSpeed, maxPassngersPerSide);
+
+        persons = new ArrayList<MovingObject>();
 
         personTx = new Texture("person.png");
 
-        groundMoverUp = new GroundMover(-groundSpeed, 0, 0, 0, GameInfo.WIDTH, GameInfo.HEIGHT);
-        groundMoverDown = new GroundMover(-groundSpeed, 0, 0, 0, GameInfo.WIDTH, GameInfo.HEIGHT);
+        groundMover = new GroundMover(-groundSpeed, 0);
     }
 
     private void initMenu() {
@@ -195,25 +204,44 @@ public class GameScene implements Screen {
             }
 
             processInput();
+
             jeep.transitionJeep(delta);
             if(jeep.getX() < jeepLoc)
             {
                 //jeep.setX(jeep.getX() + (groundSpeed * delta));
-                jeep.moveTo(jeep.getX() + (groundSpeed * delta), jeep.getY());
+                jeep.moveTo(jeepLoc, lanePositions[laneIndex]);
             }
             else {
                 moveBackgrounds(delta);
-                groundMoverUp.move(delta);
-                groundMoverDown.move(delta);
-
-                List<Sprite> up = groundMoverUp.getCollisions(jeep, groundSpeed * bumpXMult + bumpX, bumpY, bumpRotation);
-                List<Sprite> down = groundMoverDown.getCollisions(jeep, groundSpeed * bumpXMult + bumpX, bumpY, bumpRotation);
-
-                if(up.size() > 0 || down.size() > 0)
-                {
-                    timeoutToGameOverBool = true;
+                boolean collisionOccured = false;
+                //jeep.getGrabber().setGrabSpeed(grabberSpeed);
+                for(MovingObject movingObject: persons){
+                    if(!jeep.isPassenger(movingObject)) {
+                        if (movingObject.getCountdownTime() > 0 && !jeep.isFull() && jeep.grab(movingObject)) {
+                            boolean reached = jeep.getGrabber().reachCenter(movingObject, delta);
+                            if (reached) {
+                                jeep.addPassenger(movingObject);
+                            }
+                        } else {
+                            collisionOccured = Util.checkCollisions(movingObject.getCollisionVertices(), jeep.getCollisionVertices());
+                            if (collisionOccured) {
+                                movingObject.setSpeedX(bumpXMult * groundSpeed + bumpX);
+                                movingObject.setSpeedY(bumpY);
+                                movingObject.setRotation(bumpRotation);
+                            }
+                            if (!timeoutToGameOverBool && collisionOccured) {
+                                timeoutToGameOverBool = true;
+                            }
+                            groundMover.move(movingObject, delta);
+                        }
+                    }
                 }
-                Person.generatePerson(personTx, groundMoverUp, groundMoverDown, groundSpeed, delta);
+
+//                Person person = Person.generatePerson(personTx, groundSpeed, 0, 0, 0, delta);
+//                if(person != null) {
+//                    persons.add(person);
+//                }
+
             }
             currScore = currScore + (delta * (groundSpeed / 50));
             if(groundSpeed < topGroundSpeed) {
@@ -222,12 +250,7 @@ public class GameScene implements Screen {
             }else {
                 groundSpeed = topGroundSpeed;
             }
-            groundMoverUp.setGroundSpeedX(-groundSpeed);
-            groundMoverDown.setGroundSpeedX(-groundSpeed);
-//            if(groundMoverUp.isCollide(jeep).size() > 0
-//                    || groundMoverDown.isCollide(jeep).size() > 0 ){
-//                setCurrentState(GameState.GAME_END);
-//            }
+            groundMover.setGroundSpeedX(-groundSpeed);
 
         }
         else if(currState == GameState.MAIN_MENU){
@@ -290,19 +313,64 @@ public class GameScene implements Screen {
         debugFont.draw(batch, "Test Mode", GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2);
         batch.end();
 
+
+        shapeRenderer.setColor(Color.RED);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.polygon(jeep.getCollisionVertices());
+        for(MovingObject obj: persons){
+            shapeRenderer.polygon(obj.getCollisionVertices());
+        }
+        //shapeRenderer.circle(GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2, 100);
+        shapeRenderer.end();
     }
+
+    private DrawCondition preJeepDraw = new DrawCondition() {
+        @Override
+        public boolean test(Sprite sprite) {
+            if(sprite == null)
+            {
+                return false;
+            }
+            return sprite.getY() >= jeep.getY();
+        }
+    };
+    private DrawCondition postJeepDraw = new DrawCondition() {
+        @Override
+        public boolean test(Sprite sprite) {
+            if(sprite == null)
+            {
+                return false;
+            }
+            return sprite.getY() < jeep.getY();
+        }
+    };
 
     private void drawGame(SpriteBatch batch){
         for(Sprite bg: skyBg){
             batch.draw(bg, bg.getX(), bg.getY());
         }
-        for(Sprite bg: gameBg){
+        for(Sprite bg: gameBg) {
             batch.draw(bg, bg.getX(), bg.getY());
         }
-        groundMoverUp.draw(batch);
-        //batch.draw(jeep.getSprite(), jeep.getX(), jeep.getY());
+        for(MovingObject p: persons){
+            if(p.isSprite()){
+                Sprite sprite = (Sprite) p;
+                if(preJeepDraw.test(sprite))
+                {
+                    sprite.draw(batch);
+                }
+            }
+        }
         jeep.draw(batch);
-        groundMoverDown.draw(batch);
+        for(MovingObject p: persons){
+            if(p.isSprite()){
+                Sprite sprite = (Sprite) p;
+                if(postJeepDraw.test(sprite))
+                {
+                    sprite.draw(batch);
+                }
+            }
+        }
         gameFont.draw(batch, ((int)currScore) + " m", GameInfo.WIDTH * 1/10, GameInfo.HEIGHT  * 7/8);
         gameFont.draw(batch, "$ " + money, GameInfo.WIDTH * 9/10, GameInfo.HEIGHT  * 7/8);
     }
@@ -314,7 +382,7 @@ public class GameScene implements Screen {
     }
 
     private void processInput() {
-        if(!jeep.isLaneTrans()) {
+//        if(!jeep.isLaneTrans()) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && laneIndex > 0) {
                 laneIndex--;
                 jeep.moveTo(jeep.getX(), lanePositions[laneIndex]);
@@ -322,7 +390,7 @@ public class GameScene implements Screen {
                 laneIndex++;
                 jeep.moveTo(jeep.getX(), lanePositions[laneIndex]);
             }
-        }
+//        }
         if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
         {
             setCurrentState(GameState.TRANSITION_TO_MENU);
@@ -426,13 +494,18 @@ public class GameScene implements Screen {
     }
 
     private void resetScore(){
+        timeoutToGameOverAccum = 0;
         currScore = 0;
         money = 0;
         groundSpeed = initGroundSpeed;
         skySpeed = initSkySpeed;
         laneIndex = 1;
         timeoutToGameOverBool = false;
-        groundMoverUp.clearAll();
-        groundMoverDown.clearAll();
+        jeep.removeAllPassengers();
+        persons.clear();
+    }
+
+    private interface DrawCondition {
+        boolean test(Sprite object);
     }
 }
