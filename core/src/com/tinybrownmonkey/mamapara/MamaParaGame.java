@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.tinybrownmonkey.mamapara.scenes.GameScene;
+import com.tinybrownmonkey.mamapara.scenes.TestScreen;
+import com.tinybrownmonkey.mamapara.scenes.TestScreen2;
 
 public class MamaParaGame extends Game {
 	SpriteBatch batch;
@@ -16,6 +18,7 @@ public class MamaParaGame extends Game {
 	public void create () {
 		batch = new SpriteBatch();
 		setScreen( new GameScene(this));
+		//setScreen( new TestScreen(this));
 	}
 
 	@Override

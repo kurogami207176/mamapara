@@ -1,14 +1,22 @@
 package com.tinybrownmonkey.mamapara.helper;
 
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Polygon;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.Fixture;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.PolygonShape;
+import com.badlogic.gdx.physics.box2d.Shape;
+import com.badlogic.gdx.physics.box2d.World;
 
 /**
  * Created by AlainAnne on 13-Jun-17.
  */
 
-public class Jeepney {
-    private Sprite jeep;
+public class Jeepney extends Sprite{
     private boolean laneTrans = false;
     private int targetLane;
     private float transitionSpeed;
@@ -16,52 +24,20 @@ public class Jeepney {
     private float targetLaneX;
     private float targetLaneY;
     private float currAngle = 0;
-    private static float maxAngle = 20;
+    private static float maxAngle = 15;
+    private Box2DDebugRenderer debugRenderer;
 
-    public Jeepney(Sprite jeep, float transitionSpeed, float angleSpeed){
-        this.jeep = jeep;
+    public Jeepney(Texture texture, float x, float y, float transitionSpeed, float angleSpeed){
+        super(texture);
+        setPosition(x, y);
         this.transitionSpeed = transitionSpeed;
         this.angleSpeed = angleSpeed;
+        this.targetLaneX = x;
+        this.targetLaneY = y;
     }
 
     public boolean isLaneTrans(){
         return laneTrans;
-    }
-
-    public Sprite getSprite(){
-        return jeep;
-    }
-
-    public float getX(){
-        return jeep.getX();
-    }
-
-    public float getWidth(){
-        return jeep.getWidth();
-    }
-
-    public float getY(){
-        return jeep.getY();
-    }
-
-    public float getHeight(){
-        return jeep.getHeight();
-    }
-
-    public void setX(float x){
-        jeep.setX(x);
-    }
-
-    public void setY(float y){
-        jeep.setY(y);
-    }
-
-    public void setRotation(float degrees){
-        jeep.setRotation(degrees);
-    }
-
-    public void setPosition(float x, float y){
-        jeep.setPosition(x, y);
     }
 
     public void moveTo(float targetLaneX, float targetLaneY){
@@ -72,72 +48,66 @@ public class Jeepney {
         }
     }
 
-    public void draw(SpriteBatch batch)
-    {
-        jeep.draw(batch);
-    }
-
     public void transitionJeep(float deltaTime){
-        if(laneTrans){
-            float jeepY = jeep.getY();
-            if(jeepY > targetLaneY){
-                if(currAngle > -maxAngle){
-                    currAngle = currAngle - deltaTime * angleSpeed;
-                }
-                jeep.setY(jeepY - deltaTime * transitionSpeed);
-                if(jeep.getY() <= targetLaneY )
-                {
-                    jeep.setY(targetLaneY);
-                }
+        float jeepY = getY();
+        if(jeepY > targetLaneY){
+            if(currAngle > -maxAngle){
+                currAngle = currAngle - deltaTime * angleSpeed;
             }
-            else if(jeepY < targetLaneY){
-                if(currAngle < maxAngle){
-                    currAngle = currAngle + deltaTime * angleSpeed;
-                }
-                jeep.setY(jeepY + deltaTime * transitionSpeed);
-                if(jeep.getY() >= targetLaneY )
-                {
-                    jeep.setY(targetLaneY);
-                }
-            }
-            float jeepX = jeep.getX();
-            if(jeepX > targetLaneX){
-                jeep.setX(jeepX - deltaTime * transitionSpeed);
-                if(jeep.getX() <= targetLaneX )
-                {
-                    jeep.setX(targetLaneX);
-                    //jeep.setRotation(0);
-                }
-            }
-            else if(jeepX < targetLaneX){
-                jeep.setX(jeepX + deltaTime * transitionSpeed);
-                if(jeep.getX() >= targetLaneX )
-                {
-                    jeep.setX(targetLaneX);
-                    //jeep.setRotation(0);
-                }
-            }
-            if(jeep.getY() == targetLaneY)
+            setY(jeepY - deltaTime * transitionSpeed);
+            if(getY() <= targetLaneY )
             {
-                if(currAngle  > 0){
-                    currAngle = currAngle - deltaTime * angleSpeed;
-                    if(currAngle <= 0)
-                    {
-                        currAngle  = 0;
-                    }
-                }
-                else if(currAngle < 0){
-                    currAngle = currAngle + deltaTime * angleSpeed;
-                    if(currAngle >= 0)
-                    {
-                        currAngle  = 0;
-                    }
+                setY(targetLaneY);
+            }
+        }
+        else if(jeepY < targetLaneY){
+            if(currAngle < maxAngle){
+                currAngle = currAngle + deltaTime * angleSpeed;
+            }
+            setY(jeepY + deltaTime * transitionSpeed);
+            if(getY() >= targetLaneY )
+            {
+                setY(targetLaneY);
+            }
+        }
+        float jeepX = getX();
+        if(jeepX > targetLaneX){
+            setX(jeepX - deltaTime * transitionSpeed);
+            if(getX() <= targetLaneX )
+            {
+                setX(targetLaneX);
+                //jeep.setRotation(0);
+            }
+        }
+        else if(jeepX < targetLaneX){
+            setX(jeepX + deltaTime * transitionSpeed);
+            if(getX() >= targetLaneX )
+            {
+                setX(targetLaneX);
+                //jeep.setRotation(0);
+            }
+        }
+        setRotation(currAngle);
+        if(getX() == targetLaneX && getY() == targetLaneY){
+            laneTrans = false;
+        }
+        if(getY() == targetLaneY)
+        {
+            if(currAngle  > 0){
+                currAngle = currAngle - deltaTime * angleSpeed;
+                if(currAngle <= 0)
+                {
+                    currAngle  = 0;
                 }
             }
-            jeep.setRotation(currAngle);
-            if(currAngle == 0 && jeep.getX() == targetLaneX && jeep.getY() == targetLaneY){
-                laneTrans = false;
+            else if(currAngle < 0){
+                currAngle = currAngle + deltaTime * angleSpeed;
+                if(currAngle >= 0)
+                {
+                    currAngle  = 0;
+                }
             }
+            setRotation(currAngle);
         }
     }
 

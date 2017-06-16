@@ -1,6 +1,5 @@
 package com.tinybrownmonkey.mamapara.scenes;
 
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -9,9 +8,16 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.PolygonRegion;
+import com.badlogic.gdx.graphics.g2d.PolygonSprite;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -19,8 +25,10 @@ import com.tinybrownmonkey.mamapara.MamaParaGame;
 import com.tinybrownmonkey.mamapara.helper.GameInfo;
 import com.tinybrownmonkey.mamapara.helper.GroundMover;
 import com.tinybrownmonkey.mamapara.helper.Jeepney;
+import com.tinybrownmonkey.mamapara.helper.Person;
+import com.tinybrownmonkey.mamapara.helper.Util;
 
-import java.util.Random;
+import java.util.List;
 
 /**
  * Created by AlainAnne on 12-Jun-17.
@@ -47,31 +55,36 @@ public class GameScene implements Screen {
     private Texture personTx;
 
     private GameState currState;
-    private GroundMover groundMoverUp;
-    private GroundMover groundMoverDown;
+    private GroundMover<Person> groundMoverUp;
+    private GroundMover<Person> groundMoverDown;
     private float groundSpeed = initGroundSpeed;
     private float skySpeed = initSkySpeed;
 
+    private float timeoutToGameOverAccum = 0;
+    private boolean timeoutToGameOverBool = false;
+
     private static float initSkySpeed = 33;
-    private static float initGroundSpeed = 100;
+    private static float initGroundSpeed = 300;
+    private static float topGroundSpeed = 3000;
     private static int jeepSpeed = 0;
     private static int changeLaneSpeed = 300;
     private static int[] lanePositions = new int[] {210, 130, 50};
     private static int jeepLoc = 50;
-    private static int laneIndex = 0;
+    private static int laneIndex = 1;
+    private static float groundSpeedIncrement = 50;
+    private static float angleSpeed = 100;
+
+    private float bumpX = 200f;
+    private float bumpY = 200f;
+    private float bumpRotation = -100f;
+
+    private float bumpXMult = 1.2f;
+
+    private static float timeoutToGameOver = 0.5f;
     private boolean laneTrans = false;
 
-    private static float transitionSpeed = 400;
 
-    Random random = new Random();
-    private float personIntervalCounter = 0;
-    private static float personIntervalMin = 0.01f;
-    private static float personIntervalRange = 0.05f;
-
-    private static float personRangeMax = GameInfo.HEIGHT * 0.656f;
-    private static float personRangeMin = 0;
-
-    private static float personRange = 60;
+    private static float transitionSpeed = 800;
 
     private static boolean moving = true;
 
@@ -87,9 +100,10 @@ public class GameScene implements Screen {
         MAIN_MENU, HIGH_SCORE, TRANSITION_TO_GAME, GAME_PLAY, GAME_END, TRANSITION_TO_MENU;
     }
 
-
+    ShapeRenderer shapeRenderer  = new ShapeRenderer();
     public GameScene(MamaParaGame game) {
         this.game = game;
+
         mainCamera = new OrthographicCamera(GameInfo.WIDTH, GameInfo.HEIGHT);
         mainCamera.position.set(GameInfo.WIDTH / 2f, GameInfo.HEIGHT / 2f, 0);
 
@@ -125,8 +139,8 @@ public class GameScene implements Screen {
             sprite.setPosition(i * skyBgTx.getWidth(), GameInfo.HEIGHT - skyBgTx.getHeight());
             skyBg.add(sprite);
         }
-        jeep = new Jeepney(new Sprite(new Texture("jeepney_side.png")), changeLaneSpeed, changeLaneSpeed);
-        jeep.setPosition(-jeep.getWidth(), lanePositions[1]);
+        Texture jeepTexture = new Texture("jeepney_side.png");
+        jeep = new Jeepney(jeepTexture, -jeepTexture.getWidth(), lanePositions[laneIndex], changeLaneSpeed, angleSpeed);
 
         personTx = new Texture("person.png");
 
@@ -170,25 +184,51 @@ public class GameScene implements Screen {
 
     @Override
     public void render(float delta) {
+        mainCamera.update();
         if(currState == GameState.GAME_PLAY && moving)
         {
+            if(timeoutToGameOverBool) {
+                timeoutToGameOverAccum = timeoutToGameOverAccum + delta;
+                if(timeoutToGameOverAccum > timeoutToGameOver){
+                    setCurrentState(GameState.GAME_END);
+                }
+            }
+
             processInput();
             jeep.transitionJeep(delta);
             if(jeep.getX() < jeepLoc)
             {
-                jeep.setX(jeep.getX() + (groundSpeed * delta));
+                //jeep.setX(jeep.getX() + (groundSpeed * delta));
+                jeep.moveTo(jeep.getX() + (groundSpeed * delta), jeep.getY());
             }
             else {
                 moveBackgrounds(delta);
                 groundMoverUp.move(delta);
                 groundMoverDown.move(delta);
+
+                List<Sprite> up = groundMoverUp.getCollisions(jeep, groundSpeed * bumpXMult + bumpX, bumpY, bumpRotation);
+                List<Sprite> down = groundMoverDown.getCollisions(jeep, groundSpeed * bumpXMult + bumpX, bumpY, bumpRotation);
+
+                if(up.size() > 0 || down.size() > 0)
+                {
+                    timeoutToGameOverBool = true;
+                }
+                Person.generatePerson(personTx, groundMoverUp, groundMoverDown, groundSpeed, delta);
             }
             currScore = currScore + (delta * (groundSpeed / 50));
-            generatePerson(delta);
-            groundSpeed = groundSpeed + 50 * delta;
-            skySpeed = groundSpeed / 4;
+            if(groundSpeed < topGroundSpeed) {
+                groundSpeed = groundSpeed + groundSpeedIncrement * delta;
+                skySpeed = groundSpeed / 4;
+            }else {
+                groundSpeed = topGroundSpeed;
+            }
             groundMoverUp.setGroundSpeedX(-groundSpeed);
             groundMoverDown.setGroundSpeedX(-groundSpeed);
+//            if(groundMoverUp.isCollide(jeep).size() > 0
+//                    || groundMoverDown.isCollide(jeep).size() > 0 ){
+//                setCurrentState(GameState.GAME_END);
+//            }
+
         }
         else if(currState == GameState.MAIN_MENU){
             processMenuButton();
@@ -205,10 +245,21 @@ public class GameScene implements Screen {
         else if(currState == GameState.TRANSITION_TO_MENU){
             transitionToMenu(delta);
         }
+        else if(currState == GameState.GAME_END){
+            if(Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)
+                    || Gdx.input.isButtonPressed(Input.Buttons.LEFT)
+                    || Gdx.input.isButtonPressed(Input.Buttons.RIGHT)
+                    || Gdx.input.isButtonPressed(Input.Buttons.MIDDLE)){
+                setCurrentState(GameState.TRANSITION_TO_MENU);
+            }
+        }
 
         Gdx.gl.glClearColor(1, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         SpriteBatch batch = game.getSpriteBatch();
+        batch.setProjectionMatrix(mainCamera.combined);
+
+        // Scale down the sprite batches projection matrix to box2D size
         batch.begin();
         switch (currState)
         {
@@ -231,9 +282,11 @@ public class GameScene implements Screen {
                 break;
             case GAME_END:
                 drawGame(batch);
+                gameFont.draw(batch, "GAME OVER", GameInfo.WIDTH / 2 - 100, GameInfo.HEIGHT  /2 );
                 break;
             default:
         }
+//        debugRenderer.render(world, debugMatrix);
         debugFont.draw(batch, "Test Mode", GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2);
         batch.end();
 
@@ -258,28 +311,6 @@ public class GameScene implements Screen {
         batch.draw(homeBg, homeBg.getX(), homeBg.getY());
         batch.draw(logo, logo.getX(), logo.getY());
 
-    }
-
-    private void generatePerson(float delta) {
-        if(personIntervalCounter <= 0)
-        {
-            Sprite person = new Sprite(personTx);
-            boolean up = random.nextBoolean();
-            float randFloat = random.nextFloat();
-            float y = up? (personRangeMax - personRange * randFloat) : (personRangeMin + personRange * randFloat);
-            person.setPosition(GameInfo.WIDTH, y);
-            if(up) {
-                groundMoverUp.addItem(person, 0, 0, null);
-            }
-            else {
-                groundMoverDown.addItem(person, 0, 0, null);
-            }
-            personIntervalCounter = groundSpeed * (personIntervalMin + random.nextFloat() * personIntervalRange);
-        }
-        else
-        {
-            personIntervalCounter = personIntervalCounter - delta * groundSpeed;
-        }
     }
 
     private void processInput() {
@@ -349,7 +380,8 @@ public class GameScene implements Screen {
             logo.setY(0);
         }
         if(homeBg.getX() == 0 && logo.getY() == 0){
-            jeep.setPosition(-jeep.getWidth(), lanePositions[1]);
+            jeep.setPosition(-jeep.getWidth(), lanePositions[laneIndex]);
+            jeep.moveTo(-jeep.getWidth(), lanePositions[laneIndex]);
             setCurrentState(GameState.MAIN_MENU);
             resetScore();
         }
@@ -382,7 +414,7 @@ public class GameScene implements Screen {
         logo.getTexture().dispose();
         playBttn.getTexture().dispose();
         hsBttn.getTexture().dispose();
-        jeep.getSprite().getTexture().dispose();
+        jeep.getTexture().dispose();
         gameBgTx.dispose();
         skyBgTx.dispose();
         personTx.dispose();
@@ -398,5 +430,9 @@ public class GameScene implements Screen {
         money = 0;
         groundSpeed = initGroundSpeed;
         skySpeed = initSkySpeed;
+        laneIndex = 1;
+        timeoutToGameOverBool = false;
+        groundMoverUp.clearAll();
+        groundMoverDown.clearAll();
     }
 }
