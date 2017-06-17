@@ -18,6 +18,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.tinybrownmonkey.mamapara.MamaParaGame;
+import com.tinybrownmonkey.mamapara.helper.Car;
 import com.tinybrownmonkey.mamapara.helper.GameData;
 import com.tinybrownmonkey.mamapara.helper.GameInfo;
 import com.tinybrownmonkey.mamapara.helper.GameManager;
@@ -29,6 +30,7 @@ import com.tinybrownmonkey.mamapara.helper.MusicManager;
 import com.tinybrownmonkey.mamapara.helper.ObjectGenerator;
 import com.tinybrownmonkey.mamapara.helper.Person;
 import com.tinybrownmonkey.mamapara.helper.Scores;
+import com.tinybrownmonkey.mamapara.helper.TimedText;
 import com.tinybrownmonkey.mamapara.helper.Util;
 
 import java.util.ArrayList;
@@ -58,7 +60,10 @@ public class GameScene implements Screen {
     private Texture skyBgTx;
     //private Sprite jeep;
     private Jeepney jeep;
-    private Texture personTx;
+    private List<MovingObject> persons;
+    private List<MovingObject> cars;
+
+    private List<TimedText> timedTexts;
 
     private static boolean moving = true;
 
@@ -70,7 +75,9 @@ public class GameScene implements Screen {
 
     private BitmapFont debugFont = new BitmapFont();
     private BitmapFont gameFont;
+    private BitmapFont dollarFont;
 
+    private MusicManager musicManager;
     ShapeRenderer shapeRenderer  = new ShapeRenderer();
     public GameScene(MamaParaGame game) {
         this.game = game;
@@ -86,12 +93,17 @@ public class GameScene implements Screen {
         gameFont = generator.generateFont(parameter);
         gameFont.setColor(Color.GOLD);
 
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter2 = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 20;
+        dollarFont = generator.generateFont(parameter2);
+        dollarFont.setColor(Color.GOLD);
+
         score = GameManager.loadScores();
         gameData = GameManager.loadGameData();
         if(gameData.currState == null) {
             setCurrentState(GameData.GameState.MAIN_MENU);
         }
-
+        musicManager = MusicManager.getInstance();
         initMenu();
 
         initGameplay();
@@ -115,13 +127,15 @@ public class GameScene implements Screen {
             sprite.setPosition(i * skyBgTx.getWidth(), GameInfo.HEIGHT - skyBgTx.getHeight());
             skyBg.add(sprite);
         }
+        ObjectGenerator.loadTextures();
         Texture jeepTexture = new Texture("jeepney_side.png");
         jeep = new Jeepney(jeepTexture, -jeepTexture.getWidth(), lanePositions[gameData.laneIndex],
                 changeLaneSpeed, angleSpeed, grabberRange, grabberSpeed, maxPassngersPerSide);
 
-        gameData.persons = new ArrayList<MovingObject>();
+        persons = new ArrayList<MovingObject>();
+        cars = new ArrayList<MovingObject>();
 
-        personTx = new Texture("person.png");
+        timedTexts = new ArrayList<TimedText>();
 
         gameData.groundMover = new GroundMover(-gameData.groundSpeed, 0);
         //MusicManager.play(0, true);
@@ -166,91 +180,30 @@ public class GameScene implements Screen {
         mainCamera.update();
         if(gameData.currState == GameData.GameState.GAME_PLAY && moving)
         {
-            if(gameData.timeoutToGameOverBool) {
-                gameData.timeoutToGameOverAccum = gameData.timeoutToGameOverAccum + delta;
-                if(gameData.timeoutToGameOverAccum > timeoutToGameOver){
-                    setCurrentState(GameData.GameState.GAME_END);
-                }
-            }
-
-            processInput();
-
-            jeep.transitionJeep(delta);
-            Set<MovingObject> scoredPassengers = jeep.processPassengers(delta);
-
-            float c = MathUtils.log2(gameData.groundSpeed / initGroundSpeed) * moneyMultplier;
-            for(MovingObject scoredPassenger: scoredPassengers){
-                float money = c * scoredPassenger.getInitCountdownTime();
-                System.out.println("c=" + c);
-                System.out.println("groundSpeed=" + gameData.groundSpeed);
-                System.out.println("initGroundSpeed=" + initGroundSpeed);
-                System.out.println("moneyMultplier=" + moneyMultplier);
-                System.out.println("scoredPassenger.getInitCountdownTime=" + scoredPassenger.getInitCountdownTime());
-                score.addMoney(money);
-            }
-            if(jeep.getX() < jeepLoc)
-            {
-                //jeep.setX(jeep.getX() + (groundSpeed * delta));
-                jeep.moveTo(jeepLoc, lanePositions[gameData.laneIndex]);
-            }
-            else {
-                moveBackgrounds(delta);
-                boolean collisionOccured = false;
-                //jeep.getGrabber().setGrabSpeed(grabberSpeed);
-                for(MovingObject movingObject: gameData.persons){
-                    if(!jeep.isPassenger(movingObject)) {
-                        if (movingObject.getCountdownTime() > 0 && !jeep.isFull() && jeep.grab(movingObject)) {
-                            boolean reached = jeep.getGrabber().reachCenter(movingObject, delta);
-                            if (reached) {
-                                jeep.addPassenger(movingObject);
-                            }
-                        } else {
-                            collisionOccured = Util.checkCollisions(movingObject.getCollisionVertices(), jeep.getCollisionVertices());
-                            if (collisionOccured) {
-                                movingObject.setSpeedX(bumpXMult * gameData.groundSpeed + bumpX);
-                                movingObject.setSpeedY(bumpY);
-                                movingObject.setRotation(bumpRotation);
-                            }
-                            if (!gameData.timeoutToGameOverBool && collisionOccured) {
-                                gameData.timeoutToGameOverBool = true;
-                            }
-                            gameData.groundMover.move(movingObject, delta);
-                        }
-                    }
-                }
-
-                Person person = ObjectGenerator.generatePerson(personTx, gameData.groundSpeed, 0, 0, 0, delta);
-                if(person != null) {
-                    gameData.persons.add(person);
-                }
-
-            }
-            score.addDistance((delta * (gameData.groundSpeed / 50)));
-            if(gameData.groundSpeed < topGroundSpeed) {
-                gameData.groundSpeed = gameData.groundSpeed + groundSpeedIncrement * delta;
-                gameData.skySpeed = gameData.groundSpeed / 4;
-            }else {
-                gameData.groundSpeed = topGroundSpeed;
-            }
-            gameData.groundMover.setGroundSpeedX(-gameData.groundSpeed);
-
+            musicManager.setMusic(MusicManager.MusicState.L1);
+            gamePlayUpdate(delta);
         }
         else if(gameData.currState == GameData.GameState.MAIN_MENU){
+            musicManager.setMusic(MusicManager.MusicState.TITLE);
             processMenuButton();
         }
         else if(gameData.currState == GameData.GameState.HIGH_SCORE)
         {
+            musicManager.setMusic(MusicManager.MusicState.TITLE);
             if(Gdx.input.isButtonPressed(Input.Buttons.RIGHT)){
                 setCurrentState(GameData.GameState.MAIN_MENU);
             }
         }
         else if(gameData.currState == GameData.GameState.TRANSITION_TO_GAME){
+            musicManager.setMusic(MusicManager.MusicState.L2);
             transitionToGame(delta);
         }
         else if(gameData.currState == GameData.GameState.TRANSITION_TO_MENU){
+            musicManager.setMusic(MusicManager.MusicState.TITLE);
             transitionToMenu(delta);
         }
         else if(gameData.currState == GameData.GameState.GAME_END){
+            musicManager.setMusic(MusicManager.MusicState.END);
             if(Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)
                     || Gdx.input.isButtonPressed(Input.Buttons.LEFT)
                     || Gdx.input.isButtonPressed(Input.Buttons.RIGHT)
@@ -259,6 +212,10 @@ public class GameScene implements Screen {
             }
         }
 
+        //music
+        musicManager.transition(delta / 10);
+
+        //graphics
         Gdx.gl.glClearColor(1, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         SpriteBatch batch = game.getSpriteBatch();
@@ -301,12 +258,151 @@ public class GameScene implements Screen {
             shapeRenderer.setColor(Color.RED);
             shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
             shapeRenderer.polygon(jeep.getCollisionVertices());
-            for (MovingObject obj : gameData.persons) {
+            List<MovingObject> movingObjectList = new ArrayList<MovingObject>();
+            movingObjectList.addAll(persons);
+            movingObjectList.addAll(cars);
+            for (MovingObject obj : movingObjectList) {
                 shapeRenderer.polygon(obj.getCollisionVertices());
             }
             //shapeRenderer.circle(GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2, 100);
             shapeRenderer.end();
         }
+    }
+
+    private void gamePlayUpdate(float delta) {
+        if(gameData.timeoutToGameOverBool) {
+            gameData.timeoutToGameOverAccum = gameData.timeoutToGameOverAccum + delta;
+            if(gameData.timeoutToGameOverAccum > timeoutToGameOver){
+                setCurrentState(GameData.GameState.GAME_END);
+            }
+        }
+
+        processInput();
+
+        jeep.transitionJeep(delta);
+        Set<MovingObject> scoredPassengers = jeep.processPassengers(delta);
+
+        float c = MathUtils.log2(gameData.groundSpeed / initGroundSpeed) * moneyMultplier;
+        for(MovingObject scoredPassenger: scoredPassengers){
+            int money = (int)(c * scoredPassenger.getInitCountdownTime());
+            TimedText tt = new TimedText("$" + money,
+                    1.5f,
+                    scoredPassenger.getX() + scoredPassenger.getWidth() / 2,
+                    scoredPassenger.getY() + scoredPassenger.getHeight() + 20,
+                    0,
+                    100);
+            musicManager.playSound(MusicManager.SoundState.COIN);
+            timedTexts.add(tt);
+            score.addMoney(money);
+        }
+        if(jeep.getX() < jeepLoc)
+        {
+            //jeep.setX(jeep.getX() + (groundSpeed * delta));
+            jeep.moveTo(jeepLoc, lanePositions[gameData.laneIndex]);
+        }
+        else {
+            moveBackgrounds(delta);
+            //jeep.getGrabber().setGrabSpeed(grabberSpeed);
+            movePersons(delta);
+            generatePerson(delta);
+            //cars
+            moveCars(delta);
+            generateCar(delta);
+        }
+        List<TimedText> removable = new ArrayList<TimedText>();
+        for(TimedText tt: timedTexts){
+            boolean done = tt.countDown(delta);
+            if(done){
+                removable.add(tt);
+            }
+        }
+        timedTexts.removeAll(removable);
+
+        removeOffscreenMovingObjects();
+
+        score.addDistance((delta * (gameData.groundSpeed / 50)));
+        if(gameData.groundSpeed < topGroundSpeed) {
+            gameData.groundSpeed = gameData.groundSpeed + groundSpeedIncrement * delta;
+            gameData.skySpeed = gameData.groundSpeed / 4;
+        }else {
+            gameData.groundSpeed = topGroundSpeed;
+        }
+        gameData.groundMover.setGroundSpeedX(-gameData.groundSpeed);
+    }
+
+    private void generateCar(float delta) {
+        Car car = ObjectGenerator.generateCar(gameData.groundSpeed, delta);
+        if(car != null) {
+            cars.add(car);
+        }
+    }
+
+    private void generatePerson(float delta) {
+        Person person = ObjectGenerator.generatePerson(gameData.groundSpeed, 0, 0, 0, 1f, delta);
+        if(person != null) {
+            persons.add(person);
+        }
+    }
+
+    private void movePersons(float delta) {
+        for(MovingObject movingObject: persons){
+            if(!jeep.isPassenger(movingObject)) {
+                if (movingObject.getCountdownTime() > 0 && !jeep.isFull() && jeep.grab(movingObject)) {
+                    boolean reached = jeep.getGrabber().reachCenter(movingObject, delta);
+                    if (reached) {
+                        jeep.addPassenger(movingObject);
+                    }
+                } else {
+                    boolean collisionOccured = Util.checkCollisions(movingObject.getCollisionVertices(), jeep.getCollisionVertices());
+                    if (collisionOccured) {
+                        movingObject.setSpeedX(bumpXMult * gameData.groundSpeed + bumpX);
+                        movingObject.setSpeedY(bumpY);
+                        movingObject.setRotation(bumpRotation);
+                        musicManager.playSound(MusicManager.SoundState.HIT_PERSON);
+                    }
+                    if (!gameData.timeoutToGameOverBool && collisionOccured) {
+                        gameData.timeoutToGameOverBool = true;
+                    }
+                    gameData.groundMover.move(movingObject, delta);
+                }
+            }
+        }
+    }
+
+    private void moveCars(float delta) {
+        boolean collisionOccured;
+        for(MovingObject car:cars)
+        {
+            collisionOccured = Util.checkCollisions(car.getCollisionVertices(), jeep.getCollisionVertices());
+            if (collisionOccured) {
+                car.setSpeedX(bumpXMult * gameData.groundSpeed + carBumpX);
+                car.setSpeedY(carBumpY);
+                car.setRotation(carBumpRotation);
+                musicManager.playSound(MusicManager.SoundState.HIT_CAR);
+            }
+            if (!gameData.timeoutToGameOverBool && collisionOccured) {
+                gameData.timeoutToGameOverBool = true;
+            }
+            gameData.groundMover.move(car, delta);
+
+        }
+    }
+
+    private void removeOffscreenMovingObjects() {
+        List<MovingObject> removable = new ArrayList<MovingObject>();
+        for(MovingObject movingObject: persons){
+            if(Util.isOffscreen(movingObject)){
+                removable.add(movingObject);
+            }
+        }
+        persons.removeAll(removable);
+        removable.clear();
+        for(MovingObject movingObject: cars){
+            if(Util.isOffscreen(movingObject)){
+                removable.add(movingObject);
+            }
+        }
+        cars.removeAll(removable);
     }
 
     private void drawGame(SpriteBatch batch){
@@ -316,7 +412,10 @@ public class GameScene implements Screen {
         for(Sprite bg: gameBg) {
             batch.draw(bg, bg.getX(), bg.getY());
         }
-        for(MovingObject p: gameData.persons){
+        List<MovingObject> movingObjectList = new ArrayList<MovingObject>();
+        movingObjectList.addAll(persons);
+        movingObjectList.addAll(cars);
+        for(MovingObject p: movingObjectList){
             if(p.isSprite()){
                 Sprite sprite = (Sprite) p;
                 if(sprite.getY() >= jeep.getY())
@@ -326,7 +425,7 @@ public class GameScene implements Screen {
             }
         }
         jeep.draw(batch);
-        for(MovingObject p: gameData.persons){
+        for(MovingObject p: movingObjectList){
             if(p.isSprite()){
                 Sprite sprite = (Sprite) p;
                 if(sprite.getY() < jeep.getY())
@@ -337,6 +436,12 @@ public class GameScene implements Screen {
         }
         gameFont.draw(batch, score.getDistance() + " m", GameInfo.WIDTH * 1/10, GameInfo.HEIGHT  * 9/10);
         gameFont.draw(batch, "$ " + score.getMoney(), GameInfo.WIDTH * 1/10, GameInfo.HEIGHT  * 8/10);
+        Color c = dollarFont.getColor();
+        for(TimedText timedText: timedTexts){
+            dollarFont.setColor(c.r, c.g, c.b, timedText.getAlpha() * 0xff);
+            dollarFont.draw(batch, timedText.getText(), timedText.getX(), timedText.getY());
+        }
+
     }
 
     private void drawMenu(SpriteBatch batch){
@@ -449,8 +554,8 @@ public class GameScene implements Screen {
         jeep.getTexture().dispose();
         gameBgTx.dispose();
         skyBgTx.dispose();
-        personTx.dispose();
-        MusicManager.dispose();
+        ObjectGenerator.dispose();
+        musicManager.dispose();
     }
 
     private void setCurrentState(GameData.GameState nextState){
@@ -466,7 +571,9 @@ public class GameScene implements Screen {
         gameData.laneIndex = 1;
         gameData.timeoutToGameOverBool = false;
         jeep.removeAllPassengers();
-        gameData.persons.clear();
+        persons.clear();
+        cars.clear();
+        timedTexts.clear();
     }
 
 }

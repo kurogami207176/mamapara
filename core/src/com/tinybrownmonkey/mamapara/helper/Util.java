@@ -48,9 +48,11 @@ public class Util {
         return(Intersector.overlapConvexPolygons(main, other, null));
     }
 
-    public boolean isOffscreen(MovingObject obj, float buffer){
-        if(obj.getX() + obj.getHeight() + buffer < 0
-        || obj.getY() + obj.getWidth() + buffer < 0)
+    public static boolean isOffscreen(MovingObject obj){
+        if(obj.getX() + obj.getHeight() + Constants.offScreenBuffer < 0
+            || obj.getY() + obj.getWidth() + Constants.offScreenBuffer < 0
+            || obj.getX() - Constants.offScreenBuffer > GameInfo.WIDTH
+            || obj.getY() - Constants.offScreenBuffer > GameInfo.HEIGHT)
         {
             return true;
         }

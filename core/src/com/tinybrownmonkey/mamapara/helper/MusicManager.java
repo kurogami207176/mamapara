@@ -1,64 +1,98 @@
 package com.tinybrownmonkey.mamapara.helper;
 
-import com.badlogic.gdx.Audio;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by alaguipo on 17/06/2017.
  */
 
 public class MusicManager {
-    private Audio audio;
-    private static Music currentMusic;
+    private static MusicManager instance = new MusicManager();
+    public static MusicManager getInstance(){
+        return instance;
+    }
+
+    private MusicState currState;
+    private MusicState prevState;
+
+    private Map<MusicState, Music> musicMap;
+
+    private Map<SoundState, Sound> soundMap;
+
     public MusicManager(){
-
+        init();
     }
-    private static String[] tracks = new String[]{
-            "POL-secret-alchemy-short.wav"
-    };
 
-    public static void play(int trackNo, boolean isLooping){
-        if(currentMusic != null)
-        {
-            if(currentMusic.isPlaying()){
-                currentMusic.stop();
+
+    public void playSound(SoundState soundState)
+    {
+        soundMap.get(soundState).play();
+    }
+    public void setMusic(MusicState musicState)
+    {
+        if(musicState != currState){
+            prevState = currState;
+            currState = musicState;
+            musicMap.get(currState).play();
+            if(prevState != null) {
+                musicMap.get(prevState).stop();
             }
-            currentMusic.dispose();
-        }
-        currentMusic = Gdx.audio.newMusic(Gdx.files.internal(tracks[trackNo]));
-        currentMusic.setLooping(isLooping);
-        currentMusic.play();
-    }
-
-    public static void stop(){
-        if(currentMusic != null)
-        {
-            currentMusic.stop();
         }
     }
 
-    public static void pause(){
-        if(currentMusic != null)
-        {
-            currentMusic.pause();
-        }
-    }
-    public static void isPlaying(){
-        if(currentMusic != null)
-        {
-            currentMusic.isPlaying();
-        }
-    }
+    public void transition(float delta){
 
-    public static void dispose(){
-        if(currentMusic != null)
-        {
-            if(currentMusic.isPlaying()){
-                currentMusic.stop();
+        if(prevState != null){
+            Music prevMusic = musicMap.get(prevState);
+            if(prevMusic.getVolume() <= 0 ){
+                prevMusic.stop();
+                prevState = null;
             }
-            currentMusic.dispose();
-            currentMusic = null;
+            else{
+                Music currMusic = musicMap.get(currState);
+                prevMusic.setVolume(prevMusic.getVolume() - delta);
+                currMusic.setVolume(currMusic.getVolume() + delta);
+            }
         }
+    }
+
+    public void init(){
+        musicMap = new HashMap<MusicState, Music>();
+        musicMap.put(MusicState.TITLE, Gdx.audio.newMusic(Gdx.files.internal("music/TitleScreen.wav")));
+        musicMap.put(MusicState.L1, Gdx.audio.newMusic(Gdx.files.internal("music/Level01.wav")));
+        musicMap.put(MusicState.L2, Gdx.audio.newMusic(Gdx.files.internal("music/Level02.wav")));
+        musicMap.put(MusicState.L3, Gdx.audio.newMusic(Gdx.files.internal("music/Level03.wav")));
+        musicMap.put(MusicState.END, Gdx.audio.newMusic(Gdx.files.internal("music/Ending.wav")));
+        for(Music music : musicMap.values()){
+            music.setVolume(1f);
+            music.setLooping(true);
+        }
+        soundMap = new HashMap<SoundState, Sound>();
+        soundMap.put(SoundState.COIN, Gdx.audio.newSound(Gdx.files.internal("sound/money.wav")));
+        soundMap.put(SoundState.HIT_PERSON, Gdx.audio.newSound(Gdx.files.internal("sound/hit_human.wav")));
+        soundMap.put(SoundState.HIT_CAR, Gdx.audio.newSound(Gdx.files.internal("sound/hit_car.wav")));
+    }
+    public void dispose(){
+        for(Music music : musicMap.values()){
+            music.dispose();
+        }
+        musicMap.clear();
+        for(Sound sound : soundMap.values()){
+            sound.dispose();
+        }
+        soundMap.clear();
+    }
+
+    public enum MusicState{
+        TITLE, L1, L2, L3, END;
+    }
+
+    public enum SoundState{
+        COIN, HIT_PERSON, HIT_CAR;
     }
 }

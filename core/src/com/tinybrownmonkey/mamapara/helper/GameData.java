@@ -12,7 +12,6 @@ import static com.tinybrownmonkey.mamapara.helper.Constants.initSkySpeed;
  */
 
 public class GameData {
-    public List<MovingObject> persons;
 
     public GameState currState;
     public GroundMover<Person> groundMover;

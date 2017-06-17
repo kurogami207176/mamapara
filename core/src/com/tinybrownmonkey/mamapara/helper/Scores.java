@@ -17,7 +17,7 @@ public class Scores {
         }
     }
 
-    public void addMoney(float money){
+    public void addMoney(int money){
         this.money = this.money + money;
     }
 
