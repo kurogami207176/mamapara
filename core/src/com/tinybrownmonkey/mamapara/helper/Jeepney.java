@@ -15,7 +15,7 @@ import java.util.Set;
  */
 
 public class Jeepney extends Sprite implements MovingObject{
-    private boolean laneTrans = false;
+//    private boolean laneTrans = false;
     private int targetLane;
     private float transitionSpeed;
     private float angleSpeed;
@@ -48,16 +48,9 @@ public class Jeepney extends Sprite implements MovingObject{
         passengers = new HashSet<MovingObject>(maxPassengers);
     }
 
-    public boolean isLaneTrans(){
-        return laneTrans;
-    }
-
     public void moveTo(float targetLaneX, float targetLaneY){
-        if(!laneTrans) {
             this.targetLaneX = targetLaneX;
             this.targetLaneY = targetLaneY;
-            laneTrans = true;
-        }
     }
 
     public void transitionJeep(float deltaTime){
@@ -100,9 +93,6 @@ public class Jeepney extends Sprite implements MovingObject{
             }
         }
         setRotation(currAngle);
-        if(getX() == targetLaneX && getY() == targetLaneY){
-            laneTrans = false;
-        }
         if(getY() == targetLaneY)
         {
             if(currAngle  > 0){
@@ -240,10 +230,10 @@ public class Jeepney extends Sprite implements MovingObject{
     @Override public String getId(){return "jeep";}
 
     public float[] getCollisionVertices(){
-        float x1 = getX() + getWidth() - 20;
+        float x1 = getX() + getWidth() / 1.1f;
         float y1 = getY();
         float x2 = getX() + getWidth();
-        float y2 = getY() + getHeight()-20;
+        float y2 = getY() + getHeight() * 2/3;
         return new float[] {
                 aX(x1, y1, x1, y1, getRotation()),
                 aY(x1, y1, x1, y1, getRotation()),

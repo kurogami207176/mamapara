@@ -68,7 +68,7 @@ public class Car extends Sprite implements MovingObject{
         float x1 = getX();
         float y1 = getY();
         float x2 = getX() + getWidth();
-        float y2 = getY() + getHeight()-20;
+        float y2 = getY() + getHeight() * 1/3;
         return new float[] {x1,y1, x1,y2, x2,y2, x2,y1};
     }
 

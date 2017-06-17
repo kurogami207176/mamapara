@@ -18,7 +18,7 @@ import java.util.Set;
  * Created by alaguipo on 16/06/2017.
  */
 
-public class Grabber extends Sprite{
+public class Grabber{
     private float x;
     private float y;
     private float range;
@@ -84,12 +84,22 @@ public class Grabber extends Sprite{
             multiplierX = -1;
         }
         float deltaGrabSpeed = grabSpeed * deltaTime;
+//        float dx = multiplierX * (xDiff < deltaGrabSpeed? xDiff: deltaGrabSpeed);
+//        float dy = multiplierY * (yDiff < deltaGrabSpeed? yDiff: deltaGrabSpeed);
         float dx = multiplierX * (xDiff < deltaGrabSpeed? xDiff: deltaGrabSpeed);
         float dy = multiplierY * (yDiff < deltaGrabSpeed? yDiff: deltaGrabSpeed);
         obj.setPosition(
                 obj.getX() - dx,
                 obj.getY() - dy);
         return (obj.getX() == x && obj.getY() == y);
+    }
+
+    public float getX(){
+        return x;
+    }
+
+    public float getY(){
+        return y;
     }
 
 }

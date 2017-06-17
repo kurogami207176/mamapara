@@ -14,11 +14,13 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.tinybrownmonkey.mamapara.MamaParaGame;
 import com.tinybrownmonkey.mamapara.helper.Car;
+import com.tinybrownmonkey.mamapara.helper.Constants;
 import com.tinybrownmonkey.mamapara.helper.GameData;
 import com.tinybrownmonkey.mamapara.helper.GameInfo;
 import com.tinybrownmonkey.mamapara.helper.GameManager;
@@ -30,6 +32,7 @@ import com.tinybrownmonkey.mamapara.helper.MusicManager;
 import com.tinybrownmonkey.mamapara.helper.ObjectGenerator;
 import com.tinybrownmonkey.mamapara.helper.Person;
 import com.tinybrownmonkey.mamapara.helper.Scores;
+import com.tinybrownmonkey.mamapara.helper.TextureManager;
 import com.tinybrownmonkey.mamapara.helper.TimedText;
 import com.tinybrownmonkey.mamapara.helper.Util;
 
@@ -74,7 +77,8 @@ public class GameScene implements Screen {
 //    private int money = 0;
 
     private BitmapFont debugFont = new BitmapFont();
-    private BitmapFont gameFont;
+    private BitmapFont scoreFont;
+    private BitmapFont moneyFont;
     private BitmapFont dollarFont;
 
     private MusicManager musicManager;
@@ -88,13 +92,18 @@ public class GameScene implements Screen {
         gameViewPort = new StretchViewport(GameInfo.WIDTH, GameInfo.HEIGHT, mainCamera);
 
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("pricedown bl.ttf"));
-        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter.size = 50;
-        gameFont = generator.generateFont(parameter);
-        gameFont.setColor(Color.GOLD);
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter0 = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter0.size = 55;
+        scoreFont = generator.generateFont(parameter0);
+        scoreFont.setColor(Color.GOLD);
+
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter1 = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter1.size = 50;
+        moneyFont = generator.generateFont(parameter1);
+        moneyFont.setColor(Color.GOLD);
 
         FreeTypeFontGenerator.FreeTypeFontParameter parameter2 = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter.size = 20;
+        parameter2.size = 20;
         dollarFont = generator.generateFont(parameter2);
         dollarFont.setColor(Color.GOLD);
 
@@ -112,7 +121,7 @@ public class GameScene implements Screen {
 
     private void initGameplay() {
         gameBg = new Array<Sprite>();
-        gameBgTx = new Texture("road_bg.png");
+        gameBgTx = TextureManager.get("road_bg.png");
         for(int i=0; i < 3; i++)
         {
             Sprite sprite = new Sprite(gameBgTx);
@@ -120,7 +129,7 @@ public class GameScene implements Screen {
             gameBg.add(sprite);
         }
         skyBg = new Array<Sprite>();
-        skyBgTx = new Texture("skies_bg.png");
+        skyBgTx = TextureManager.get("skies_bg.png");
         for(int i=0; i < 3; i++)
         {
             Sprite sprite = new Sprite(skyBgTx);
@@ -128,7 +137,7 @@ public class GameScene implements Screen {
             skyBg.add(sprite);
         }
         ObjectGenerator.loadTextures();
-        Texture jeepTexture = new Texture("jeepney_side.png");
+        Texture jeepTexture = TextureManager.get("jeepney_side.png");
         jeep = new Jeepney(jeepTexture, -jeepTexture.getWidth(), lanePositions[gameData.laneIndex],
                 changeLaneSpeed, angleSpeed, grabberRange, grabberSpeed, maxPassngersPerSide);
 
@@ -142,14 +151,14 @@ public class GameScene implements Screen {
     }
 
     private void initMenu() {
-        homeBg = new Sprite(new Texture("home_bg.png"));
-        logo = new Sprite(new Texture("logo.png"));
+        homeBg = new Sprite(TextureManager.get("home_bg.png"));
+        logo = new Sprite(TextureManager.get("logo.png"));
         float logoX = (GameInfo.WIDTH - logo.getWidth()) / 2;
         logo.setPosition(logoX, logo.getY());
-        playBttn = new Sprite(new Texture("button_play.png"));
+        playBttn = new Sprite(TextureManager.get("button_play.png"));
         playBttn.setX((GameInfo.WIDTH - playBttn.getWidth()) / 3);
         playBttn.setY(GameInfo.HEIGHT / 2 - (GameInfo.HEIGHT / 7));
-        hsBttn = new Sprite(new Texture("button_highscore.png"));
+        hsBttn = new Sprite(TextureManager.get("button_highscore.png"));
         hsBttn.setX((GameInfo.WIDTH - playBttn.getWidth()) * 2 / 3);
         hsBttn.setY(GameInfo.HEIGHT / 2 - (GameInfo.HEIGHT / 7));
     }
@@ -178,6 +187,81 @@ public class GameScene implements Screen {
     @Override
     public void render(float delta) {
         mainCamera.update();
+        updateComponents(delta);
+
+        //music
+        musicManager.transition(delta / 10);
+        drawComponents();
+
+
+        if(GameInfo.DEBUG_MODE) {
+            shapeRenderer.setColor(Color.RED);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.polygon(jeep.getCollisionVertices());
+            List<MovingObject> movingObjectList = new ArrayList<MovingObject>();
+            movingObjectList.addAll(persons);
+            movingObjectList.addAll(cars);
+            for (MovingObject obj : movingObjectList) {
+                shapeRenderer.polygon(obj.getCollisionVertices());
+            }
+            shapeRenderer.circle(jeep.getGrabber().getX(), jeep.getGrabber().getY(),
+                    jeep.getGrabber().getRange());
+            shapeRenderer.end();
+        }
+    }
+
+    private void drawComponents() {
+        //graphics
+        Gdx.gl.glClearColor(1, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        SpriteBatch batch = game.getSpriteBatch();
+        batch.setProjectionMatrix(mainCamera.combined);
+
+        // Scale down the sprite batches projection matrix to box2D size
+        batch.begin();
+        switch (gameData.currState)
+        {
+            case MAIN_MENU:
+                drawMenu(batch);
+                batch.draw(playBttn, playBttn.getX(), playBttn.getY());
+                batch.draw(hsBttn, hsBttn.getX(), hsBttn.getY());
+                break;
+            case GAME_PLAY:
+                drawGame(batch);
+                break;
+            case TRANSITION_TO_GAME:
+            case TRANSITION_TO_MENU:
+                drawGame(batch);
+                drawMenu(batch);
+                break;
+            case HIGH_SCORE:
+                drawMenu(batch);
+                scoreFont.draw(batch, score.getHighScore() + " m", GameInfo.WIDTH / 2, GameInfo.HEIGHT * 4 / 9,
+                        200, Align.center, false);
+                break;
+            case GAME_END:
+                drawGame(batch);
+                scoreFont.draw(batch, "GAME OVER", GameInfo.WIDTH / 2 - 100, GameInfo.HEIGHT  /2 );
+                break;
+            default:
+        }
+//        debugRenderer.render(world, debugMatrix);
+        if(GameInfo.DEBUG_MODE) {
+            debugFont.draw(batch, "Test Mode", GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2);
+        }
+        batch.end();
+
+        if(gameData.currState == GameData.GameState.GAME_PLAY)
+        {
+            //shapeRenderer.setColor(1, (float)0xd7/(float)0xff, 0, 0.01f);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.circle(jeep.getGrabber().getX(), jeep.getGrabber().getY(),
+                    jeep.getGrabber().getRange());
+            shapeRenderer.end();
+        }
+    }
+
+    private void updateComponents(float delta) {
         if(gameData.currState == GameData.GameState.GAME_PLAY && moving)
         {
             musicManager.setMusic(MusicManager.MusicState.L1);
@@ -211,62 +295,6 @@ public class GameScene implements Screen {
                 setCurrentState(GameData.GameState.TRANSITION_TO_MENU);
             }
         }
-
-        //music
-        musicManager.transition(delta / 10);
-
-        //graphics
-        Gdx.gl.glClearColor(1, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        SpriteBatch batch = game.getSpriteBatch();
-        batch.setProjectionMatrix(mainCamera.combined);
-
-        // Scale down the sprite batches projection matrix to box2D size
-        batch.begin();
-        switch (gameData.currState)
-        {
-            case MAIN_MENU:
-                drawMenu(batch);
-                batch.draw(playBttn, playBttn.getX(), playBttn.getY());
-                batch.draw(hsBttn, hsBttn.getX(), hsBttn.getY());
-                break;
-            case GAME_PLAY:
-                drawGame(batch);
-                break;
-            case TRANSITION_TO_GAME:
-            case TRANSITION_TO_MENU:
-                drawGame(batch);
-                drawMenu(batch);
-                break;
-            case HIGH_SCORE:
-                drawMenu(batch);
-                gameFont.draw(batch, score.getHighScore() + "m", GameInfo.HEIGHT / 2, GameInfo.HEIGHT / 2);
-                break;
-            case GAME_END:
-                drawGame(batch);
-                gameFont.draw(batch, "GAME OVER", GameInfo.WIDTH / 2 - 100, GameInfo.HEIGHT  /2 );
-                break;
-            default:
-        }
-//        debugRenderer.render(world, debugMatrix);
-        if(GameInfo.DEBUG_MODE) {
-            debugFont.draw(batch, "Test Mode", GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2);
-        }
-        batch.end();
-
-        if(GameInfo.DEBUG_MODE) {
-            shapeRenderer.setColor(Color.RED);
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            shapeRenderer.polygon(jeep.getCollisionVertices());
-            List<MovingObject> movingObjectList = new ArrayList<MovingObject>();
-            movingObjectList.addAll(persons);
-            movingObjectList.addAll(cars);
-            for (MovingObject obj : movingObjectList) {
-                shapeRenderer.polygon(obj.getCollisionVertices());
-            }
-            //shapeRenderer.circle(GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2, 100);
-            shapeRenderer.end();
-        }
     }
 
     private void gamePlayUpdate(float delta) {
@@ -285,6 +313,9 @@ public class GameScene implements Screen {
         float c = MathUtils.log2(gameData.groundSpeed / initGroundSpeed) * moneyMultplier;
         for(MovingObject scoredPassenger: scoredPassengers){
             int money = (int)(c * scoredPassenger.getInitCountdownTime());
+            if(money == 0){
+                money = 1;
+            }
             TimedText tt = new TimedText("$" + money,
                     1.5f,
                     scoredPassenger.getX() + scoredPassenger.getWidth() / 2,
@@ -292,6 +323,7 @@ public class GameScene implements Screen {
                     0,
                     100);
             musicManager.playSound(MusicManager.SoundState.COIN);
+            scoredPassenger.setSpeedY(ySpeedGetOff);
             timedTexts.add(tt);
             score.addMoney(money);
         }
@@ -338,7 +370,7 @@ public class GameScene implements Screen {
     }
 
     private void generatePerson(float delta) {
-        Person person = ObjectGenerator.generatePerson(gameData.groundSpeed, 0, 0, 0, 1f, delta);
+        Person person = ObjectGenerator.generatePerson(gameData.groundSpeed, 0, 0, 0, 5f, delta);
         if(person != null) {
             persons.add(person);
         }
@@ -352,19 +384,20 @@ public class GameScene implements Screen {
                     if (reached) {
                         jeep.addPassenger(movingObject);
                     }
-                } else {
-                    boolean collisionOccured = Util.checkCollisions(movingObject.getCollisionVertices(), jeep.getCollisionVertices());
-                    if (collisionOccured) {
-                        movingObject.setSpeedX(bumpXMult * gameData.groundSpeed + bumpX);
-                        movingObject.setSpeedY(bumpY);
-                        movingObject.setRotation(bumpRotation);
-                        musicManager.playSound(MusicManager.SoundState.HIT_PERSON);
-                    }
-                    if (!gameData.timeoutToGameOverBool && collisionOccured) {
-                        gameData.timeoutToGameOverBool = true;
-                    }
+                }
+                else {
                     gameData.groundMover.move(movingObject, delta);
                 }
+            }
+            boolean collisionOccured = Util.checkCollisions(movingObject.getCollisionVertices(), jeep.getCollisionVertices());
+            if (collisionOccured) {
+                movingObject.setSpeedX(bumpXMult * gameData.groundSpeed + bumpX);
+                movingObject.setSpeedY(bumpY);
+                movingObject.setRotation(bumpRotation);
+                musicManager.playSound(MusicManager.SoundState.HIT_PERSON);
+            }
+            if (!gameData.timeoutToGameOverBool && collisionOccured) {
+                gameData.timeoutToGameOverBool = true;
             }
         }
     }
@@ -434,11 +467,9 @@ public class GameScene implements Screen {
                 }
             }
         }
-        gameFont.draw(batch, score.getDistance() + " m", GameInfo.WIDTH * 1/10, GameInfo.HEIGHT  * 9/10);
-        gameFont.draw(batch, "$ " + score.getMoney(), GameInfo.WIDTH * 1/10, GameInfo.HEIGHT  * 8/10);
-        Color c = dollarFont.getColor();
+        scoreFont.draw(batch, score.getDistance() + " m", GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 19/20);
+        moneyFont.draw(batch, "$ " + score.getMoney(), GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 8/10);
         for(TimedText timedText: timedTexts){
-            dollarFont.setColor(c.r, c.g, c.b, timedText.getAlpha() * 0xff);
             dollarFont.draw(batch, timedText.getText(), timedText.getX(), timedText.getY());
         }
 
@@ -521,6 +552,7 @@ public class GameScene implements Screen {
             jeep.moveTo(-jeep.getWidth(), lanePositions[gameData.laneIndex]);
             setCurrentState(GameData.GameState.MAIN_MENU);
             resetScore();
+            GameManager.saveScore(score);
         }
     }
 
@@ -528,6 +560,7 @@ public class GameScene implements Screen {
     public void resize(int width, int height) {
         GameInfo.HEIGHT = height;
         GameInfo.WIDTH = width;
+        gameViewPort.update(width, height);
     }
 
     @Override
@@ -568,7 +601,7 @@ public class GameScene implements Screen {
         score.reset();
         gameData.groundSpeed = initGroundSpeed;
         gameData.skySpeed = initSkySpeed;
-        gameData.laneIndex = 1;
+        gameData.laneIndex = Math.round(((float) Constants.lanePositions.length)/ 2f) - 1;
         gameData.timeoutToGameOverBool = false;
         jeep.removeAllPassengers();
         persons.clear();
