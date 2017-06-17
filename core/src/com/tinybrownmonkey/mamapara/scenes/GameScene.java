@@ -1,5 +1,6 @@
 package com.tinybrownmonkey.mamapara.scenes;
 
+import static com.tinybrownmonkey.mamapara.helper.Constants.*;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -8,30 +9,32 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.PolygonRegion;
-import com.badlogic.gdx.graphics.g2d.PolygonSprite;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
-import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.tinybrownmonkey.mamapara.MamaParaGame;
+import com.tinybrownmonkey.mamapara.helper.GameData;
 import com.tinybrownmonkey.mamapara.helper.GameInfo;
+import com.tinybrownmonkey.mamapara.helper.GameManager;
 import com.tinybrownmonkey.mamapara.helper.Grabber;
 import com.tinybrownmonkey.mamapara.helper.GroundMover;
 import com.tinybrownmonkey.mamapara.helper.Jeepney;
 import com.tinybrownmonkey.mamapara.helper.MovingObject;
+import com.tinybrownmonkey.mamapara.helper.MusicManager;
+import com.tinybrownmonkey.mamapara.helper.ObjectGenerator;
 import com.tinybrownmonkey.mamapara.helper.Person;
+import com.tinybrownmonkey.mamapara.helper.Scores;
 import com.tinybrownmonkey.mamapara.helper.Util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+
 
 /**
  * Created by AlainAnne on 12-Jun-17.
@@ -56,56 +59,17 @@ public class GameScene implements Screen {
     //private Sprite jeep;
     private Jeepney jeep;
     private Texture personTx;
-    private List<MovingObject> persons;
-
-    private GameState currState;
-    private GroundMover<Person> groundMover;
-    private float groundSpeed = initGroundSpeed;
-    private float skySpeed = initSkySpeed;
-
-    private int maxPassngersPerSide = 8;
-
-    private float timeoutToGameOverAccum = 0;
-    private boolean timeoutToGameOverBool = false;
-
-    private static float initSkySpeed = 33;
-    private static float initGroundSpeed = 300;
-    private static float topGroundSpeed = 3000;
-    private static int jeepSpeed = 0;
-    private static int changeLaneSpeed = 300;
-    private static int[] lanePositions = new int[] {210, 130, 50};
-    private static int jeepLoc = 50;
-    private static int laneIndex = 1;
-    private static float groundSpeedIncrement = 50;
-    private static float angleSpeed = 100;
-    private static float grabberRange = 200;
-    private static float grabberSpeed = 100;
-
-    private float bumpX = 200f;
-    private float bumpY = 200f;
-    private float bumpRotation = -100f;
-
-    private float bumpXMult = 1.2f;
-
-    private static float timeoutToGameOver = 0.5f;
-    private boolean laneTrans = false;
-
-
-    private static float transitionSpeed = 800;
 
     private static boolean moving = true;
 
     //scores
-    private float currScore = 0;
-    private int money = 0;
-    private int highestScore = 9999;
+    private Scores score;
+    private GameData gameData;
+//    private float currScore = 0;
+//    private int money = 0;
 
     private BitmapFont debugFont = new BitmapFont();
     private BitmapFont gameFont;
-
-    private enum GameState{
-        MAIN_MENU, HIGH_SCORE, TRANSITION_TO_GAME, GAME_PLAY, GAME_END, TRANSITION_TO_MENU;
-    }
 
     ShapeRenderer shapeRenderer  = new ShapeRenderer();
     public GameScene(MamaParaGame game) {
@@ -122,11 +86,16 @@ public class GameScene implements Screen {
         gameFont = generator.generateFont(parameter);
         gameFont.setColor(Color.GOLD);
 
+        score = GameManager.loadScores();
+        gameData = GameManager.loadGameData();
+        if(gameData.currState == null) {
+            setCurrentState(GameData.GameState.MAIN_MENU);
+        }
+
         initMenu();
 
         initGameplay();
 
-        setCurrentState(GameState.MAIN_MENU);
     }
 
     private void initGameplay() {
@@ -147,14 +116,15 @@ public class GameScene implements Screen {
             skyBg.add(sprite);
         }
         Texture jeepTexture = new Texture("jeepney_side.png");
-        jeep = new Jeepney(jeepTexture, -jeepTexture.getWidth(), lanePositions[laneIndex],
+        jeep = new Jeepney(jeepTexture, -jeepTexture.getWidth(), lanePositions[gameData.laneIndex],
                 changeLaneSpeed, angleSpeed, grabberRange, grabberSpeed, maxPassngersPerSide);
 
-        persons = new ArrayList<MovingObject>();
+        gameData.persons = new ArrayList<MovingObject>();
 
         personTx = new Texture("person.png");
 
-        groundMover = new GroundMover(-groundSpeed, 0);
+        gameData.groundMover = new GroundMover(-gameData.groundSpeed, 0);
+        //MusicManager.play(0, true);
     }
 
     private void initMenu() {
@@ -176,14 +146,14 @@ public class GameScene implements Screen {
 
     public void moveBackgrounds(float deltaTime){
         for(Sprite bg: skyBg) {
-            bg.setX(bg.getX() - (deltaTime * skySpeed));
+            bg.setX(bg.getX() - (deltaTime * gameData.skySpeed));
             if (bg.getX() + bg.getWidth() < 0)
             {
                 bg.setX(bg.getX() + (bg.getWidth() * 2));
             }
         }
         for(Sprite bg: gameBg) {
-            bg.setX(bg.getX() - (deltaTime * groundSpeed));
+            bg.setX(bg.getX() - (deltaTime * gameData.groundSpeed));
             if (bg.getX() + bg.getWidth() < 0)
             {
                 bg.setX(bg.getX() + (bg.getWidth() * 2));
@@ -194,28 +164,40 @@ public class GameScene implements Screen {
     @Override
     public void render(float delta) {
         mainCamera.update();
-        if(currState == GameState.GAME_PLAY && moving)
+        if(gameData.currState == GameData.GameState.GAME_PLAY && moving)
         {
-            if(timeoutToGameOverBool) {
-                timeoutToGameOverAccum = timeoutToGameOverAccum + delta;
-                if(timeoutToGameOverAccum > timeoutToGameOver){
-                    setCurrentState(GameState.GAME_END);
+            if(gameData.timeoutToGameOverBool) {
+                gameData.timeoutToGameOverAccum = gameData.timeoutToGameOverAccum + delta;
+                if(gameData.timeoutToGameOverAccum > timeoutToGameOver){
+                    setCurrentState(GameData.GameState.GAME_END);
                 }
             }
 
             processInput();
 
             jeep.transitionJeep(delta);
+            Set<MovingObject> scoredPassengers = jeep.processPassengers(delta);
+
+            float c = MathUtils.log2(gameData.groundSpeed / initGroundSpeed) * moneyMultplier;
+            for(MovingObject scoredPassenger: scoredPassengers){
+                float money = c * scoredPassenger.getInitCountdownTime();
+                System.out.println("c=" + c);
+                System.out.println("groundSpeed=" + gameData.groundSpeed);
+                System.out.println("initGroundSpeed=" + initGroundSpeed);
+                System.out.println("moneyMultplier=" + moneyMultplier);
+                System.out.println("scoredPassenger.getInitCountdownTime=" + scoredPassenger.getInitCountdownTime());
+                score.addMoney(money);
+            }
             if(jeep.getX() < jeepLoc)
             {
                 //jeep.setX(jeep.getX() + (groundSpeed * delta));
-                jeep.moveTo(jeepLoc, lanePositions[laneIndex]);
+                jeep.moveTo(jeepLoc, lanePositions[gameData.laneIndex]);
             }
             else {
                 moveBackgrounds(delta);
                 boolean collisionOccured = false;
                 //jeep.getGrabber().setGrabSpeed(grabberSpeed);
-                for(MovingObject movingObject: persons){
+                for(MovingObject movingObject: gameData.persons){
                     if(!jeep.isPassenger(movingObject)) {
                         if (movingObject.getCountdownTime() > 0 && !jeep.isFull() && jeep.grab(movingObject)) {
                             boolean reached = jeep.getGrabber().reachCenter(movingObject, delta);
@@ -225,55 +207,55 @@ public class GameScene implements Screen {
                         } else {
                             collisionOccured = Util.checkCollisions(movingObject.getCollisionVertices(), jeep.getCollisionVertices());
                             if (collisionOccured) {
-                                movingObject.setSpeedX(bumpXMult * groundSpeed + bumpX);
+                                movingObject.setSpeedX(bumpXMult * gameData.groundSpeed + bumpX);
                                 movingObject.setSpeedY(bumpY);
                                 movingObject.setRotation(bumpRotation);
                             }
-                            if (!timeoutToGameOverBool && collisionOccured) {
-                                timeoutToGameOverBool = true;
+                            if (!gameData.timeoutToGameOverBool && collisionOccured) {
+                                gameData.timeoutToGameOverBool = true;
                             }
-                            groundMover.move(movingObject, delta);
+                            gameData.groundMover.move(movingObject, delta);
                         }
                     }
                 }
 
-//                Person person = Person.generatePerson(personTx, groundSpeed, 0, 0, 0, delta);
-//                if(person != null) {
-//                    persons.add(person);
-//                }
+                Person person = ObjectGenerator.generatePerson(personTx, gameData.groundSpeed, 0, 0, 0, delta);
+                if(person != null) {
+                    gameData.persons.add(person);
+                }
 
             }
-            currScore = currScore + (delta * (groundSpeed / 50));
-            if(groundSpeed < topGroundSpeed) {
-                groundSpeed = groundSpeed + groundSpeedIncrement * delta;
-                skySpeed = groundSpeed / 4;
+            score.addDistance((delta * (gameData.groundSpeed / 50)));
+            if(gameData.groundSpeed < topGroundSpeed) {
+                gameData.groundSpeed = gameData.groundSpeed + groundSpeedIncrement * delta;
+                gameData.skySpeed = gameData.groundSpeed / 4;
             }else {
-                groundSpeed = topGroundSpeed;
+                gameData.groundSpeed = topGroundSpeed;
             }
-            groundMover.setGroundSpeedX(-groundSpeed);
+            gameData.groundMover.setGroundSpeedX(-gameData.groundSpeed);
 
         }
-        else if(currState == GameState.MAIN_MENU){
+        else if(gameData.currState == GameData.GameState.MAIN_MENU){
             processMenuButton();
         }
-        else if(currState == GameState.HIGH_SCORE)
+        else if(gameData.currState == GameData.GameState.HIGH_SCORE)
         {
             if(Gdx.input.isButtonPressed(Input.Buttons.RIGHT)){
-                setCurrentState(GameState.MAIN_MENU);
+                setCurrentState(GameData.GameState.MAIN_MENU);
             }
         }
-        else if(currState == GameState.TRANSITION_TO_GAME){
+        else if(gameData.currState == GameData.GameState.TRANSITION_TO_GAME){
             transitionToGame(delta);
         }
-        else if(currState == GameState.TRANSITION_TO_MENU){
+        else if(gameData.currState == GameData.GameState.TRANSITION_TO_MENU){
             transitionToMenu(delta);
         }
-        else if(currState == GameState.GAME_END){
+        else if(gameData.currState == GameData.GameState.GAME_END){
             if(Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)
                     || Gdx.input.isButtonPressed(Input.Buttons.LEFT)
                     || Gdx.input.isButtonPressed(Input.Buttons.RIGHT)
                     || Gdx.input.isButtonPressed(Input.Buttons.MIDDLE)){
-                setCurrentState(GameState.TRANSITION_TO_MENU);
+                setCurrentState(GameData.GameState.TRANSITION_TO_MENU);
             }
         }
 
@@ -284,7 +266,7 @@ public class GameScene implements Screen {
 
         // Scale down the sprite batches projection matrix to box2D size
         batch.begin();
-        switch (currState)
+        switch (gameData.currState)
         {
             case MAIN_MENU:
                 drawMenu(batch);
@@ -301,7 +283,7 @@ public class GameScene implements Screen {
                 break;
             case HIGH_SCORE:
                 drawMenu(batch);
-                gameFont.draw(batch, highestScore + "m", GameInfo.HEIGHT / 2, GameInfo.HEIGHT / 2);
+                gameFont.draw(batch, score.getHighScore() + "m", GameInfo.HEIGHT / 2, GameInfo.HEIGHT / 2);
                 break;
             case GAME_END:
                 drawGame(batch);
@@ -310,40 +292,22 @@ public class GameScene implements Screen {
             default:
         }
 //        debugRenderer.render(world, debugMatrix);
-        debugFont.draw(batch, "Test Mode", GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2);
+        if(GameInfo.DEBUG_MODE) {
+            debugFont.draw(batch, "Test Mode", GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2);
+        }
         batch.end();
 
-
-        shapeRenderer.setColor(Color.RED);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.polygon(jeep.getCollisionVertices());
-        for(MovingObject obj: persons){
-            shapeRenderer.polygon(obj.getCollisionVertices());
+        if(GameInfo.DEBUG_MODE) {
+            shapeRenderer.setColor(Color.RED);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.polygon(jeep.getCollisionVertices());
+            for (MovingObject obj : gameData.persons) {
+                shapeRenderer.polygon(obj.getCollisionVertices());
+            }
+            //shapeRenderer.circle(GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2, 100);
+            shapeRenderer.end();
         }
-        //shapeRenderer.circle(GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2, 100);
-        shapeRenderer.end();
     }
-
-    private DrawCondition preJeepDraw = new DrawCondition() {
-        @Override
-        public boolean test(Sprite sprite) {
-            if(sprite == null)
-            {
-                return false;
-            }
-            return sprite.getY() >= jeep.getY();
-        }
-    };
-    private DrawCondition postJeepDraw = new DrawCondition() {
-        @Override
-        public boolean test(Sprite sprite) {
-            if(sprite == null)
-            {
-                return false;
-            }
-            return sprite.getY() < jeep.getY();
-        }
-    };
 
     private void drawGame(SpriteBatch batch){
         for(Sprite bg: skyBg){
@@ -352,27 +316,27 @@ public class GameScene implements Screen {
         for(Sprite bg: gameBg) {
             batch.draw(bg, bg.getX(), bg.getY());
         }
-        for(MovingObject p: persons){
+        for(MovingObject p: gameData.persons){
             if(p.isSprite()){
                 Sprite sprite = (Sprite) p;
-                if(preJeepDraw.test(sprite))
+                if(sprite.getY() >= jeep.getY())
                 {
                     sprite.draw(batch);
                 }
             }
         }
         jeep.draw(batch);
-        for(MovingObject p: persons){
+        for(MovingObject p: gameData.persons){
             if(p.isSprite()){
                 Sprite sprite = (Sprite) p;
-                if(postJeepDraw.test(sprite))
+                if(sprite.getY() < jeep.getY())
                 {
                     sprite.draw(batch);
                 }
             }
         }
-        gameFont.draw(batch, ((int)currScore) + " m", GameInfo.WIDTH * 1/10, GameInfo.HEIGHT  * 7/8);
-        gameFont.draw(batch, "$ " + money, GameInfo.WIDTH * 9/10, GameInfo.HEIGHT  * 7/8);
+        gameFont.draw(batch, score.getDistance() + " m", GameInfo.WIDTH * 1/10, GameInfo.HEIGHT  * 9/10);
+        gameFont.draw(batch, "$ " + score.getMoney(), GameInfo.WIDTH * 1/10, GameInfo.HEIGHT  * 8/10);
     }
 
     private void drawMenu(SpriteBatch batch){
@@ -383,17 +347,17 @@ public class GameScene implements Screen {
 
     private void processInput() {
 //        if(!jeep.isLaneTrans()) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && laneIndex > 0) {
-                laneIndex--;
-                jeep.moveTo(jeep.getX(), lanePositions[laneIndex]);
-            } else if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) && laneIndex < lanePositions.length - 1) {
-                laneIndex++;
-                jeep.moveTo(jeep.getX(), lanePositions[laneIndex]);
+            if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && gameData.laneIndex > 0) {
+                gameData.laneIndex--;
+                jeep.moveTo(jeep.getX(), lanePositions[gameData.laneIndex]);
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) && gameData.laneIndex < lanePositions.length - 1) {
+                gameData.laneIndex++;
+                jeep.moveTo(jeep.getX(), lanePositions[gameData.laneIndex]);
             }
 //        }
         if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
         {
-            setCurrentState(GameState.TRANSITION_TO_MENU);
+            setCurrentState(GameData.GameState.TRANSITION_TO_MENU);
         }
     }
 
@@ -404,11 +368,11 @@ public class GameScene implements Screen {
             float y = GameInfo.HEIGHT - Gdx.input.getY();
             if(isButtonTouched(playBttn, x, y))
             {
-                setCurrentState(GameState.TRANSITION_TO_GAME);
+                setCurrentState(GameData.GameState.TRANSITION_TO_GAME);
             }
             else if(isButtonTouched(hsBttn, x, y))
             {
-                setCurrentState(GameState.HIGH_SCORE);
+                setCurrentState(GameData.GameState.HIGH_SCORE);
             }
         }
     }
@@ -433,7 +397,7 @@ public class GameScene implements Screen {
         if(homeBg.getX() + homeBg.getWidth() < 0 && logo.getY() + logo.getHeight() < 0){
             homeBg.setX(homeBg.getWidth() + 10);
             logo.setY(-logo.getHeight()-10);
-            setCurrentState(GameState.GAME_PLAY);
+            setCurrentState(GameData.GameState.GAME_PLAY);
         }
     }
 
@@ -448,9 +412,9 @@ public class GameScene implements Screen {
             logo.setY(0);
         }
         if(homeBg.getX() == 0 && logo.getY() == 0){
-            jeep.setPosition(-jeep.getWidth(), lanePositions[laneIndex]);
-            jeep.moveTo(-jeep.getWidth(), lanePositions[laneIndex]);
-            setCurrentState(GameState.MAIN_MENU);
+            jeep.setPosition(-jeep.getWidth(), lanePositions[gameData.laneIndex]);
+            jeep.moveTo(-jeep.getWidth(), lanePositions[gameData.laneIndex]);
+            setCurrentState(GameData.GameState.MAIN_MENU);
             resetScore();
         }
     }
@@ -486,26 +450,23 @@ public class GameScene implements Screen {
         gameBgTx.dispose();
         skyBgTx.dispose();
         personTx.dispose();
+        MusicManager.dispose();
     }
 
-    private void setCurrentState(GameState nextState){
+    private void setCurrentState(GameData.GameState nextState){
         System.out.println("State = " + nextState.name());
-        currState = nextState;
+        gameData.currState = nextState;
     }
 
     private void resetScore(){
-        timeoutToGameOverAccum = 0;
-        currScore = 0;
-        money = 0;
-        groundSpeed = initGroundSpeed;
-        skySpeed = initSkySpeed;
-        laneIndex = 1;
-        timeoutToGameOverBool = false;
+        gameData.timeoutToGameOverAccum = 0;
+        score.reset();
+        gameData.groundSpeed = initGroundSpeed;
+        gameData.skySpeed = initSkySpeed;
+        gameData.laneIndex = 1;
+        gameData.timeoutToGameOverBool = false;
         jeep.removeAllPassengers();
-        persons.clear();
+        gameData.persons.clear();
     }
 
-    private interface DrawCondition {
-        boolean test(Sprite object);
-    }
 }

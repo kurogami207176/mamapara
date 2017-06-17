@@ -10,22 +10,12 @@ import java.util.Random;
  */
 
 public class Person extends Sprite implements MovingObject{
-    private static Random random = new Random();
-    private static float personIntervalCounter = 0;
-//    private static float personIntervalMin = 0.01f;
-//    private static float personIntervalRange = 0.05f;
-    private static float personIntervalMin = 0.01f;
-    private static float personIntervalRange = 0.05f;
-
-    private static float personRangeMax = GameInfo.HEIGHT * 0.656f;
-    private static float personRangeMin = 0;
-
-    private static float personRange = 60;
     private float speedX;
 
     private float speedY;
     private long id;
 
+    private float initTravelTime;
     private float travelTime;
 
     public Person(Texture texture, float x, float y){
@@ -33,29 +23,6 @@ public class Person extends Sprite implements MovingObject{
         this.setPosition(x, y);
     }
 
-    private static long counter = 0;
-    public static Person generatePerson(Texture personTx, float groundSpeed, float speedX, float speedY, float angle, float delta) {
-        if(personIntervalCounter <= 0)
-        {
-            boolean up = random.nextBoolean();
-            float randFloat = random.nextFloat();
-            float y = up? (personRangeMax - personRange * randFloat) : (personRangeMin + personRange * randFloat);
-            Person person = new Person(personTx, GameInfo.WIDTH, y);
-            personIntervalCounter = groundSpeed * (personIntervalMin + random.nextFloat() * personIntervalRange);
-            person.setSpeedX(speedX);
-            person.setSpeedY(speedY);
-            person.setRotation(angle);
-            person.setCountdownTime(10);
-            person.id = counter;
-            counter++;
-            return person;
-        }
-        else
-        {
-            personIntervalCounter = personIntervalCounter - delta * groundSpeed;
-        }
-        return null;
-    }
 
 
     @Override
@@ -106,11 +73,20 @@ public class Person extends Sprite implements MovingObject{
 
     @Override public String getId(){return String.valueOf(id);}
 
+    public float getInitCountdownTime() {
+        return initTravelTime;
+    }
+
     public float getCountdownTime() {
         return travelTime;
     }
 
+    public void subtractCountdownTime(float deltaTime){
+        this.travelTime = travelTime - deltaTime;
+    }
+
     public void setCountdownTime(float travelTime) {
+        this.initTravelTime = travelTime;
         this.travelTime = travelTime;
     }
 
@@ -137,4 +113,7 @@ public class Person extends Sprite implements MovingObject{
     }
 
 
+    public void setId(long id) {
+        this.id = id;
+    }
 }

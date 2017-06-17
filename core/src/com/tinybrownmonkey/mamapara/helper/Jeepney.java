@@ -7,6 +7,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -120,11 +121,10 @@ public class Jeepney extends Sprite implements MovingObject{
             }
             setRotation(currAngle);
         }
-//        System.out.println("j.x=" + getX());
-//        System.out.println("j.y=" + getY());
-//        System.out.println("j.ox=" + getOriginX());
-//        System.out.println("j.oy=" + getOriginY());
         grabber.setPosition(getX() + grabberDX, getY() + grabberDY);
+    }
+
+    public Set<MovingObject> processPassengers(float deltaTime){
         int i = 0;
         Set<MovingObject> removable = new HashSet<MovingObject>();
         for( MovingObject movingObject : passengers){
@@ -141,7 +141,7 @@ public class Jeepney extends Sprite implements MovingObject{
             movingObject.setX(getX() + (interval * (i % maxPassengers)) + sideOffsetX );
 
             movingObject.setY(getY() + grabberDY + sideOffsetY);
-            movingObject.setCountdownTime(movingObject.getCountdownTime() - deltaTime);
+            movingObject.subtractCountdownTime(deltaTime);
             i++;
             if(movingObject.getCountdownTime() <= 0){
                 removable.add(movingObject);
@@ -151,6 +151,7 @@ public class Jeepney extends Sprite implements MovingObject{
             ((Person)rem).setAttachement(null);
         }
         passengers.removeAll(removable);
+        return removable;
     }
 
     public boolean grab(MovingObject sprite){
@@ -183,6 +184,16 @@ public class Jeepney extends Sprite implements MovingObject{
     @Override
     public float getCountdownTime() {
         return 0;
+    }
+
+    @Override
+    public float getInitCountdownTime() {
+        return 0;
+    }
+
+    @Override
+    public void subtractCountdownTime(float deltaTime) {
+
     }
 
 
@@ -234,14 +245,14 @@ public class Jeepney extends Sprite implements MovingObject{
         float x2 = getX() + getWidth();
         float y2 = getY() + getHeight()-20;
         return new float[] {
-                aX(x1, y1, getX(), getY(), getRotation()),
-                aY(x1, y1, getX(), getY(), getRotation()),
-                aX(x1, y2, getX(), getY(), getRotation()),
-                aY(x1, y2, getX(), getY(), getRotation()),
-                aX(x2, y2, getX(), getY(), getRotation()),
-                aY(x2, y2, getX(), getY(), getRotation()),
-                aX(x2, y1, getX(), getY(), getRotation()),
-                aY(x2, y1, getX(), getY(), getRotation())};
+                aX(x1, y1, x1, y1, getRotation()),
+                aY(x1, y1, x1, y1, getRotation()),
+                aX(x1, y2, x1, y1, getRotation()),
+                aY(x1, y2, x1, y1, getRotation()),
+                aX(x2, y2, x1, y1, getRotation()),
+                aY(x2, y2, x1, y1, getRotation()),
+                aX(x2, y1, x1, y1, getRotation()),
+                aY(x2, y1, x1, y1, getRotation())};
     }
 
     private float aX(float x, float y, float xC, float yC, float angle){

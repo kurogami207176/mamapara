@@ -7,4 +7,6 @@ package com.tinybrownmonkey.mamapara.helper;
 public class GameInfo {
         public static int WIDTH = 640;
         public static int HEIGHT = 480;
+
+        public static boolean DEBUG_MODE = true;
 }

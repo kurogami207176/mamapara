@@ -17,6 +17,8 @@ public interface MovingObject {
     float getOriginY();
 
     float getCountdownTime();
+    float getInitCountdownTime();
+    void subtractCountdownTime(float deltaTime);
 
     String getId();
 
