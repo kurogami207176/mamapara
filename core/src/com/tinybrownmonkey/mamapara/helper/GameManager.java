@@ -4,7 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.utils.Json;
 import com.tinybrownmonkey.mamapara.info.GameData;
-import com.tinybrownmonkey.mamapara.info.Scores;
+import com.tinybrownmonkey.mamapara.info.GameSave;
 
 /**
  * Created by alaguipo on 17/06/2017.
@@ -17,20 +17,22 @@ public class GameManager {
 //    private static FileHandle scoreFileHandle = Gdx.files.internal("bin/Scores.json");
 //    private static FileHandle gameDataFileHandle = Gdx.files.internal("bin/GameData.json");
 
-    public static void saveScore(Scores scores){
+    public static void saveScore(GameSave scores){
         if(scores != null)
         {
-            pref.putString("score", json.prettyPrint(scores));
+            String scoreString = json.prettyPrint(scores);
+            System.out.println("saving.scoreString=" + scoreString);
+            pref.putString("score", scoreString);
             pref.flush();
         }
     }
 
-    public static Scores loadScores(){
+    public static GameSave loadScores(){
         String gdString = pref.getString("score");
         if(gdString == null || gdString.length() <= 0){
-            return new Scores();
+            return new GameSave();
         }
-        return json.fromJson(Scores.class, gdString);
+        return json.fromJson(GameSave.class, gdString);
     }
     public static void saveGameData(GameData gameData){
         if(gameData != null)

@@ -9,15 +9,12 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -33,14 +30,13 @@ import com.tinybrownmonkey.mamapara.actors.MovingObject;
 import com.tinybrownmonkey.mamapara.helper.MusicManager;
 import com.tinybrownmonkey.mamapara.helper.ObjectGenerator;
 import com.tinybrownmonkey.mamapara.actors.Person;
-import com.tinybrownmonkey.mamapara.info.Scores;
+import com.tinybrownmonkey.mamapara.info.GameSave;
 import com.tinybrownmonkey.mamapara.helper.TextureManager;
 import com.tinybrownmonkey.mamapara.actors.TimedText;
 import com.tinybrownmonkey.mamapara.helper.Util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 
@@ -60,6 +56,9 @@ public class GameScene implements Screen {
     private Sprite playBttn;
     private Sprite hsBttn;
 
+    private Sprite soundOn;
+    private Sprite soundOff;
+
     private Array<Sprite> gameBg;
     private Texture gameBgTx;
     private Array<Sprite> skyBg;
@@ -75,23 +74,28 @@ public class GameScene implements Screen {
     private static boolean collission = false;
 
     //scores
-    private Scores score;
+    private GameSave gameSave;
     private GameData gameData;
 
-    private BitmapFont debugFont = new BitmapFont();
+    private BitmapFont debugFont;
+
     private BitmapFont scoreFont;
     private BitmapFont moneyFont;
     private BitmapFont dollarFont;
 
     private MusicManager musicManager;
-    ShapeRenderer shapeRenderer  = new ShapeRenderer();
+    ShapeRenderer shapeRenderer;
     public GameScene(MamaParaGame game) {
         this.game = game;
+
+        shapeRenderer  = new ShapeRenderer();
 
         mainCamera = new OrthographicCamera(GameInfo.WIDTH, GameInfo.HEIGHT);
         mainCamera.position.set(GameInfo.WIDTH / 2f, GameInfo.HEIGHT / 2f, 0);
 
         gameViewPort = new StretchViewport(GameInfo.WIDTH, GameInfo.HEIGHT, mainCamera);
+
+        debugFont = new BitmapFont();
 
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("pricedown bl.ttf"));
         FreeTypeFontGenerator.FreeTypeFontParameter parameter0 = new FreeTypeFontGenerator.FreeTypeFontParameter();
@@ -109,7 +113,11 @@ public class GameScene implements Screen {
         dollarFont = generator.generateFont(parameter2);
         dollarFont.setColor(Color.GOLD);
 
-        score = GameManager.loadScores();
+        gameSave = GameManager.loadScores();
+        System.out.println("Launched " + gameSave.getLaunchCount() + " times!");
+        gameSave.setLaunchCount(gameSave.getLaunchCount() + 1);
+        GameManager.saveScore(gameSave);
+
         gameData = GameManager.loadGameData();
         if(gameData.currState == null) {
             setCurrentState(GameData.GameState.MAIN_MENU);
@@ -158,13 +166,20 @@ public class GameScene implements Screen {
         logo = new Sprite(TextureManager.get("logo.png"));
         float logoX = (GameInfo.WIDTH - logo.getWidth()) / 2;
         logo.setPosition(logoX, logo.getY());
+
         float newY = GameInfo.HEIGHT / 2 - (GameInfo.HEIGHT / 11);
+
         playBttn = new Sprite(TextureManager.get("button_play.png"));
         playBttn.setX((GameInfo.WIDTH - playBttn.getWidth()) / 3);
         playBttn.setY(newY);
         hsBttn = new Sprite(TextureManager.get("button_highscore.png"));
         hsBttn.setX((GameInfo.WIDTH - playBttn.getWidth()) * 2 / 3);
         hsBttn.setY(newY);
+
+        soundOn = new Sprite(TextureManager.get("button_sound_on.png"));
+        soundOn.setPosition(50,50);
+        soundOff = new Sprite(TextureManager.get("button_sound_off.png"));
+        soundOff.setPosition(50,50);
     }
 
     @Override
@@ -195,7 +210,14 @@ public class GameScene implements Screen {
         updateComponents(delta);
 
         //music
-        musicManager.transition(delta / 10);
+        if(!gameSave.isMuted()) {
+            musicManager.mute();
+        }
+        else{
+            musicManager.unmute();
+        }
+
+        // draw
         drawComponents();
 
 
@@ -228,6 +250,12 @@ public class GameScene implements Screen {
                 drawMenu(batch);
                 batch.draw(playBttn, playBttn.getX(), playBttn.getY());
                 batch.draw(hsBttn, hsBttn.getX(), hsBttn.getY());
+                if(gameSave.isMuted()) {
+                    batch.draw(soundOn, soundOn.getX(), soundOn.getY());
+                }
+                else {
+                    batch.draw(soundOff, soundOff.getX(), soundOff.getY());
+                }
                 break;
             case GAME_PLAY:
                 drawGame(batch);
@@ -239,7 +267,7 @@ public class GameScene implements Screen {
                 break;
             case HIGH_SCORE:
                 drawMenu(batch);
-                String highScoreText = score.getHighScore() + " m";
+                String highScoreText = gameSave.getHighScore() + " m";
                 scoreFont.draw(batch, highScoreText, GameInfo.WIDTH / 2 - 50, GameInfo.HEIGHT / 2);
                 break;
             case GAME_END:
@@ -264,7 +292,7 @@ public class GameScene implements Screen {
         }
         else if(gameData.currState == GameData.GameState.MAIN_MENU){
             musicManager.setMusic(MusicManager.MusicState.TITLE);
-            processMenuButton();
+            processMenuButton(delta);
         }
         else if(gameData.currState == GameData.GameState.HIGH_SCORE)
         {
@@ -320,7 +348,7 @@ public class GameScene implements Screen {
             musicManager.playSound(MusicManager.SoundState.COIN);
             scoredPassenger.setSpeedY(ySpeedGetOff);
             timedTexts.add(tt);
-            score.addMoney(money);
+            gameSave.addMoney(money);
         }
         jeep.getGrabber().update(delta);
         if(jeep.getX() < jeepLoc)
@@ -349,7 +377,7 @@ public class GameScene implements Screen {
 
         removeOffscreenMovingObjects();
 
-        score.addDistance((delta * (gameData.groundSpeed / 50)));
+        gameSave.addDistance((delta * (gameData.groundSpeed / 50)));
         if(gameData.groundSpeed < topGroundSpeed) {
             gameData.groundSpeed = gameData.groundSpeed + groundSpeedIncrement * delta;
             gameData.skySpeed = gameData.groundSpeed / 4;
@@ -471,8 +499,8 @@ public class GameScene implements Screen {
             }
         }
         jeep.getGrabber().draw(batch);
-        scoreFont.draw(batch, score.getDistance() + " m", GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 19/20);
-        moneyFont.draw(batch, "$ " + score.getMoney(), GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 8/10);
+        scoreFont.draw(batch, gameSave.getDistance() + " m", GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 19/20);
+        moneyFont.draw(batch, "$ " + gameSave.getMoney(), GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 8/10);
         for(TimedText timedText: timedTexts){
             dollarFont.draw(batch, timedText.getText(), timedText.getX(), timedText.getY());
         }
@@ -511,18 +539,32 @@ public class GameScene implements Screen {
         }
     }
 
-    private void processMenuButton() {
-        if(Gdx.input.isButtonPressed(Input.Buttons.LEFT))
+    private float buttonTouched;
+    private static float buttonTouchedDelay = 0.5f;
+    private void processMenuButton(float delta) {
+        if(buttonTouched > 0) {
+            buttonTouched = buttonTouched - delta;
+        }
+        if(buttonTouched <= 0 && Gdx.input.isButtonPressed(Input.Buttons.LEFT))
         {
-            float x = Gdx.input.getX();
-            float y = GameInfo.HEIGHT - Gdx.input.getY();
+            Vector3 v3 = mainCamera.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
+            float x = v3.x;
+            float y = v3.y;
             if(isButtonTouched(playBttn, x, y))
             {
+                buttonTouched = buttonTouchedDelay;
                 setCurrentState(GameData.GameState.TRANSITION_TO_GAME);
             }
             else if(isButtonTouched(hsBttn, x, y))
             {
+                buttonTouched = buttonTouchedDelay;
                 setCurrentState(GameData.GameState.HIGH_SCORE);
+            }
+            else if(isButtonTouched(soundOn, x, y))
+            {
+                buttonTouched = buttonTouchedDelay;
+                gameSave.setMuted(!gameSave.isMuted());
+                GameManager.saveScore(gameSave);
             }
         }
     }
@@ -566,7 +608,7 @@ public class GameScene implements Screen {
             jeep.moveTo(-jeep.getWidth(), lanePositions[gameData.laneIndex]);
             setCurrentState(GameData.GameState.MAIN_MENU);
             resetScore();
-            GameManager.saveScore(score);
+            GameManager.saveScore(gameSave);
         }
     }
 
@@ -594,6 +636,7 @@ public class GameScene implements Screen {
 
     @Override
     public void dispose() {
+
         homeBg.getTexture().dispose();
         logo.getTexture().dispose();
         playBttn.getTexture().dispose();
@@ -612,7 +655,7 @@ public class GameScene implements Screen {
 
     private void resetScore(){
         gameData.timeoutToGameOverAccum = 0;
-        score.reset();
+        gameSave.reset();
         gameData.groundSpeed = initGroundSpeed;
         gameData.skySpeed = initSkySpeed;
         gameData.laneIndex = Math.round(((float) Constants.lanePositions.length)/ 2f) - 1;

@@ -31,32 +31,27 @@ public class MusicManager {
 
     public void playSound(SoundState soundState)
     {
-        soundMap.get(soundState).play();
+        if(!muted) {
+            soundMap.get(soundState).play();
+        }
     }
     public void setMusic(MusicState musicState)
     {
         if(musicState != currState){
             prevState = currState;
             currState = musicState;
+            Music music = musicMap.get(currState);
+            if(muted)
+            {
+                music.setVolume(0);
+            }
+            else
+            {
+                music.setVolume(1f);
+            }
             musicMap.get(currState).play();
             if(prevState != null) {
                 musicMap.get(prevState).stop();
-            }
-        }
-    }
-
-    public void transition(float delta){
-
-        if(prevState != null){
-            Music prevMusic = musicMap.get(prevState);
-            if(prevMusic.getVolume() <= 0 ){
-                prevMusic.stop();
-                prevState = null;
-            }
-            else{
-                Music currMusic = musicMap.get(currState);
-                prevMusic.setVolume(prevMusic.getVolume() - delta);
-                currMusic.setVolume(currMusic.getVolume() + delta);
             }
         }
     }
@@ -77,6 +72,28 @@ public class MusicManager {
         soundMap.put(SoundState.HIT_PERSON, Gdx.audio.newSound(Gdx.files.internal("sound/hit_human.wav")));
         soundMap.put(SoundState.HIT_CAR, Gdx.audio.newSound(Gdx.files.internal("sound/hit_car.wav")));
     }
+
+    boolean muted = false;
+    public void mute(){
+        if(!muted && currState != null) {
+            Music music = musicMap.get(currState);
+            if (music != null) {
+                muted = true;
+                music.setVolume(0);
+            }
+        }
+    }
+
+    public void unmute(){
+        if(muted && currState != null) {
+            Music music = musicMap.get(currState);
+            if (music != null) {
+                muted = false;
+                music.setVolume(1f);
+            }
+        }
+    }
+
     public void dispose(){
         for(Music music : musicMap.values()){
             music.dispose();

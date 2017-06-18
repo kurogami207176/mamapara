@@ -50,5 +50,9 @@ public class Constants {
 
     public final static float ySpeedGetOff = 100;
 
+    // ask
+    public final static int rateAskInterval = 5;
+
+    public final static int shareAskInterval = 7;
 
 }

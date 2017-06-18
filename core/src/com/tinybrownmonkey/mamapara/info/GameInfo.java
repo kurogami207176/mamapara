@@ -10,5 +10,5 @@ public class GameInfo {
         public static int WIDTH = 960;
         public static int HEIGHT = 540;
 
-        public static boolean DEBUG_MODE = true;
+        public static boolean DEBUG_MODE = false;
 }
