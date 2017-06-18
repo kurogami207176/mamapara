@@ -9,11 +9,14 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
@@ -37,6 +40,7 @@ import com.tinybrownmonkey.mamapara.helper.Util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 
@@ -68,6 +72,7 @@ public class GameScene implements Screen {
     private List<TimedText> timedTexts;
 
     private static boolean moving = true;
+    private static boolean collission = false;
 
     //scores
     private Scores score;
@@ -153,12 +158,13 @@ public class GameScene implements Screen {
         logo = new Sprite(TextureManager.get("logo.png"));
         float logoX = (GameInfo.WIDTH - logo.getWidth()) / 2;
         logo.setPosition(logoX, logo.getY());
+        float newY = GameInfo.HEIGHT / 2 - (GameInfo.HEIGHT / 11);
         playBttn = new Sprite(TextureManager.get("button_play.png"));
         playBttn.setX((GameInfo.WIDTH - playBttn.getWidth()) / 3);
-        playBttn.setY(GameInfo.HEIGHT / 2 - (GameInfo.HEIGHT / 7));
+        playBttn.setY(newY);
         hsBttn = new Sprite(TextureManager.get("button_highscore.png"));
         hsBttn.setX((GameInfo.WIDTH - playBttn.getWidth()) * 2 / 3);
-        hsBttn.setY(GameInfo.HEIGHT / 2 - (GameInfo.HEIGHT / 7));
+        hsBttn.setY(newY);
     }
 
     @Override
@@ -184,6 +190,7 @@ public class GameScene implements Screen {
 
     @Override
     public void render(float delta) {
+
         mainCamera.update();
         updateComponents(delta);
 
@@ -232,12 +239,12 @@ public class GameScene implements Screen {
                 break;
             case HIGH_SCORE:
                 drawMenu(batch);
-                scoreFont.draw(batch, score.getHighScore() + " m", GameInfo.WIDTH / 2, GameInfo.HEIGHT * 4 / 9,
-                        200, Align.center, false);
+                String highScoreText = score.getHighScore() + " m";
+                scoreFont.draw(batch, highScoreText, GameInfo.WIDTH / 2 - 50, GameInfo.HEIGHT / 2);
                 break;
             case GAME_END:
                 drawGame(batch);
-                scoreFont.draw(batch, "GAME OVER", GameInfo.WIDTH / 2 - 100, GameInfo.HEIGHT  /2 );
+                scoreFont.draw(batch, "GAME OVER", GameInfo.WIDTH / 2 - 50, GameInfo.HEIGHT  /2 );
                 break;
             default:
         }
@@ -315,6 +322,7 @@ public class GameScene implements Screen {
             timedTexts.add(tt);
             score.addMoney(money);
         }
+        jeep.getGrabber().update(delta);
         if(jeep.getX() < jeepLoc)
         {
             //jeep.setX(jeep.getX() + (groundSpeed * delta));
@@ -322,12 +330,13 @@ public class GameScene implements Screen {
         }
         else {
             moveBackgrounds(delta);
-            //jeep.getGrabber().setGrabSpeed(grabberSpeed);
-            movePersons(delta);
+            boolean colPerson = movePersons(delta);
             generatePerson(delta);
             //cars
-            moveCars(delta);
+            boolean colCar = moveCars(delta);
             generateCar(delta);
+
+            collission = colPerson || colCar;
         }
         List<TimedText> removable = new ArrayList<TimedText>();
         for(TimedText tt: timedTexts){
@@ -364,7 +373,8 @@ public class GameScene implements Screen {
         }
     }
 
-    private void movePersons(float delta) {
+    private boolean movePersons(float delta) {
+        boolean retVal = false;
         for(MovingObject movingObject: persons){
             if(!jeep.isPassenger(movingObject)) {
                 if (movingObject.getCountdownTime() > 0 && !jeep.isFull() && jeep.grab(movingObject)) {
@@ -383,14 +393,17 @@ public class GameScene implements Screen {
                 movingObject.setSpeedY(bumpY);
                 movingObject.setRotation(bumpRotation);
                 musicManager.playSound(MusicManager.SoundState.HIT_PERSON);
+                retVal = true;
             }
             if (!gameData.timeoutToGameOverBool && collisionOccured) {
                 gameData.timeoutToGameOverBool = true;
             }
         }
+        return retVal;
     }
 
-    private void moveCars(float delta) {
+    private boolean moveCars(float delta) {
+        boolean retVal = false;
         boolean collisionOccured;
         for(MovingObject car:cars)
         {
@@ -400,6 +413,7 @@ public class GameScene implements Screen {
                 car.setSpeedY(carBumpY);
                 car.setRotation(carBumpRotation);
                 musicManager.playSound(MusicManager.SoundState.HIT_CAR);
+                retVal = true;
             }
             if (!gameData.timeoutToGameOverBool && collisionOccured) {
                 gameData.timeoutToGameOverBool = true;
@@ -407,6 +421,7 @@ public class GameScene implements Screen {
             gameData.groundMover.move(car, delta);
 
         }
+        return retVal;
     }
 
     private void removeOffscreenMovingObjects() {
@@ -460,6 +475,16 @@ public class GameScene implements Screen {
         moneyFont.draw(batch, "$ " + score.getMoney(), GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 8/10);
         for(TimedText timedText: timedTexts){
             dollarFont.draw(batch, timedText.getText(), timedText.getX(), timedText.getY());
+        }
+
+        if(collission)
+        {
+            System.out.println("Collission print!");
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(Color.WHITE);
+            shapeRenderer.rect(0, 0, GameInfo.WIDTH, GameInfo.HEIGHT);
+            shapeRenderer.end();
+            //collission = false;
         }
 
     }

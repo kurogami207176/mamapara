@@ -10,7 +10,7 @@ public class Constants {
     public final static float topGroundSpeed = 3000;
 
     public final static int changeLaneSpeed = 300;
-    private final static float topLaneY = GameInfo.HEIGHT / 2.28f;
+    private final static float topLaneY = GameInfo.HEIGHT / 2.2f;
     private final static float bottomLaneY = GameInfo.HEIGHT / 10;
     public final static int laneCount = 5;
     public final static float[] lanePositions = new float[laneCount] ;

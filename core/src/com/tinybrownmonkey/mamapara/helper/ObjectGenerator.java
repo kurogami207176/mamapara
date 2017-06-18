@@ -31,20 +31,36 @@ public class ObjectGenerator {
     private static float personRange = 60;
 
     private static long counter = 0;
-    private static Texture personTx;
+    private static Texture[] personTx;
     private static Texture[] carsTx;
 
+    private static Texture copTx;
+
     public static void loadTextures(){
-        personTx = new Texture("person.png");
+        personTx = new Texture[]{
+                new Texture("person_blue.png"),
+                new Texture("person_red.png"),
+                new Texture("person_green.png"),
+                new Texture("person_white.png")
+        };
+        copTx = new Texture("person_cop.png");
         carsTx = new Texture[]{
-                new Texture("car_beetle_blue.png"),
-                new Texture("car_beetle_green.png"),
-                new Texture("car_beetle_red.png")
+                new Texture("car_sedan_blue.png"),
+                new Texture("car_sedan_green.png"),
+                new Texture("car_sedan_red.png"),
+                new Texture("car_sedan_pink.png"),
+                new Texture("car_sedan_black.png"),
+                new Texture("motorcycle_blue.png"),
+                new Texture("motorcycle_red.png"),
+                new Texture("motorcycle_green.png"),
+                new Texture("jeepney_grey.png")
         };
     }
 
     public static void dispose(){
-        personTx.dispose();
+        for(Texture texture: personTx){
+            texture.dispose();
+        }
         for(Texture texture: carsTx){
             texture.dispose();
         }
@@ -56,7 +72,7 @@ public class ObjectGenerator {
             boolean up = random.nextBoolean();
             float randFloat = random.nextFloat();
             float y = up? (personRangeMax - personRange * randFloat) : (personRangeMin + personRange * randFloat);
-            Person person = new Person(personTx, GameInfo.WIDTH, y);
+            Person person = new Person(personTx[random.nextInt(personTx.length)], GameInfo.WIDTH, y);
             personIntervalCounter = groundSpeed * (personIntervalMin + random.nextFloat() * personIntervalRange);
             person.setSpeedX(speedX);
             person.setSpeedY(speedY);
@@ -77,8 +93,6 @@ public class ObjectGenerator {
     public static Car generateCar(float groundSpeed, float delta) {
         if(carIntervalCounter <= 0)
         {
-            boolean up = random.nextBoolean();
-            float randFloat = random.nextFloat();
             float y = Constants.lanePositions[random.nextInt(Constants.lanePositions.length)];
             Car car = new Car(carsTx[random.nextInt(carsTx.length)], GameInfo.WIDTH, y);
             carIntervalCounter = groundSpeed * (carIntervalMin + random.nextFloat() * carIntervalRange);

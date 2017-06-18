@@ -1,9 +1,11 @@
-package com.tinybrownmonkey.mamapara.helper;
+package com.tinybrownmonkey.mamapara.actors;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.MathUtils;
 import com.tinybrownmonkey.mamapara.actors.MovingObject;
+import com.tinybrownmonkey.mamapara.helper.Util;
 
 /**
  * Created by alaguipo on 16/06/2017.
@@ -66,6 +68,12 @@ public class Grabber extends Sprite{
             return true;
         }
         return false;
+    }
+    float accum = 0;
+    float maxAlpha = 0.7f;
+    public void update(float deltaTime){
+        setAlpha(maxAlpha * MathUtils.cos(accum));
+        accum = accum + deltaTime / 2;
     }
 
     public boolean reachCenter(MovingObject obj, float deltaTime){
