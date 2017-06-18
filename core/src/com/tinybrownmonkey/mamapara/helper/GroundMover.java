@@ -1,6 +1,7 @@
 package com.tinybrownmonkey.mamapara.helper;
 
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.tinybrownmonkey.mamapara.actors.MovingObject;
 
 /**
  * Created by AlainAnne on 12-Jun-17.

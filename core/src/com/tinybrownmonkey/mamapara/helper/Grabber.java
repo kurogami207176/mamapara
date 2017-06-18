@@ -1,24 +1,15 @@
 package com.tinybrownmonkey.mamapara.helper;
 
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
-import com.badlogic.gdx.math.MathUtils;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import com.tinybrownmonkey.mamapara.actors.MovingObject;
 
 /**
  * Created by alaguipo on 16/06/2017.
  */
 
-public class Grabber{
+public class Grabber extends Sprite{
     private float x;
     private float y;
     private float range;
@@ -26,22 +17,29 @@ public class Grabber{
 
     private Circle circle;
 
-    private static float buffer = 50;
+    private float cx, cy;
 
-    public Grabber(float x, float y, float range, float grabSpeed)
+    public Grabber(Texture texture, float x, float y, float grabSpeed)
     {
-        this.x = x;
-        this.y = y;
-        this.range = range;
+        super(texture);
+        this.x = x - getWidth() / 2;
+        this.y = y - getHeight() / 2;
+        this.cx = x;
+        this.cy = y;
+        this.range = getWidth() / 2;
         this.grabSpeed = grabSpeed;
-        circle = new Circle(x, y, range);
+        circle = new Circle(cx, cy, range);
+        super.setPosition(this.x,this.y);
     }
 
     public void setPosition(float x, float y){
         //System.out.println("circle.x=" + x + ", circle.y=" + y);
-        this.x = x;
-        this.y = y;
-        circle.setPosition(x, y);
+        this.x = x - getWidth() / 2;
+        this.y = y - getHeight() / 2;
+        this.cx = x;
+        this.cy = y;
+        circle.setPosition(cx, cy);
+        super.setPosition(this.x,this.y);
     }
 
     public float getGrabSpeed(){
@@ -71,8 +69,8 @@ public class Grabber{
     }
 
     public boolean reachCenter(MovingObject obj, float deltaTime){
-        float yDiff = (obj.getY() - y);
-        float xDiff = (obj.getX() - x);
+        float yDiff = (obj.getY() - cy);
+        float xDiff = (obj.getX() - cx);
         float multiplierX = 1;
         float multiplierY = 1;
         if(yDiff < 0) {
@@ -91,7 +89,7 @@ public class Grabber{
         obj.setPosition(
                 obj.getX() - dx,
                 obj.getY() - dy);
-        return (obj.getX() == x && obj.getY() == y);
+        return (obj.getX() == cx && obj.getY() == cy);
     }
 
     public float getX(){

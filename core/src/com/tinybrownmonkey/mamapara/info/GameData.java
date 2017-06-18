@@ -1,11 +1,7 @@
-package com.tinybrownmonkey.mamapara.helper;
+package com.tinybrownmonkey.mamapara.info;
 
-import com.tinybrownmonkey.mamapara.scenes.GameScene;
-
-import java.util.List;
-
-import static com.tinybrownmonkey.mamapara.helper.Constants.initGroundSpeed;
-import static com.tinybrownmonkey.mamapara.helper.Constants.initSkySpeed;
+import com.tinybrownmonkey.mamapara.actors.Person;
+import com.tinybrownmonkey.mamapara.helper.GroundMover;
 
 /**
  * Created by alaguipo on 17/06/2017.
@@ -15,8 +11,8 @@ public class GameData {
 
     public GameState currState;
     public GroundMover<Person> groundMover;
-    public float groundSpeed = initGroundSpeed;
-    public float skySpeed = initSkySpeed;
+    public float groundSpeed = Constants.initGroundSpeed;
+    public float skySpeed = Constants.initSkySpeed;
 
     public float timeoutToGameOverAccum = 0;
     public boolean timeoutToGameOverBool = false;

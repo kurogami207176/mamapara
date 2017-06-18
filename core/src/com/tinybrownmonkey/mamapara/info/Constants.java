@@ -1,4 +1,4 @@
-package com.tinybrownmonkey.mamapara.helper;
+package com.tinybrownmonkey.mamapara.info;
 
 /**
  * Created by alaguipo on 17/06/2017.

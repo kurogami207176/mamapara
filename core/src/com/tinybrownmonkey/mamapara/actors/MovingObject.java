@@ -1,4 +1,4 @@
-package com.tinybrownmonkey.mamapara.helper;
+package com.tinybrownmonkey.mamapara.actors;
 
 /**
  * Created by alaguipo on 16/06/2017.

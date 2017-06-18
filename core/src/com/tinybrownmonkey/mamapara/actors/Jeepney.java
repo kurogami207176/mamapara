@@ -1,20 +1,19 @@
-package com.tinybrownmonkey.mamapara.helper;
+package com.tinybrownmonkey.mamapara.actors;
 
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.tinybrownmonkey.mamapara.helper.Grabber;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
  * Created by AlainAnne on 13-Jun-17.
  */
 
-public class Jeepney extends Sprite implements MovingObject{
+public class Jeepney extends Sprite implements MovingObject {
 //    private boolean laneTrans = false;
     private int targetLane;
     private float transitionSpeed;
@@ -35,14 +34,14 @@ public class Jeepney extends Sprite implements MovingObject{
     private Grabber grabber;
     private Set<MovingObject> passengers;
 
-    public Jeepney(Texture texture, float x, float y, float transitionSpeed, float angleSpeed, float grabberRange, float grabberSpeed, int maxPassengersPerSide){
+    public Jeepney(Texture texture, Texture grabberTexture, float x, float y, float transitionSpeed, float angleSpeed, float grabberRange, float grabberSpeed, int maxPassengersPerSide){
         super(texture);
         setPosition(x, y);
         this.transitionSpeed = transitionSpeed;
         this.angleSpeed = angleSpeed;
         this.targetLaneX = x;
         this.targetLaneY = y;
-        this.grabber = new Grabber(x + grabberDX, y + grabberDY, grabberRange, grabberSpeed);
+        this.grabber = new Grabber(grabberTexture, x + grabberDX, y + grabberDY, grabberSpeed);
         this.maxPassengersPerSide = maxPassengersPerSide;
         this.maxPassengers = maxPassengersPerSide * 2;
         passengers = new HashSet<MovingObject>(maxPassengers);

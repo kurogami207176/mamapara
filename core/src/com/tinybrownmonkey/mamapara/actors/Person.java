@@ -1,15 +1,13 @@
-package com.tinybrownmonkey.mamapara.helper;
+package com.tinybrownmonkey.mamapara.actors;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-
-import java.util.Random;
 
 /**
  * Created by alaguipo on 13/06/2017.
  */
 
-public class Person extends Sprite implements MovingObject{
+public class Person extends Sprite implements MovingObject {
     private float speedX;
 
     private float speedY;

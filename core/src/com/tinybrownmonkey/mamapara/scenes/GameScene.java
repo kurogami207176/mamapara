@@ -1,6 +1,6 @@
 package com.tinybrownmonkey.mamapara.scenes;
 
-import static com.tinybrownmonkey.mamapara.helper.Constants.*;
+import static com.tinybrownmonkey.mamapara.info.Constants.*;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -19,21 +19,20 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.tinybrownmonkey.mamapara.MamaParaGame;
-import com.tinybrownmonkey.mamapara.helper.Car;
-import com.tinybrownmonkey.mamapara.helper.Constants;
-import com.tinybrownmonkey.mamapara.helper.GameData;
-import com.tinybrownmonkey.mamapara.helper.GameInfo;
+import com.tinybrownmonkey.mamapara.actors.Car;
+import com.tinybrownmonkey.mamapara.info.Constants;
+import com.tinybrownmonkey.mamapara.info.GameData;
+import com.tinybrownmonkey.mamapara.info.GameInfo;
 import com.tinybrownmonkey.mamapara.helper.GameManager;
-import com.tinybrownmonkey.mamapara.helper.Grabber;
 import com.tinybrownmonkey.mamapara.helper.GroundMover;
-import com.tinybrownmonkey.mamapara.helper.Jeepney;
-import com.tinybrownmonkey.mamapara.helper.MovingObject;
+import com.tinybrownmonkey.mamapara.actors.Jeepney;
+import com.tinybrownmonkey.mamapara.actors.MovingObject;
 import com.tinybrownmonkey.mamapara.helper.MusicManager;
 import com.tinybrownmonkey.mamapara.helper.ObjectGenerator;
-import com.tinybrownmonkey.mamapara.helper.Person;
-import com.tinybrownmonkey.mamapara.helper.Scores;
+import com.tinybrownmonkey.mamapara.actors.Person;
+import com.tinybrownmonkey.mamapara.info.Scores;
 import com.tinybrownmonkey.mamapara.helper.TextureManager;
-import com.tinybrownmonkey.mamapara.helper.TimedText;
+import com.tinybrownmonkey.mamapara.actors.TimedText;
 import com.tinybrownmonkey.mamapara.helper.Util;
 
 import java.util.ArrayList;
@@ -73,8 +72,6 @@ public class GameScene implements Screen {
     //scores
     private Scores score;
     private GameData gameData;
-//    private float currScore = 0;
-//    private int money = 0;
 
     private BitmapFont debugFont = new BitmapFont();
     private BitmapFont scoreFont;
@@ -138,7 +135,8 @@ public class GameScene implements Screen {
         }
         ObjectGenerator.loadTextures();
         Texture jeepTexture = TextureManager.get("jeepney_side.png");
-        jeep = new Jeepney(jeepTexture, -jeepTexture.getWidth(), lanePositions[gameData.laneIndex],
+        Texture grabberTexture = TextureManager.get("range.png");
+        jeep = new Jeepney(jeepTexture, grabberTexture,  -jeepTexture.getWidth(), lanePositions[gameData.laneIndex],
                 changeLaneSpeed, angleSpeed, grabberRange, grabberSpeed, maxPassngersPerSide);
 
         persons = new ArrayList<MovingObject>();
@@ -204,8 +202,6 @@ public class GameScene implements Screen {
             for (MovingObject obj : movingObjectList) {
                 shapeRenderer.polygon(obj.getCollisionVertices());
             }
-            shapeRenderer.circle(jeep.getGrabber().getX(), jeep.getGrabber().getY(),
-                    jeep.getGrabber().getRange());
             shapeRenderer.end();
         }
     }
@@ -251,14 +247,6 @@ public class GameScene implements Screen {
         }
         batch.end();
 
-        if(gameData.currState == GameData.GameState.GAME_PLAY)
-        {
-            //shapeRenderer.setColor(1, (float)0xd7/(float)0xff, 0, 0.01f);
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            shapeRenderer.circle(jeep.getGrabber().getX(), jeep.getGrabber().getY(),
-                    jeep.getGrabber().getRange());
-            shapeRenderer.end();
-        }
     }
 
     private void updateComponents(float delta) {
@@ -467,6 +455,7 @@ public class GameScene implements Screen {
                 }
             }
         }
+        jeep.getGrabber().draw(batch);
         scoreFont.draw(batch, score.getDistance() + " m", GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 19/20);
         moneyFont.draw(batch, "$ " + score.getMoney(), GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 8/10);
         for(TimedText timedText: timedTexts){

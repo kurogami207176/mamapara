@@ -1,4 +1,4 @@
-package com.tinybrownmonkey.mamapara.helper;
+package com.tinybrownmonkey.mamapara.actors;
 
 import com.badlogic.gdx.graphics.g2d.Sprite;
 

@@ -3,9 +3,9 @@ package com.tinybrownmonkey.mamapara.helper;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.tinybrownmonkey.mamapara.actors.MovingObject;
+import com.tinybrownmonkey.mamapara.info.Constants;
+import com.tinybrownmonkey.mamapara.info.GameInfo;
 
 /**
  * Created by alaguipo on 15/06/2017.

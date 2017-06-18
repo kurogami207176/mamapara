@@ -3,6 +3,8 @@ package com.tinybrownmonkey.mamapara.helper;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.utils.Json;
+import com.tinybrownmonkey.mamapara.info.GameData;
+import com.tinybrownmonkey.mamapara.info.Scores;
 
 /**
  * Created by alaguipo on 17/06/2017.
