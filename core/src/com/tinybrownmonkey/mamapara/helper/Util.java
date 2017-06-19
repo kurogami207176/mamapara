@@ -4,7 +4,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.tinybrownmonkey.mamapara.actors.MovingObject;
-import com.tinybrownmonkey.mamapara.info.Constants;
+import com.tinybrownmonkey.mamapara.constants.Constants;
 import com.tinybrownmonkey.mamapara.info.GameInfo;
 
 /**
@@ -57,6 +57,28 @@ public class Util {
             return true;
         }
         return false;
+    }
+
+    public static boolean isButtonTouched(Sprite sprite, float x, float y){
+//        return x > sprite.getX() - sprite.getWidth() / 2
+//                && x < sprite.getX() + sprite.getWidth() / 2
+//                && y > sprite.getY() - sprite.getHeight() / 2
+//                && y < sprite.getY() + sprite.getHeight() / 2;
+        return x > sprite.getX()
+                && x < sprite.getX() + sprite.getWidth()
+                && y > sprite.getY()
+                && y < sprite.getY() + sprite.getHeight();
+    }
+
+    public static boolean isAreaTouched(float x, float y, float xStart, float yStart, float width, float height){
+//        return x > xStart - width / 2
+//                && x < xStart + width / 2
+//                && y > yStart - height / 2
+//                && y < yStart + height / 2;
+        return x > xStart
+                && x < xStart + width
+                && y > yStart
+                && y < yStart + height;
     }
 
 }

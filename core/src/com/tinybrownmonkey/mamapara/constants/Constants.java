@@ -1,11 +1,14 @@
-package com.tinybrownmonkey.mamapara.info;
+package com.tinybrownmonkey.mamapara.constants;
+
+import com.tinybrownmonkey.mamapara.info.GameInfo;
 
 /**
  * Created by alaguipo on 17/06/2017.
  */
 
 public class Constants {
-    public final static float initSkySpeed = 33;
+    public final static float skySpeedFraction = 0.25f;
+    public final static float groundSpeedFraction = 1f;
     public final static float initGroundSpeed = 400;
     public final static float topGroundSpeed = 3000;
 

@@ -3,13 +3,13 @@ package com.tinybrownmonkey.mamapara.helper;
 import com.badlogic.gdx.graphics.Texture;
 import com.tinybrownmonkey.mamapara.actors.Car;
 import com.tinybrownmonkey.mamapara.actors.Person;
-import com.tinybrownmonkey.mamapara.info.Constants;
+import com.tinybrownmonkey.mamapara.constants.Constants;
 import com.tinybrownmonkey.mamapara.info.GameInfo;
 
 import java.util.Random;
 
-import static com.tinybrownmonkey.mamapara.info.Constants.carMaxSpeedRelativeToGroundSpeed;
-import static com.tinybrownmonkey.mamapara.info.Constants.carMinimumSpeedRelativeToGroundSpeed;
+import static com.tinybrownmonkey.mamapara.constants.Constants.carMaxSpeedRelativeToGroundSpeed;
+import static com.tinybrownmonkey.mamapara.constants.Constants.carMinimumSpeedRelativeToGroundSpeed;
 
 /**
  * Created by alaguipo on 17/06/2017.
