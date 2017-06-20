@@ -14,7 +14,6 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
@@ -109,7 +108,7 @@ public class GameScene implements Screen {
         FreeTypeFontGenerator.FreeTypeFontParameter parameter0 = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter0.size = 55;
         highScoreFont = generator.generateFont(parameter0);
-        highScoreFont.setColor(Color.GOLD);
+        highScoreFont.setColor(Color.DARK_GRAY);
 
         gameSave = GameManager.loadScores();
         System.out.println("Launched " + gameSave.getLaunchCount() + " times!");
