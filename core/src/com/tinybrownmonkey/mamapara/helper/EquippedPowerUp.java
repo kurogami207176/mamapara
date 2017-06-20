@@ -10,6 +10,10 @@ public class EquippedPowerUp {
     private PowerUps powerUp;
     private int level;
 
+    public EquippedPowerUp() {
+
+    }
+
     public EquippedPowerUp(PowerUps powerUp, int level) {
         this.powerUp = powerUp;
         this.level = level;

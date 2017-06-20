@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.tinybrownmonkey.mamapara.actors.Button;
+import com.tinybrownmonkey.mamapara.constants.Constants;
 import com.tinybrownmonkey.mamapara.constants.GameState;
 import com.tinybrownmonkey.mamapara.constants.PowerUps;
 import com.tinybrownmonkey.mamapara.info.GameData;
@@ -39,7 +40,7 @@ public class Store {
     private BitmapFont priceFont;
     private BitmapFont descFont;
 
-    private boolean main;
+    private State main;
 
     private PowerUps selected;
     private int level;
@@ -62,16 +63,6 @@ public class Store {
     private float candyHeight = 40;
     private float candyGapY = 23;
 
-    private float xLeft;
-    private float xRight;
-
-    private float xOkLeft = 530;
-    private float xCancelLeft = 249;
-    private float buttonWidth = 175;
-
-    private float yDown = 168;
-    private float buttonHeight = 79;
-
     private float iconX = 250;
     private float iconY = 260;
 
@@ -87,23 +78,27 @@ public class Store {
     private float moneyX = 568;
     private float moneyY = 173;
 
+    private float backX = 201;
+    private float backY = 6;
+    private float backWidth = 80;
+    private float backHeight = 50;
+
     private String showWarning;
     private float showWarningTimer;
 
     public Store(GameSave gameSave, GameData gameData){
         this.gameSave = gameSave;
         this.gameData = gameData;
-//        gameSave.setSlotCount(0);
-//        gameSave.getPowerUps().clear();
+        offsetY = GameInfo.HEIGHT;
 
-        this.main = true;
+        this.main = State.TRANSITION_IN;
         this.storeTop = new Sprite(new Texture("tak_top.png"));
         this.storeTop.setX((GameInfo.WIDTH - storeTop.getWidth()) / 2);
         this.storeTop.setY((GameInfo.HEIGHT - storeTop.getHeight()) / 2);
 
         this.storeBottom = new Sprite(new Texture("tak_bottom.png"));
         this.storeBottom.setX((GameInfo.WIDTH - storeTop.getWidth()) / 2);
-        this.storeBottom.setY((GameInfo.HEIGHT - storeTop.getHeight()) / 2);
+        this.storeBottom.setY(((GameInfo.HEIGHT - storeTop.getHeight()) / 2));
 
         this.cigSide = new Sprite(new Texture("tak_cig_side.png"));
         this.cigGrey = new Sprite(new Texture("tak_cig_grey_front.png"));
@@ -126,7 +121,7 @@ public class Store {
 
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("pricedown bl.ttf"));
         FreeTypeFontGenerator.FreeTypeFontParameter parameter0 = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter0.size = 55;
+        parameter0.size = 50;
         titleFont = generator.generateFont(parameter0);
         titleFont.setColor(Color.DARK_GRAY);
 
@@ -140,23 +135,17 @@ public class Store {
         descFont = generator.generateFont(parameter2);
         descFont.setColor(Color.DARK_GRAY);
 
-        xLeft = (GameInfo.WIDTH - storeTop.getWidth()) / 2;
-        xRight = xLeft + storeTop.getWidth();
     }
 
     public boolean processInput(float x, float y) {
-        System.out.println("x=" + x);
-        System.out.println("y=" + y);
-        if (x < xLeft || x > xRight) {
-            System.out.println("Out of bounds");
-            gameData.currState = GameState.MAIN_MENU;
+        if (Util.isAreaTouched(x, y, backX, backY, backWidth, backHeight)) {
+            main = State.TRANSITION_OUT;
             return true;
         }
-        System.out.println("checking");
         boolean anyTouch;
         boolean candyTouch = false;
         boolean sigTouch = false;
-        if (main) {
+        if (main == State.MAIN) {
             candyLoop:
             for (int xi = 0; xi < 4; xi++) {
                 for (int yi = 0; yi < 3; yi++) {
@@ -167,7 +156,7 @@ public class Store {
                         if(gameSave.getSlotCount() > gameSave.getPowerUps().size()) {
                             selected = PowerUps.values()[xi];
                             level = 3 - yi;
-                            main = false;
+                            main = State.DIALOG;
                             System.out.println("POWER UP: " + selected);
                             System.out.println("Level: " + level);
                             break candyLoop;
@@ -185,17 +174,24 @@ public class Store {
                 float yC = 0;
                 sigTouch = Util.isAreaTouched(x, y, xC, yC, cigSide.getWidth(), cigSide.getHeight());
                 if (sigTouch) {
-                    main = false;
+                    main = State.DIALOG;
                     System.out.println("Touched sig # " + (i + 1));
                     break sigLoop;
                 }
             }
             anyTouch = sigTouch || candyTouch;
         }
-        else
+        else if (main == State.DIALOG)
         {
-            boolean okay = Util.isAreaTouched(x, y, xOkLeft, yDown, buttonWidth, buttonHeight);
-            boolean cancel = Util.isAreaTouched(x, y, xCancelLeft, yDown, buttonWidth, buttonHeight);
+            boolean okay = Util.isAreaTouched(x, y, Constants.ConfirmButton.xOkLeft,
+                    Constants.ConfirmButton.yDown,
+                    Constants.ConfirmButton.buttonWidth,
+                    Constants.ConfirmButton.buttonHeight);
+            boolean cancel = Util.isAreaTouched(x, y,
+                    Constants.ConfirmButton.xCancelLeft,
+                    Constants.ConfirmButton.yDown,
+                    Constants.ConfirmButton.buttonWidth,
+                    Constants.ConfirmButton.buttonHeight);
             if(okay){
                 if(selected == null)
                 {
@@ -209,16 +205,20 @@ public class Store {
                 System.out.println("Done!");
                 selected = null;
                 level = -1;
-                main = true;
+                main = State.MAIN;
             }
             if(cancel)
             {
                 System.out.println("Cancel!");
                 selected = null;
                 level = -1;
-                main = true;
+                main = State.MAIN;
             }
             anyTouch = okay || cancel;
+        }
+        else
+        {
+            anyTouch = false;
         }
 
         return anyTouch;
@@ -232,14 +232,39 @@ public class Store {
                 showWarning = null;
             }
         }
+
+        switch (main)
+        {
+            case TRANSITION_IN:
+                offsetY = offsetY - Constants.transitionSpeed * delta;
+                System.out.println("TIN=" + offsetY);
+                if(offsetY <= 0) {
+                    main = State.MAIN;
+                    offsetY = 0;
+                }
+                break;
+            case TRANSITION_OUT:
+                offsetY = offsetY + Constants.transitionSpeed * delta;
+                System.out.println("TOUT=" + offsetY);
+                if(offsetY > GameInfo.HEIGHT) {
+                    main = State.TRANSITION_IN;
+                    gameData.currState = GameState.MAIN_MENU;
+                }
+                break;
+            case MAIN:
+                break;
+            case DIALOG:
+                break;
+        }
     }
 
     public void draw(SpriteBatch batch){
-        storeBottom.draw(batch);
+        batch.draw(storeBottom, storeBottom.getX(), calculateY(storeBottom.getY()));
+//        storeBottom.draw(batch);
         for(int i = 0; i < gameSave.getSlotCount(); i++){
             float x = frontOffset + (cigGrey.getWidth() + frontGap) * i;
             float y = frontY;
-            batch.draw(cigGrey, x, y);
+            batch.draw(cigGrey, x, calculateY(y));
         }
 
         for(int i = 0; i < gameSave.getPowerUps().size(); i++){
@@ -247,21 +272,22 @@ public class Store {
             float y = frontY;
             EquippedPowerUp powerUp = gameSave.getPowerUps().get(i);
             Sprite cig = cigs.get(powerUp.getPowerUp());
-            batch.draw(cig, x, y);
-            descFont.draw(batch, "Lv " + powerUp.getLevel(), x + 5, y + 15);
+            batch.draw(cig, x, calculateY(y));
+            descFont.draw(batch, "Lv " + powerUp.getLevel(), x + 5, calculateY(y + 15));
         }
 
         for(int i = 0; i < 6 - gameSave.getSlotCount(); i++){
             float x = sideOffset + (cigSide.getWidth() + sideGap) * i;
             float y = 0;
-            batch.draw(cigSide, x, y);
+            batch.draw(cigSide, x, calculateY(y));
         }
 
-        storeTop.draw(batch);
+        batch.draw(storeTop, storeTop.getX(), calculateY(storeTop.getY()));
+//        storeTop.draw(batch);
 
-        priceFont.draw(batch, "$ "+gameSave.getMoneyTotal(), moneyX, moneyY);
+        priceFont.draw(batch, "$ "+gameSave.getMoneyTotal(), moneyX, calculateY(moneyY));
 
-        if(!main)
+        if(main == State.DIALOG)
         {
             confirmDialogBox.draw(batch);
             if(selected != null) {
@@ -307,5 +333,15 @@ public class Store {
         for(Sprite sprite: icons.values()){
             sprite.getTexture().dispose();
         }
+    }
+
+    private float offsetY;
+    private float calculateY(float y){
+        return offsetY + y;
+    }
+
+    private enum State
+    {
+        TRANSITION_IN, TRANSITION_OUT, MAIN, DIALOG;
     }
 }

@@ -20,8 +20,10 @@ public class Grabber extends Sprite{
     private Circle circle;
 
     private float cx, cy;
+    private float maxAlpha = 0.7f;
 
-    public Grabber(Texture texture, float x, float y, float grabSpeed)
+
+    public Grabber(Texture texture, float x, float y, float grabSpeed, float maxAlpha)
     {
         super(texture);
         this.x = x - getWidth() / 2;
@@ -31,6 +33,7 @@ public class Grabber extends Sprite{
         this.range = getWidth() / 2;
         this.grabSpeed = grabSpeed;
         circle = new Circle(cx, cy, range);
+        this.maxAlpha = maxAlpha;
         super.setPosition(this.x,this.y);
     }
 
@@ -70,7 +73,7 @@ public class Grabber extends Sprite{
         return false;
     }
     float accum = 0;
-    float maxAlpha = 0.7f;
+
     public void update(float deltaTime){
         setAlpha(maxAlpha * MathUtils.cos(accum));
         accum = accum + deltaTime / 2;

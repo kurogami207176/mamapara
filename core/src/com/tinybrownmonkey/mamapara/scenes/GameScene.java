@@ -14,13 +14,16 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.tinybrownmonkey.mamapara.MamaParaGame;
 import com.tinybrownmonkey.mamapara.actors.Car;
+import com.tinybrownmonkey.mamapara.constants.PowerUps;
 import com.tinybrownmonkey.mamapara.helper.BackgroundMover;
+import com.tinybrownmonkey.mamapara.helper.EquippedPowerUp;
 import com.tinybrownmonkey.mamapara.helper.Hud;
 import com.tinybrownmonkey.mamapara.helper.Store;
 import com.tinybrownmonkey.mamapara.constants.Constants;
@@ -40,6 +43,7 @@ import com.tinybrownmonkey.mamapara.helper.Util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 
@@ -59,9 +63,8 @@ public class GameScene implements Screen {
     private Sprite playBttn;
     private Sprite hsBttn;
     private Sprite storeBttn;
-
-    private Sprite soundOn;
     private Sprite soundOff;
+    private Sprite soundOn;
 
     //private Sprite jeep;
     private Jeepney jeep;
@@ -85,7 +88,9 @@ public class GameScene implements Screen {
     private BackgroundMover bgMover;
     private GroundMover<Person> groundMover;
 
+    private float[] effectTime = new float[PowerUps.values().length - 1];
 
+    private Random random = new Random();
     private MusicManager musicManager;
     ShapeRenderer shapeRenderer;
     public GameScene(MamaParaGame game) {
@@ -100,8 +105,6 @@ public class GameScene implements Screen {
 
         debugFont = new BitmapFont();
 
-        hud = new Hud();
-
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("pricedown bl.ttf"));
         FreeTypeFontGenerator.FreeTypeFontParameter parameter0 = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter0.size = 55;
@@ -113,6 +116,8 @@ public class GameScene implements Screen {
         gameSave.setLaunchCount(gameSave.getLaunchCount() + 1);
         GameManager.saveScore(gameSave);
 
+//        gameSave.setSlotCount(0);
+//        gameSave.clearAllPowerUps();
 
         gameData = GameManager.loadGameData();
         if(gameData.currState == null) {
@@ -120,13 +125,14 @@ public class GameScene implements Screen {
         }
 
         store = new Store(gameSave, gameData);
+        hud = new Hud(gameSave, gameData);
 
         musicManager = MusicManager.getInstance();
         initMenu();
 
         initGameplay();
 
-        Sprite sprite = new Sprite();
+
     }
 
     private void initGameplay() {
@@ -138,13 +144,15 @@ public class GameScene implements Screen {
         ObjectGenerator.loadTextures();
         Texture jeepTexture = TextureManager.get("jeepney_side.png");
         Texture grabberTexture = TextureManager.get("range.png");
-        jeep = new Jeepney(jeepTexture, grabberTexture,  -jeepTexture.getWidth(), lanePositions[gameData.laneIndex],
-                changeLaneSpeed, angleSpeed, grabberRange, grabberSpeed, maxPassngersPerSide);
+        Texture bigGrabberTexture = TextureManager.get("range_big.png");
+        jeep = new Jeepney(jeepTexture, grabberTexture, bigGrabberTexture, -jeepTexture.getWidth(),
+                lanePositions[gameData.laneIndex], changeLaneSpeed, angleSpeed, grabberSpeed, maxPassngersPerSide);
 
         persons = new ArrayList<MovingObject>();
         cars = new ArrayList<MovingObject>();
 
         groundMover = new GroundMover(-gameData.groundSpeed, 0);
+
         //MusicManager.play(0, true);
     }
 
@@ -162,7 +170,7 @@ public class GameScene implements Screen {
         hsBttn = new Sprite(TextureManager.get("button_highscore.png"));
         hsBttn.setX((GameInfo.WIDTH - hsBttn.getWidth()) * 2 / 3);
         hsBttn.setY(newY);
-        storeBttn  = new Sprite(TextureManager.get("button_highscore.png"));
+        storeBttn  = new Sprite(TextureManager.get("button_store.png"));
         storeBttn.setX((GameInfo.WIDTH - storeBttn.getWidth()) * 1/2);
         storeBttn.setY(newY);
 
@@ -259,7 +267,7 @@ public class GameScene implements Screen {
     }
 
     private float buttonTouched;
-    private static float buttonTouchedDelay = 0.5f;
+    private static float buttonTouchedDelay = 0.2f;
 
     private void updateComponents(float delta) {
         if(buttonTouched > 0) {
@@ -279,6 +287,25 @@ public class GameScene implements Screen {
         {
             musicManager.setMusic(MusicManager.MusicState.L1);
             gamePlayUpdate(delta);
+            if(pressed) {
+                System.out.println("x=" + x);
+                System.out.println("y=" + y);
+
+                for (int i = 0; i < gameSave.getPowerUps().size(); i++) {
+                    float xC = GameInfo.WIDTH - hud.getCandyWidth() - (hud.getCandyXOffset() + (hud.getCandyWidth() + hud.getCandyXGap()) * i);
+                    float yC = hud.getCandyY();
+                    boolean candyTouched = Util.isAreaTouched(x, y, xC, yC, hud.getCandyWidth(), hud.getCandyHeight());
+                    if (candyTouched) {
+                        EquippedPowerUp epu = gameSave.getPowerUps().get(i);
+                        int ordinal = epu.getPowerUp().ordinal();
+                        effectTime[ordinal] = effectTime[ordinal] + Constants.effectTimeMatrix[ordinal][epu.getLevel() - 1];
+                        gameSave.removePowerUp(i);
+                        buttonTouched = buttonTouchedDelay;
+                        break;
+                    }
+                }
+            }
+
         }
         else if(gameData.currState == GameState.STORE){
             if(pressed) {
@@ -311,11 +338,28 @@ public class GameScene implements Screen {
         }
         else if(gameData.currState == GameState.GAME_END){
             musicManager.setMusic(MusicManager.MusicState.END);
-            if(Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)
-                    || Gdx.input.isButtonPressed(Input.Buttons.LEFT)
-                    || Gdx.input.isButtonPressed(Input.Buttons.RIGHT)
-                    || Gdx.input.isButtonPressed(Input.Buttons.MIDDLE)){
-                setCurrentState(GameState.TRANSITION_TO_MENU);
+            if(pressed)
+            {
+                boolean okay = Util.isAreaTouched(x, y, Constants.ConfirmButton.xOkLeft,
+                        Constants.ConfirmButton.yDown,
+                        Constants.ConfirmButton.buttonWidth,
+                        Constants.ConfirmButton.buttonHeight);
+                boolean cancel = Util.isAreaTouched(x, y,
+                        Constants.ConfirmButton.xCancelLeft,
+                        Constants.ConfirmButton.yDown,
+                        Constants.ConfirmButton.buttonWidth,
+                        Constants.ConfirmButton.buttonHeight);
+                if(okay){
+                    GameManager.saveScore(gameSave);
+                    resetScore();
+                    setCurrentState(GameState.GAME_PLAY);
+                }
+                if(cancel)
+                {
+                    GameManager.saveScore(gameSave);
+                    resetScore();
+                    setCurrentState(GameState.TRANSITION_TO_MENU);
+                }
             }
         }
     }
@@ -349,7 +393,17 @@ public class GameScene implements Screen {
             scoredPassenger.setSpeedY(ySpeedGetOff);
             gameSave.addMoney(money);
         }
-        jeep.getGrabber().update(delta);
+        float rangeEffect = effectTime[PowerUps.RANGE.ordinal()];
+        if(rangeEffect > 0)
+        {
+            System.out.println("Range effect: " + rangeEffect);
+            float alpha = rangeEffect / 2;
+            alpha = alpha > 1? 1 : alpha;
+            jeep.getGrabber(rangeEffect).setAlpha(alpha);
+        }
+        else {
+            jeep.getGrabber(rangeEffect).update(delta);
+        }
         if(jeep.getX() < jeepLoc)
         {
             //jeep.setX(jeep.getX() + (groundSpeed * delta));
@@ -366,6 +420,10 @@ public class GameScene implements Screen {
             collission = colPerson || colCar;
         }
         hud.update(delta);
+
+        for(int i=0; i < effectTime.length; i++){
+            effectTime[i] = effectTime[i] - delta;
+        }
 
         removeOffscreenMovingObjects();
 
@@ -397,8 +455,9 @@ public class GameScene implements Screen {
         boolean retVal = false;
         for(MovingObject movingObject: persons){
             if(!jeep.isPassenger(movingObject)) {
-                if (movingObject.getCountdownTime() > 0 && !jeep.isFull() && jeep.grab(movingObject)) {
-                    boolean reached = jeep.getGrabber().reachCenter(movingObject, delta);
+                float rangeEffectTime = effectTime[PowerUps.RANGE.ordinal()];
+                if (movingObject.getCountdownTime() > 0 && !jeep.isFull() && jeep.grab(movingObject, rangeEffectTime)) {
+                    boolean reached = jeep.getGrabber(rangeEffectTime).reachCenter(movingObject, delta);
                     if (reached) {
                         jeep.addPassenger(movingObject);
                     }
@@ -475,7 +534,14 @@ public class GameScene implements Screen {
                 }
             }
         }
-        jeep.draw(batch);
+        if(effectTime[PowerUps.SHADOW.ordinal()] > 0) {
+            if(random.nextInt(3) > 0) {
+                jeep.draw(batch);
+            }
+        }
+        else{
+            jeep.draw(batch);
+        }
         for(MovingObject p: movingObjectList){
             if(p.isSprite()){
                 Sprite sprite = (Sprite) p;
@@ -485,7 +551,7 @@ public class GameScene implements Screen {
                 }
             }
         }
-        jeep.getGrabber().draw(batch);
+        jeep.getGrabber(effectTime[PowerUps.RANGE.ordinal()]).draw(batch);
         hud.drawMainHud(batch, gameSave);
 
         if(collission)
@@ -502,12 +568,12 @@ public class GameScene implements Screen {
 
     private void drawMenu(SpriteBatch batch){
         batch.draw(homeBg, homeBg.getX(), homeBg.getY());
-        if(gameData.currState == GameState.MAIN_MENU || gameData.currState == GameState.HIGH_SCORE) {
+        //if(gameData.currState != GameState.STORE) {
             batch.draw(logo, logo.getX(), logo.getY());
-        }
-        if(gameData.currState == GameState.STORE) {
+        //}
+        //if(gameData.currState == GameState.STORE) {
             store.draw(batch);
-        }
+        //}
 
     }
 
@@ -625,6 +691,9 @@ public class GameScene implements Screen {
         bgMover.dispose();
         ObjectGenerator.dispose();
         musicManager.dispose();
+        hud.dispose();
+        store.dispose();
+
     }
 
     private void setCurrentState(GameState nextState){
@@ -642,8 +711,10 @@ public class GameScene implements Screen {
         jeep.removeAllPassengers();
         persons.clear();
         cars.clear();
-        hud.dispose();
-        store.dispose();
+        hud.clear();
+        for(int i=0; i < effectTime.length; i++){
+            effectTime[i] = 0;
+        }
     }
 
 }

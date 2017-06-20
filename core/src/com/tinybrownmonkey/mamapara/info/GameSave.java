@@ -1,5 +1,6 @@
 package com.tinybrownmonkey.mamapara.info;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import com.tinybrownmonkey.mamapara.constants.PowerUps;
@@ -234,7 +235,15 @@ public class GameSave {
         this.level6 = level6;
     }
 
+    List<EquippedPowerUp> epu;
     public List<EquippedPowerUp> getPowerUps(){
+        if(epu == null)
+        {
+            epu = generatePowerUps();
+        }
+        return this.epu;
+    }
+    public List<EquippedPowerUp> generatePowerUps(){
         List<EquippedPowerUp> retVal = new ArrayList<EquippedPowerUp>();
         if(powerUpType1 >= 0)
         {
@@ -301,6 +310,7 @@ public class GameSave {
                     break;
             }
         }
+        this.epu = powerUps;
     }
 
     public void addPowerUp(PowerUps pu, int level){
@@ -315,5 +325,9 @@ public class GameSave {
             epus.remove(index);
             setPowerUps(epus);
         }
+    }
+
+    public void clearAllPowerUps(){
+        setPowerUps(new ArrayList<EquippedPowerUp>());
     }
 }

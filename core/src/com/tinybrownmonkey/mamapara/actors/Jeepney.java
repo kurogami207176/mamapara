@@ -31,16 +31,18 @@ public class Jeepney extends Sprite implements MovingObject {
 
     private Box2DDebugRenderer debugRenderer;
     private Grabber grabber;
+    private Grabber bigGrabber;
     private Set<MovingObject> passengers;
 
-    public Jeepney(Texture texture, Texture grabberTexture, float x, float y, float transitionSpeed, float angleSpeed, float grabberRange, float grabberSpeed, int maxPassengersPerSide){
+    public Jeepney(Texture texture, Texture grabberTexture, Texture bigGrabberTexture, float x, float y, float transitionSpeed, float angleSpeed, float grabberSpeed, int maxPassengersPerSide){
         super(texture);
         setPosition(x, y);
         this.transitionSpeed = transitionSpeed;
         this.angleSpeed = angleSpeed;
         this.targetLaneX = x;
         this.targetLaneY = y;
-        this.grabber = new Grabber(grabberTexture, x + grabberDX, y + grabberDY, grabberSpeed);
+        this.grabber = new Grabber(grabberTexture, x + grabberDX, y + grabberDY, grabberSpeed, 0.7f);
+        this.bigGrabber = new Grabber(bigGrabberTexture, x + grabberDX, y + grabberDY, grabberSpeed, 1f);
         this.maxPassengersPerSide = maxPassengersPerSide;
         this.maxPassengers = maxPassengersPerSide * 2;
         passengers = new HashSet<MovingObject>(maxPassengers);
@@ -110,6 +112,8 @@ public class Jeepney extends Sprite implements MovingObject {
             setRotation(currAngle);
         }
         grabber.setPosition(getX() + grabberDX, getY() + grabberDY);
+        bigGrabber.setPosition(getX() + grabberDX, getY() + grabberDY);
+
     }
 
     public Set<MovingObject> processPassengers(float deltaTime){
@@ -142,12 +146,18 @@ public class Jeepney extends Sprite implements MovingObject {
         return removable;
     }
 
-    public boolean grab(MovingObject sprite){
-        return grabber.grab(sprite);
+    public boolean grab(MovingObject sprite, float rangeEffect){
+
+        return getGrabber(rangeEffect).grab(sprite);
     }
 
-    public Grabber getGrabber(){
-        return grabber;
+    public Grabber getGrabber(float rangeEffect){
+        if(rangeEffect <= 0) {
+            return grabber;
+        } else
+        {
+            return bigGrabber;
+        }
     }
 
     private float speedX;

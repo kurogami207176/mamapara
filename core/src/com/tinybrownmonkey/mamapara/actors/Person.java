@@ -51,7 +51,7 @@ public class Person extends Sprite implements MovingObject {
     @Override
     public float[] getCollisionVertices() {
         float x1 = getX();
-        float y1 = getY() - getHeight() * 1 / 3;
+        float y1 = getY() - getHeight() * 1 / 7;
         float x2 = getX() + getWidth();
         float y2 = getY();
         return new float[] {x1,y1, x1,y2, x2,y2, x2,y1};

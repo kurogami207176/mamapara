@@ -47,7 +47,7 @@ public class Constants {
     public final static float bumpXMult = 1.2f;
 
     public final static float timeoutToGameOver = 0.5f;
-    public final static float transitionSpeed = 800;
+    public final static float transitionSpeed = 1600;
 
     public final static float offScreenBuffer = 100;
 
@@ -57,5 +57,36 @@ public class Constants {
     public final static int rateAskInterval = 5;
 
     public final static int shareAskInterval = 7;
+
+    public interface ConfirmButton{
+        float xOkLeft = 530;
+        float xCancelLeft = 249;
+        float buttonWidth = 175;
+
+        float yDown = 168;
+        float buttonHeight = 79;
+    }
+
+    public static float[][] effectTimeMatrix;
+    static{
+        effectTimeMatrix = new float[PowerUps.values().length - 1][3];
+
+        effectTimeMatrix[PowerUps.EXPLODE.ordinal()][0] = 30;
+        effectTimeMatrix[PowerUps.EXPLODE.ordinal()][1] = 60;
+        effectTimeMatrix[PowerUps.EXPLODE.ordinal()][2] = 120;
+
+        effectTimeMatrix[PowerUps.RANGE.ordinal()][0] = 30;
+        effectTimeMatrix[PowerUps.RANGE.ordinal()][1] = 60;
+        effectTimeMatrix[PowerUps.RANGE.ordinal()][2] = 120;
+
+        effectTimeMatrix[PowerUps.SHADOW.ordinal()][0] = 30;
+        effectTimeMatrix[PowerUps.SHADOW.ordinal()][1] = 60;
+        effectTimeMatrix[PowerUps.SHADOW.ordinal()][2] = 120;
+
+        effectTimeMatrix[PowerUps.SHAMAN.ordinal()][0] = 30;
+        effectTimeMatrix[PowerUps.SHAMAN.ordinal()][1] = 60;
+        effectTimeMatrix[PowerUps.SHAMAN.ordinal()][2] = 120;
+
+    }
 
 }
