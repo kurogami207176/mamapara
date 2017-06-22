@@ -24,6 +24,7 @@ import com.tinybrownmonkey.mamapara.constants.PowerUps;
 import com.tinybrownmonkey.mamapara.helper.BackgroundMover;
 import com.tinybrownmonkey.mamapara.helper.EquippedPowerUp;
 import com.tinybrownmonkey.mamapara.helper.Hud;
+import com.tinybrownmonkey.mamapara.helper.PowerUpHelper;
 import com.tinybrownmonkey.mamapara.helper.Store;
 import com.tinybrownmonkey.mamapara.constants.Constants;
 import com.tinybrownmonkey.mamapara.constants.GameState;
@@ -44,6 +45,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+
+import sun.security.provider.SHA;
 
 
 /**
@@ -83,11 +86,10 @@ public class GameScene implements Screen {
 
     private Hud hud;
     private Store store;
+    private PowerUpHelper powerUpHelper;
 
     private BackgroundMover bgMover;
     private GroundMover<Person> groundMover;
-
-    private float[] effectTime = new float[PowerUps.values().length - 1];
 
     private Random random = new Random();
     private MusicManager musicManager;
@@ -125,6 +127,7 @@ public class GameScene implements Screen {
 
         store = new Store(gameSave, gameData);
         hud = new Hud(gameSave, gameData);
+        powerUpHelper = new PowerUpHelper();
 
         musicManager = MusicManager.getInstance();
         initMenu();
@@ -297,7 +300,10 @@ public class GameScene implements Screen {
                     if (candyTouched) {
                         EquippedPowerUp epu = gameSave.getPowerUps().get(i);
                         int ordinal = epu.getPowerUp().ordinal();
-                        effectTime[ordinal] = effectTime[ordinal] + Constants.effectTimeMatrix[ordinal][epu.getLevel() - 1];
+                        powerUpHelper.addEffectTime(epu.getPowerUp(), Constants.effectTimeMatrix[ordinal][epu.getLevel() - 1]);
+                        // powerUpHelper.resetEffectAccumulator(epu.getPowerUp());
+                        // effectTime[ordinal] = effectTime[ordinal] + Constants.effectTimeMatrix[ordinal][epu.getLevel() - 1];
+                        // effectAccum[ordinal] = 0;
                         gameSave.removePowerUp(i);
                         buttonTouched = buttonTouchedDelay;
                         break;
@@ -392,7 +398,7 @@ public class GameScene implements Screen {
             scoredPassenger.setSpeedY(ySpeedGetOff);
             gameSave.addMoney(money);
         }
-        float rangeEffect = effectTime[PowerUps.RANGE.ordinal()];
+        float rangeEffect = powerUpHelper.getEffectTime(PowerUps.RANGE); // effectTime[PowerUps.RANGE.ordinal()];
         if(rangeEffect > 0)
         {
             System.out.println("Range effect: " + rangeEffect);
@@ -420,9 +426,10 @@ public class GameScene implements Screen {
         }
         hud.update(delta);
 
-        for(int i=0; i < effectTime.length; i++){
-            effectTime[i] = effectTime[i] - delta;
-        }
+        powerUpHelper.update(delta);
+//        for(int i=0; i < effectTime.length; i++){
+//            effectTime[i] = effectTime[i] - delta;
+//        }
 
         removeOffscreenMovingObjects();
 
@@ -454,7 +461,7 @@ public class GameScene implements Screen {
         boolean retVal = false;
         for(MovingObject movingObject: persons){
             if(!jeep.isPassenger(movingObject)) {
-                float rangeEffectTime = effectTime[PowerUps.RANGE.ordinal()];
+                float rangeEffectTime = powerUpHelper.getEffectTime(PowerUps.RANGE); //effectTime[PowerUps.RANGE.ordinal()];
                 if (movingObject.getCountdownTime() > 0 && !jeep.isFull() && jeep.grab(movingObject, rangeEffectTime)) {
                     boolean reached = jeep.getGrabber(rangeEffectTime).reachCenter(movingObject, delta);
                     if (reached) {
@@ -466,15 +473,20 @@ public class GameScene implements Screen {
                 }
             }
             boolean collisionOccured = Util.checkCollisions(movingObject.getCollisionVertices(), jeep.getCollisionVertices());
-            if (collisionOccured) {
-                movingObject.setSpeedX(bumpXMult * gameData.groundSpeed + bumpX);
-                movingObject.setSpeedY(bumpY);
-                movingObject.setRotation(bumpRotation);
-                musicManager.playSound(MusicManager.SoundState.HIT_PERSON);
-                retVal = true;
+            if(!powerUpHelper.isEffectActive(PowerUps.SHADOW)) {
+                if (collisionOccured) {
+                    movingObject.setSpeedX(bumpXMult * gameData.groundSpeed + bumpX);
+                    movingObject.setSpeedY(bumpY);
+                    movingObject.setRotation(bumpRotation);
+                    musicManager.playSound(MusicManager.SoundState.HIT_PERSON);
+                    retVal = true;
+                }
+                if (!gameData.timeoutToGameOverBool && collisionOccured) {
+                    gameData.timeoutToGameOverBool = true;
+                }
             }
-            if (!gameData.timeoutToGameOverBool && collisionOccured) {
-                gameData.timeoutToGameOverBool = true;
+            else if (collisionOccured) {
+                powerUpHelper.setEffectFlag(PowerUps.SHADOW, true);
             }
         }
         return retVal;
@@ -485,17 +497,24 @@ public class GameScene implements Screen {
         boolean collisionOccured;
         for(MovingObject car:cars)
         {
+
             collisionOccured = Util.checkCollisions(car.getCollisionVertices(), jeep.getCollisionVertices());
-            if (collisionOccured) {
-                car.setSpeedX(bumpXMult * gameData.groundSpeed + carBumpX);
-                car.setSpeedY(carBumpY);
-                car.setRotation(carBumpRotation);
-                musicManager.playSound(MusicManager.SoundState.HIT_CAR);
-                retVal = true;
+            if(!powerUpHelper.isEffectActive(PowerUps.SHADOW)) {
+                if (collisionOccured) {
+                    car.setSpeedX(bumpXMult * gameData.groundSpeed + carBumpX);
+                    car.setSpeedY(carBumpY);
+                    car.setRotation(carBumpRotation);
+                    musicManager.playSound(MusicManager.SoundState.HIT_CAR);
+                    retVal = true;
+                }
+                if (!gameData.timeoutToGameOverBool && collisionOccured) {
+                    gameData.timeoutToGameOverBool = true;
+                }
             }
-            if (!gameData.timeoutToGameOverBool && collisionOccured) {
-                gameData.timeoutToGameOverBool = true;
+            else if (collisionOccured) {
+                powerUpHelper.setEffectFlag(PowerUps.SHADOW, true);
             }
+
             groundMover.move(car, delta);
 
         }
@@ -533,13 +552,19 @@ public class GameScene implements Screen {
                 }
             }
         }
-        if(effectTime[PowerUps.SHADOW.ordinal()] > 0) {
-            if(random.nextInt(3) > 0) {
-                jeep.draw(batch);
-            }
+        if(powerUpHelper.isEffectActive(PowerUps.SHADOW)
+                && powerUpHelper.getEffectFlag(PowerUps.SHADOW)
+                && random.nextInt(10)==0) {
+            float x = jeep.getX();
+            float y = jeep.getY();
+            jeep.setPosition(x + random.nextInt(50) - 25, y + random.nextInt(50) - 25);
+            jeep.draw(batch);
+            jeep.setPosition(x, y);
+            powerUpHelper.setEffectFlag(PowerUps.SHADOW, false);
         }
         else{
             jeep.draw(batch);
+            powerUpHelper.resetEffectAccumulator(PowerUps.SHADOW);
         }
         for(MovingObject p: movingObjectList){
             if(p.isSprite()){
@@ -550,7 +575,7 @@ public class GameScene implements Screen {
                 }
             }
         }
-        jeep.getGrabber(effectTime[PowerUps.RANGE.ordinal()]).draw(batch);
+        jeep.getGrabber(powerUpHelper.getEffectTime(PowerUps.RANGE)).draw(batch);
         hud.drawMainHud(batch, gameSave);
 
         if(collission)
@@ -711,9 +736,8 @@ public class GameScene implements Screen {
         persons.clear();
         cars.clear();
         hud.clear();
-        for(int i=0; i < effectTime.length; i++){
-            effectTime[i] = 0;
-        }
+        powerUpHelper.resetAll();
     }
+
 
 }
