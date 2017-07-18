@@ -137,7 +137,6 @@ public class GameScene implements Screen {
 
         initGameplay();
 
-
     }
 
     private void initGameplay() {
@@ -621,7 +620,7 @@ public class GameScene implements Screen {
             System.out.println("Collission print!");
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             shapeRenderer.setColor(Color.WHITE);
-            shapeRenderer.rect(0, 0, GameInfo.WIDTH, GameInfo.HEIGHT);
+            shapeRenderer.rect(0, 0, GameInfo.WIDTH * 10, GameInfo.HEIGHT * 10);
             shapeRenderer.end();
             //collission = false;
         }
@@ -649,7 +648,7 @@ public class GameScene implements Screen {
                 jeep.moveTo(jeep.getX(), lanePositions[gameData.laneIndex]);
             }
 //        }
-        if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
+        if(Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Gdx.input.isKeyJustPressed(Input.Keys.BACK))
         {
             setCurrentState(GameState.TRANSITION_TO_MENU);
         }
@@ -754,6 +753,14 @@ public class GameScene implements Screen {
 
     private void setCurrentState(GameState nextState){
         System.out.println("State = " + nextState.name());
+        if(nextState == GameState.GAME_PLAY)
+        {
+            Gdx.input.setCatchBackKey(true);
+        }
+        else
+        {
+            Gdx.input.setCatchBackKey(false);
+        }
         gameData.currState = nextState;
     }
 

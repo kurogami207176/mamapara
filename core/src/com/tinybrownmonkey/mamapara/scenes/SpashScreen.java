@@ -52,7 +52,7 @@ public class SpashScreen implements Screen{
         game.getSpriteBatch().setProjectionMatrix(mainCamera.combined);
 
         game.getSpriteBatch().begin();
-        game.getSpriteBatch().draw(texture, 0, 0);
+        game.getSpriteBatch().draw(texture, -GameInfo.WIDTH / 2f, -GameInfo.HEIGHT / 2f);
         game.getSpriteBatch().end();
     }
 
