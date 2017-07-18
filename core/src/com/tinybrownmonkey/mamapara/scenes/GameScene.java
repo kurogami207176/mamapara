@@ -281,13 +281,13 @@ public class GameScene implements Screen {
                 buttonTouched[tx] = buttonTouched[tx] - delta;
             }
             boolean pressed = false;
-            float[] x = new float[MAX_MULTI_TOUCH];
-            float[] y = new float[MAX_MULTI_TOUCH];
+            float x = 0;
+            float y = 0;
             //if(buttonTouched[tx] <= 0 && Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
             if(buttonTouched[tx] <= 0 && Gdx.input.isTouched(tx)) {
                 Vector3 v3 = mainCamera.unproject(new Vector3(Gdx.input.getX(tx), Gdx.input.getY(tx), 0));
-                x[tx] = v3.x;
-                y[tx] = v3.y;
+                x = v3.x;
+                y = v3.y;
                 pressed = true;
             }
 
@@ -296,13 +296,13 @@ public class GameScene implements Screen {
                 musicManager.setMusic(MusicManager.MusicState.L1);
                 gamePlayUpdate(delta);
                 if(pressed) {
-                    System.out.println("x=" + x[tx]);
-                    System.out.println("y=" + y[tx]);
+                    System.out.println("x=" + x);
+                    System.out.println("y=" + y);
                     // check powerup
                     for (int i = 0; i < gameSave.getPowerUps().size(); i++) {
                         float xC = GameInfo.WIDTH - hud.getCandyWidth() - (hud.getCandyXOffset() + (hud.getCandyWidth() + hud.getCandyXGap()) * i);
                         float yC = hud.getCandyY();
-                        boolean candyTouched = Util.isAreaTouched(x[tx], y[tx], xC, yC, hud.getCandyWidth(), hud.getCandyHeight());
+                        boolean candyTouched = Util.isAreaTouched(x, y, xC, yC, hud.getCandyWidth(), hud.getCandyHeight());
                         if (candyTouched) {
                             EquippedPowerUp epu = gameSave.getPowerUps().get(i);
                             int ordinal = epu.getPowerUp().ordinal();
@@ -322,7 +322,7 @@ public class GameScene implements Screen {
                         for (int i = 0; i < lanePositions.length; i++) {
                             float from = lanePositions[i] - rad;
                             float to = lanePositions[i] + rad;
-                            if(y[tx] >= from && y[tx] <= to){
+                            if(y >= from && y <= to){
                                 gameData.laneIndex = i;
                                 jeep.moveTo(jeep.getX(), lanePositions[i]);
                                 changeLaneDone = true;
@@ -335,7 +335,7 @@ public class GameScene implements Screen {
             }
             else if(gameData.currState == GameState.STORE){
                 if(pressed) {
-                    boolean prc = store.processInput(x[tx], y[tx]);
+                    boolean prc = store.processInput(x, y);
                     if(prc)
                     {
                         buttonTouched[tx] = buttonTouchedDelay;
@@ -345,13 +345,18 @@ public class GameScene implements Screen {
             }
             else if(gameData.currState == GameState.MAIN_MENU){
                 musicManager.setMusic(MusicManager.MusicState.TITLE);
-                processMenuButton(delta);
+                if(pressed) {
+                    System.out.println("Main menu pressed " + tx);
+                    processMenuButton(delta, x, y);
+                }
             }
             else if(gameData.currState == GameState.HIGH_SCORE)
             {
                 musicManager.setMusic(MusicManager.MusicState.TITLE);
-                if(Gdx.input.isButtonPressed(Input.Buttons.RIGHT)){
+                if(pressed){
+                    System.out.println("End Main menu pressed " + tx);
                     setCurrentState(GameState.MAIN_MENU);
+                    buttonTouched[tx] = buttonTouchedDelay;
                 }
             }
             else if(gameData.currState == GameState.TRANSITION_TO_GAME){
@@ -366,11 +371,11 @@ public class GameScene implements Screen {
                 musicManager.setMusic(MusicManager.MusicState.END);
                 if(pressed)
                 {
-                    boolean okay = Util.isAreaTouched(x[tx], y[tx], Constants.ConfirmButton.xOkLeft,
+                    boolean okay = Util.isAreaTouched(x, y, Constants.ConfirmButton.xOkLeft,
                             Constants.ConfirmButton.yDown,
                             Constants.ConfirmButton.buttonWidth,
                             Constants.ConfirmButton.buttonHeight);
-                    boolean cancel = Util.isAreaTouched(x[tx], y[tx],
+                    boolean cancel = Util.isAreaTouched(x, y,
                             Constants.ConfirmButton.xCancelLeft,
                             Constants.ConfirmButton.yDown,
                             Constants.ConfirmButton.buttonWidth,
@@ -650,33 +655,27 @@ public class GameScene implements Screen {
         }
     }
 
-    private void processMenuButton(float delta) {
-        if(buttonTouched[0] <= 0 && Gdx.input.isButtonPressed(Input.Buttons.LEFT))
+    private void processMenuButton(float delta, float x, float y) {
+        if(Util.isButtonTouched(playBttn, x, y))
         {
-            Vector3 v3 = mainCamera.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
-            float x = v3.x;
-            float y = v3.y;
-            if(Util.isButtonTouched(playBttn, x, y))
-            {
-                buttonTouched[0] = buttonTouchedDelay;
-                setCurrentState(GameState.TRANSITION_TO_GAME);
-            }
-            else if(Util.isButtonTouched(hsBttn, x, y))
-            {
-                buttonTouched[0] = buttonTouchedDelay;
-                setCurrentState(GameState.HIGH_SCORE);
-            }
-            else if(Util.isButtonTouched(storeBttn, x, y))
-            {
-                buttonTouched[0] = buttonTouchedDelay;
-                setCurrentState(GameState.STORE);
-            }
-            else if(Util.isButtonTouched(soundOn, x, y))
-            {
-                buttonTouched[0] = buttonTouchedDelay;
-                gameSave.setMuted(!gameSave.isMuted());
-                GameManager.saveScore(gameSave);
-            }
+            buttonTouched[0] = buttonTouchedDelay;
+            setCurrentState(GameState.TRANSITION_TO_GAME);
+        }
+        else if(Util.isButtonTouched(hsBttn, x, y))
+        {
+            buttonTouched[0] = buttonTouchedDelay;
+            setCurrentState(GameState.HIGH_SCORE);
+        }
+        else if(Util.isButtonTouched(storeBttn, x, y))
+        {
+            buttonTouched[0] = buttonTouchedDelay;
+            setCurrentState(GameState.STORE);
+        }
+        else if(Util.isButtonTouched(soundOn, x, y))
+        {
+            buttonTouched[0] = buttonTouchedDelay;
+            gameSave.setMuted(!gameSave.isMuted());
+            GameManager.saveScore(gameSave);
         }
     }
 
@@ -712,9 +711,9 @@ public class GameScene implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        GameInfo.HEIGHT = height;
-        GameInfo.WIDTH = width;
-        gameViewPort.update(width, height);
+//        GameInfo.HEIGHT = height;
+//        GameInfo.WIDTH = width;
+//        gameViewPort.update(width, height);
     }
 
     @Override
