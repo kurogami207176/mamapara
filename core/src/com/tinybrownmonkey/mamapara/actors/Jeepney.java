@@ -48,6 +48,12 @@ public class Jeepney extends Sprite implements MovingObject {
         passengers = new HashSet<MovingObject>(maxPassengers);
     }
 
+    public void setMaxPassengersPerSide(int maxPassengersPerSide){
+        this.maxPassengersPerSide = maxPassengersPerSide;
+        this.maxPassengers = maxPassengersPerSide * 2;
+    }
+
+
     public void moveTo(float targetLaneX, float targetLaneY){
             this.targetLaneX = targetLaneX;
             this.targetLaneY = targetLaneY;

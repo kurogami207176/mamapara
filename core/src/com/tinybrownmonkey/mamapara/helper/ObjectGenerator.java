@@ -18,8 +18,8 @@ import static com.tinybrownmonkey.mamapara.constants.Constants.carMinimumSpeedRe
 public class ObjectGenerator {
     private static Random random = new Random();
     private static float personIntervalCounter = 0;
-    private static float personIntervalMin = 0.1f;
-    private static float personIntervalRange = 0.55f;
+    private static float personIntervalMin = 0.01f;
+    private static float personIntervalRange = 0.055f;
 
     private static float carIntervalCounter = 0;
     private static float carIntervalMin = 1f;
@@ -29,6 +29,10 @@ public class ObjectGenerator {
     private static float personRangeMin = 0;
 
     private static float personRange = 60;
+
+    private static float totalTime;
+    private static float delta;
+    private static float groundSpeed;
 
     private static long counter = 0;
     private static Texture[] personTx;
@@ -57,27 +61,38 @@ public class ObjectGenerator {
         };
     }
 
-    public static void dispose(){
-        for(Texture texture: personTx){
+    public static void dispose() {
+        for (Texture texture : personTx) {
             texture.dispose();
         }
-        for(Texture texture: carsTx){
+        for (Texture texture : carsTx) {
             texture.dispose();
         }
     }
 
-    public static Person generatePerson(float groundSpeed, float speedX, float speedY, float angle, float lifeTime, float delta) {
+    public static void delta(float groundSpeed, float lastDelta){
+        ObjectGenerator.delta = lastDelta;
+        ObjectGenerator.totalTime = ObjectGenerator.totalTime + lastDelta;
+        ObjectGenerator.groundSpeed = groundSpeed;
+    }
+
+    public static void resetTime(){
+        totalTime = 0;
+    }
+
+    public static Person generatePerson(float speedX, float speedY, float angle) {
         if(personIntervalCounter <= 0)
         {
             boolean up = random.nextBoolean();
             float randFloat = random.nextFloat();
             float y = up? (personRangeMax - personRange * randFloat) : (personRangeMin + personRange * randFloat);
-            Person person = new Person(personTx[random.nextInt(personTx.length)], GameInfo.WIDTH, y);
+            PersonInfo pi = getRandomPersonInfo();
+            Person person = new Person(personTx[pi.index], GameInfo.WIDTH, y);
             personIntervalCounter = groundSpeed * (personIntervalMin + random.nextFloat() * personIntervalRange);
             person.setSpeedX(speedX);
             person.setSpeedY(speedY);
             person.setRotation(angle);
-            person.setCountdownTime(lifeTime);
+            person.setCountdownTime(pi.lifetime);
             person.setId(counter);
             counter++;
             return person;
@@ -89,8 +104,7 @@ public class ObjectGenerator {
         return null;
     }
 
-
-    public static Car generateCar(float groundSpeed, float delta) {
+    public static Car generateCar() {
         if(carIntervalCounter <= 0)
         {
             float y = Constants.lanePositions[random.nextInt(Constants.lanePositions.length)];
@@ -113,6 +127,51 @@ public class ObjectGenerator {
             carIntervalCounter = carIntervalCounter - delta * groundSpeed;
         }
         return null;
+    }
+
+    public static PersonInfo getRandomPersonInfo(){
+//        float totalLifetime = 0;
+//        for(PersonInfo pi: PersonInfo.values())
+//        {
+//            totalLifetime = totalLifetime + pi.lifetime;
+//        }
+//        float randFloat = random.nextFloat() * totalLifetime;
+//        totalLifetime = 0;
+//        for(PersonInfo pi: PersonInfo.values())
+//        {
+//            totalLifetime = totalLifetime + pi.lifetime;
+//            if(randFloat <= totalLifetime)
+//            {
+//                return  pi;
+//            }
+//        }
+//        return PersonInfo.values()[PersonInfo.values().length - 1];
+        return PersonInfo.values()[random.nextInt(PersonInfo.values().length)];
+    }
+
+    private enum  PersonInfo
+    {
+        BLUE (0, 1f),
+        RED  (1, 5f),
+        GREEN(2, 10f),
+        WHITE(3, 20f);
+        private static float totalLifetime = 0;
+
+        private int index;
+        private float lifetime;
+
+        PersonInfo(int index, float lifetime){
+            this.index = index;
+            this.lifetime = lifetime;
+        }
+
+        public float getLifetime(){
+            return lifetime;
+        }
+
+        public int getIndex(){
+            return index;
+        }
     }
 
 }

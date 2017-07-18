@@ -31,7 +31,8 @@ public class Constants {
     public final static float grabberRange = 100;
     public final static float grabberSpeed = 200;
     public final static float moneyMultplier = 2;
-    public final static int maxPassngersPerSide = 8;
+    public final static int maxPassngersPerSide = 6;
+    public final static int maxPassngersPerSideShaman = 9;
 
     public final static float bumpX = 200f;
     public final static float bumpY = 200f;

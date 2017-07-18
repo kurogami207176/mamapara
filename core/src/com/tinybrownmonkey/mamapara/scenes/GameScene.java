@@ -94,6 +94,9 @@ public class GameScene implements Screen {
     private Random random = new Random();
     private MusicManager musicManager;
     ShapeRenderer shapeRenderer;
+
+    private int MAX_MULTI_TOUCH = 2;
+
     public GameScene(MamaParaGame game) {
         this.game = game;
 
@@ -268,104 +271,124 @@ public class GameScene implements Screen {
 
     }
 
-    private float buttonTouched;
+    private float[] buttonTouched = new float[MAX_MULTI_TOUCH];
     private static float buttonTouchedDelay = 0.2f;
 
     private void updateComponents(float delta) {
-        if(buttonTouched > 0) {
-            buttonTouched = buttonTouched - delta;
-        }
-        boolean pressed = false;
-        float x = 0;
-        float y = 0;
-        if(buttonTouched <= 0 && Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
-            Vector3 v3 = mainCamera.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
-            x = v3.x;
-            y = v3.y;
-            pressed = true;
-        }
+        boolean changeLaneDone = false;
+        for(int tx = 0; tx < MAX_MULTI_TOUCH; tx++){
+            if(buttonTouched[tx] > 0) {
+                buttonTouched[tx] = buttonTouched[tx] - delta;
+            }
+            boolean pressed = false;
+            float[] x = new float[MAX_MULTI_TOUCH];
+            float[] y = new float[MAX_MULTI_TOUCH];
+            //if(buttonTouched[tx] <= 0 && Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
+            if(buttonTouched[tx] <= 0 && Gdx.input.isTouched(tx)) {
+                Vector3 v3 = mainCamera.unproject(new Vector3(Gdx.input.getX(tx), Gdx.input.getY(tx), 0));
+                x[tx] = v3.x;
+                y[tx] = v3.y;
+                pressed = true;
+            }
 
-        if(gameData.currState == GameState.GAME_PLAY && moving)
-        {
-            musicManager.setMusic(MusicManager.MusicState.L1);
-            gamePlayUpdate(delta);
-            if(pressed) {
-                System.out.println("x=" + x);
-                System.out.println("y=" + y);
+            if(gameData.currState == GameState.GAME_PLAY && moving)
+            {
+                musicManager.setMusic(MusicManager.MusicState.L1);
+                gamePlayUpdate(delta);
+                if(pressed) {
+                    System.out.println("x=" + x[tx]);
+                    System.out.println("y=" + y[tx]);
+                    // check powerup
+                    for (int i = 0; i < gameSave.getPowerUps().size(); i++) {
+                        float xC = GameInfo.WIDTH - hud.getCandyWidth() - (hud.getCandyXOffset() + (hud.getCandyWidth() + hud.getCandyXGap()) * i);
+                        float yC = hud.getCandyY();
+                        boolean candyTouched = Util.isAreaTouched(x[tx], y[tx], xC, yC, hud.getCandyWidth(), hud.getCandyHeight());
+                        if (candyTouched) {
+                            EquippedPowerUp epu = gameSave.getPowerUps().get(i);
+                            int ordinal = epu.getPowerUp().ordinal();
+                            powerUpHelper.addEffectTime(epu.getPowerUp(), Constants.effectTimeMatrix[ordinal][epu.getLevel() - 1]);
+                            // powerUpHelper.resetEffectAccumulator(epu.getPowerUp());
+                            // effectTime[ordinal] = effectTime[ordinal] + Constants.effectTimeMatrix[ordinal][epu.getLevel() - 1];
+                            // effectAccum[ordinal] = 0;
+                            gameSave.removePowerUp(i);
+                            buttonTouched[tx] = buttonTouchedDelay;
+                            break;
+                        }
+                    }
+                    // check lane
+                    if(!changeLaneDone) {
+                        float rad = (lanePositions[0] - lanePositions[1]) / 2;
+                        rad = rad < 0 ? -rad : rad;
+                        for (int i = 0; i < lanePositions.length; i++) {
+                            float from = lanePositions[i] - rad;
+                            float to = lanePositions[i] + rad;
+                            if(y[tx] >= from && y[tx] <= to){
+                                gameData.laneIndex = i;
+                                jeep.moveTo(jeep.getX(), lanePositions[i]);
+                                changeLaneDone = true;
+                                break;
+                            }
+                        }
+                    }
+                }
 
-                for (int i = 0; i < gameSave.getPowerUps().size(); i++) {
-                    float xC = GameInfo.WIDTH - hud.getCandyWidth() - (hud.getCandyXOffset() + (hud.getCandyWidth() + hud.getCandyXGap()) * i);
-                    float yC = hud.getCandyY();
-                    boolean candyTouched = Util.isAreaTouched(x, y, xC, yC, hud.getCandyWidth(), hud.getCandyHeight());
-                    if (candyTouched) {
-                        EquippedPowerUp epu = gameSave.getPowerUps().get(i);
-                        int ordinal = epu.getPowerUp().ordinal();
-                        powerUpHelper.addEffectTime(epu.getPowerUp(), Constants.effectTimeMatrix[ordinal][epu.getLevel() - 1]);
-                        // powerUpHelper.resetEffectAccumulator(epu.getPowerUp());
-                        // effectTime[ordinal] = effectTime[ordinal] + Constants.effectTimeMatrix[ordinal][epu.getLevel() - 1];
-                        // effectAccum[ordinal] = 0;
-                        gameSave.removePowerUp(i);
-                        buttonTouched = buttonTouchedDelay;
-                        break;
+            }
+            else if(gameData.currState == GameState.STORE){
+                if(pressed) {
+                    boolean prc = store.processInput(x[tx], y[tx]);
+                    if(prc)
+                    {
+                        buttonTouched[tx] = buttonTouchedDelay;
+                    }
+                }
+                store.update(delta);
+            }
+            else if(gameData.currState == GameState.MAIN_MENU){
+                musicManager.setMusic(MusicManager.MusicState.TITLE);
+                processMenuButton(delta);
+            }
+            else if(gameData.currState == GameState.HIGH_SCORE)
+            {
+                musicManager.setMusic(MusicManager.MusicState.TITLE);
+                if(Gdx.input.isButtonPressed(Input.Buttons.RIGHT)){
+                    setCurrentState(GameState.MAIN_MENU);
+                }
+            }
+            else if(gameData.currState == GameState.TRANSITION_TO_GAME){
+                musicManager.setMusic(MusicManager.MusicState.L2);
+                transitionToGame(delta);
+            }
+            else if(gameData.currState == GameState.TRANSITION_TO_MENU){
+                musicManager.setMusic(MusicManager.MusicState.TITLE);
+                transitionToMenu(delta);
+            }
+            else if(gameData.currState == GameState.GAME_END){
+                musicManager.setMusic(MusicManager.MusicState.END);
+                if(pressed)
+                {
+                    boolean okay = Util.isAreaTouched(x[tx], y[tx], Constants.ConfirmButton.xOkLeft,
+                            Constants.ConfirmButton.yDown,
+                            Constants.ConfirmButton.buttonWidth,
+                            Constants.ConfirmButton.buttonHeight);
+                    boolean cancel = Util.isAreaTouched(x[tx], y[tx],
+                            Constants.ConfirmButton.xCancelLeft,
+                            Constants.ConfirmButton.yDown,
+                            Constants.ConfirmButton.buttonWidth,
+                            Constants.ConfirmButton.buttonHeight);
+                    if(okay){
+                        GameManager.saveScore(gameSave);
+                        resetScore();
+                        setCurrentState(GameState.GAME_PLAY);
+                    }
+                    if(cancel)
+                    {
+                        GameManager.saveScore(gameSave);
+                        resetScore();
+                        setCurrentState(GameState.TRANSITION_TO_MENU);
                     }
                 }
             }
 
-        }
-        else if(gameData.currState == GameState.STORE){
-            if(pressed) {
-                boolean prc = store.processInput(x, y);
-                if(prc)
-                {
-                    buttonTouched = buttonTouchedDelay;
-                }
-            }
-            store.update(delta);
-        }
-        else if(gameData.currState == GameState.MAIN_MENU){
-            musicManager.setMusic(MusicManager.MusicState.TITLE);
-            processMenuButton(delta);
-        }
-        else if(gameData.currState == GameState.HIGH_SCORE)
-        {
-            musicManager.setMusic(MusicManager.MusicState.TITLE);
-            if(Gdx.input.isButtonPressed(Input.Buttons.RIGHT)){
-                setCurrentState(GameState.MAIN_MENU);
-            }
-        }
-        else if(gameData.currState == GameState.TRANSITION_TO_GAME){
-            musicManager.setMusic(MusicManager.MusicState.L2);
-            transitionToGame(delta);
-        }
-        else if(gameData.currState == GameState.TRANSITION_TO_MENU){
-            musicManager.setMusic(MusicManager.MusicState.TITLE);
-            transitionToMenu(delta);
-        }
-        else if(gameData.currState == GameState.GAME_END){
-            musicManager.setMusic(MusicManager.MusicState.END);
-            if(pressed)
-            {
-                boolean okay = Util.isAreaTouched(x, y, Constants.ConfirmButton.xOkLeft,
-                        Constants.ConfirmButton.yDown,
-                        Constants.ConfirmButton.buttonWidth,
-                        Constants.ConfirmButton.buttonHeight);
-                boolean cancel = Util.isAreaTouched(x, y,
-                        Constants.ConfirmButton.xCancelLeft,
-                        Constants.ConfirmButton.yDown,
-                        Constants.ConfirmButton.buttonWidth,
-                        Constants.ConfirmButton.buttonHeight);
-                if(okay){
-                    GameManager.saveScore(gameSave);
-                    resetScore();
-                    setCurrentState(GameState.GAME_PLAY);
-                }
-                if(cancel)
-                {
-                    GameManager.saveScore(gameSave);
-                    resetScore();
-                    setCurrentState(GameState.TRANSITION_TO_MENU);
-                }
-            }
         }
     }
 
@@ -380,6 +403,14 @@ public class GameScene implements Screen {
         processInput();
 
         jeep.transitionJeep(delta);
+        if(powerUpHelper.isEffectActive(PowerUps.SHAMAN))
+        {
+            jeep.setMaxPassengersPerSide(maxPassngersPerSideShaman);
+        }
+        else
+        {
+            jeep.setMaxPassengersPerSide(maxPassngersPerSide);
+        }
         Set<MovingObject> scoredPassengers = jeep.processPassengers(delta);
 
         float c = MathUtils.log2(gameData.groundSpeed / initGroundSpeed) * moneyMultplier;
@@ -416,6 +447,8 @@ public class GameScene implements Screen {
         }
         else {
             bgMover.update(delta);
+            ObjectGenerator.delta(gameData.groundSpeed, delta);
+
             boolean colPerson = movePersons(delta);
             generatePerson(delta);
             //cars
@@ -444,14 +477,14 @@ public class GameScene implements Screen {
     }
 
     private void generateCar(float delta) {
-        Car car = ObjectGenerator.generateCar(gameData.groundSpeed, delta);
+        Car car = ObjectGenerator.generateCar();
         if(car != null) {
             cars.add(car);
         }
     }
 
     private void generatePerson(float delta) {
-        Person person = ObjectGenerator.generatePerson(gameData.groundSpeed, 0, 0, 0, 5f, delta);
+        Person person = ObjectGenerator.generatePerson(0, 0, 0);
         if(person != null) {
             persons.add(person);
         }
@@ -618,29 +651,29 @@ public class GameScene implements Screen {
     }
 
     private void processMenuButton(float delta) {
-        if(buttonTouched <= 0 && Gdx.input.isButtonPressed(Input.Buttons.LEFT))
+        if(buttonTouched[0] <= 0 && Gdx.input.isButtonPressed(Input.Buttons.LEFT))
         {
             Vector3 v3 = mainCamera.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
             float x = v3.x;
             float y = v3.y;
             if(Util.isButtonTouched(playBttn, x, y))
             {
-                buttonTouched = buttonTouchedDelay;
+                buttonTouched[0] = buttonTouchedDelay;
                 setCurrentState(GameState.TRANSITION_TO_GAME);
             }
             else if(Util.isButtonTouched(hsBttn, x, y))
             {
-                buttonTouched = buttonTouchedDelay;
+                buttonTouched[0] = buttonTouchedDelay;
                 setCurrentState(GameState.HIGH_SCORE);
             }
             else if(Util.isButtonTouched(storeBttn, x, y))
             {
-                buttonTouched = buttonTouchedDelay;
+                buttonTouched[0] = buttonTouchedDelay;
                 setCurrentState(GameState.STORE);
             }
             else if(Util.isButtonTouched(soundOn, x, y))
             {
-                buttonTouched = buttonTouchedDelay;
+                buttonTouched[0] = buttonTouchedDelay;
                 gameSave.setMuted(!gameSave.isMuted());
                 GameManager.saveScore(gameSave);
             }
@@ -726,6 +759,7 @@ public class GameScene implements Screen {
     }
 
     private void resetScore(){
+        ObjectGenerator.resetTime();
         gameData.timeoutToGameOverAccum = 0;
         gameSave.reset();
         gameData.groundSpeed = initGroundSpeed;
