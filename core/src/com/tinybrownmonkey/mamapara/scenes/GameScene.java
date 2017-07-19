@@ -75,6 +75,7 @@ public class GameScene implements Screen {
 
     private static boolean moving = true;
     private static boolean collission = false;
+    private static boolean prevCollission = false;
 
     //scores
     private GameSave gameSave;
@@ -444,6 +445,35 @@ public class GameScene implements Screen {
         else {
             jeep.getGrabber(rangeEffect).update(delta);
         }
+        float explodeEffect = powerUpHelper.getEffectAccumulator(PowerUps.EXPLODE); // getEffectAccumulator[PowerUps.RANGE.ordinal()];
+        if(explodeEffect > explodeCycle)
+        {
+            //do effect
+            for(MovingObject car:cars) {
+                if(car.getX() < jeep.getX())
+                {
+                    car.setSpeedX(-car.getSpeedX());
+                }
+                else
+                {
+                    car.setSpeedX(car.getSpeedX() * 50);
+                }
+
+                if(car.getY() > jeep.getY()){
+                    car.setSpeedY(-100);
+                }
+                else {
+                    car.setSpeedY(100);
+                }
+            }
+            powerUpHelper.setEffectFlag(PowerUps.EXPLODE, true);
+            powerUpHelper.resetEffectAccumulator(PowerUps.EXPLODE);
+        }
+        else
+        {
+            powerUpHelper.setEffectFlag(PowerUps.EXPLODE, false);
+        }
+
         if(jeep.getX() < jeepLoc)
         {
             //jeep.setX(jeep.getX() + (groundSpeed * delta));
@@ -534,7 +564,6 @@ public class GameScene implements Screen {
         boolean collisionOccured;
         for(MovingObject car:cars)
         {
-
             collisionOccured = Util.checkCollisions(car.getCollisionVertices(), jeep.getCollisionVertices());
             if(!powerUpHelper.isEffectActive(PowerUps.SHADOW)) {
                 if (collisionOccured) {
@@ -615,7 +644,7 @@ public class GameScene implements Screen {
         jeep.getGrabber(powerUpHelper.getEffectTime(PowerUps.RANGE)).draw(batch);
         hud.drawMainHud(batch, gameSave);
 
-        if(collission)
+        if(collission && !prevCollission)
         {
             System.out.println("Collission print!");
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -623,6 +652,14 @@ public class GameScene implements Screen {
             shapeRenderer.rect(0, 0, GameInfo.WIDTH * 10, GameInfo.HEIGHT * 10);
             shapeRenderer.end();
             //collission = false;
+        }
+        prevCollission = collission;
+        if(powerUpHelper.getEffectFlag(PowerUps.EXPLODE)){
+            System.out.println("Boom print!");
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(Color.RED);
+            shapeRenderer.rect(0, 0, GameInfo.WIDTH * 10, GameInfo.HEIGHT * 10);
+            shapeRenderer.end();
         }
 
     }

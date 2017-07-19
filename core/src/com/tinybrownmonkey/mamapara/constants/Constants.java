@@ -59,6 +59,8 @@ public class Constants {
 
     public final static int shareAskInterval = 7;
 
+    public final static float explodeCycle = 5f;
+
     public interface ConfirmButton{
         float xOkLeft = 530;
         float xCancelLeft = 249;
