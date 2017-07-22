@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.tinybrownmonkey.mamapara.actors.TimedText;
 import com.tinybrownmonkey.mamapara.constants.PowerUps;
 import com.tinybrownmonkey.mamapara.info.GameData;
@@ -42,9 +43,13 @@ public class Hud {
     private float candyWidth;
     private float candyHeight;
 
-    public Hud(GameSave gameSave, GameData gameData){
+    private PowerUpHelper powerUpHelper;
+
+
+    public Hud(GameSave gameSave, GameData gameData, PowerUpHelper powerUpHelper){
         this.gameSave = gameSave;
         this.gameData = gameData;
+        this.powerUpHelper = powerUpHelper;
 
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("pricedown bl.ttf"));
         FreeTypeFontGenerator.FreeTypeFontParameter parameter0 = new FreeTypeFontGenerator.FreeTypeFontParameter();
@@ -105,7 +110,6 @@ public class Hud {
     public void drawMainHud(SpriteBatch batch, GameSave gameSave){
         scoreFont.setColor(Color.GOLD);
         moneyFont.setColor(Color.GOLD);
-        dollarFont.setColor(Color.GOLD);
         scoreFont.draw(batch, gameSave.getDistance() + " m", GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 19/20);
         moneyFont.draw(batch, "$ " + gameSave.getMoney(), GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 8/10);
         for(int i = 0; i < gameSave.getPowerUps().size(); i++){
@@ -115,6 +119,7 @@ public class Hud {
             batch.draw(sprite, x, candyY);
         }
         for(TimedText timedText: timedTexts){
+            dollarFont.setColor(timedText.getColor());
             dollarFont.draw(batch, timedText.getText(), timedText.getX(), timedText.getY());
         }
 
@@ -142,8 +147,9 @@ public class Hud {
         }
     }
 
-    public void addTimedText(String text, float countDownTimer, float x, float y, float xSpeed, float ySpeed){
+    public void addTimedText(String text, Color color, float countDownTimer, float x, float y, float xSpeed, float ySpeed){
         TimedText tt = new TimedText(text,
+                color,
                 countDownTimer,
                 x,
                 y,

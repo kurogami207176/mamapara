@@ -1,11 +1,14 @@
 package com.tinybrownmonkey.mamapara.actors;
 
+import com.badlogic.gdx.graphics.Color;
+
 /**
  * Created by alaguipo on 17/06/2017.
  */
 
 public class TimedText {
     private String text;
+    private Color color;
     private float countDownTimer;
     private float initCountDownTimer;
     private float x;
@@ -13,7 +16,7 @@ public class TimedText {
     private float xSpeed;
     private float ySpeed;
 
-    public TimedText(String text, float countDownTimer, float x, float y, float xSpeed, float ySpeed){
+    public TimedText(String text, Color color, float countDownTimer, float x, float y, float xSpeed, float ySpeed){
         this.text = text;
         this.countDownTimer = countDownTimer;
         this.initCountDownTimer = countDownTimer;
@@ -21,6 +24,7 @@ public class TimedText {
         this.y = y;
         this.xSpeed = xSpeed;
         this.ySpeed = ySpeed;
+        this.color = color;
     }
 
     public String getText(){
@@ -43,5 +47,9 @@ public class TimedText {
     }
     public float getY(){
         return y;
+    }
+
+    public Color getColor() {
+        return color;
     }
 }

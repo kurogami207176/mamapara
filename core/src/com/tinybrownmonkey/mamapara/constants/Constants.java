@@ -61,6 +61,10 @@ public class Constants {
 
     public final static float explodeCycle = 5f;
 
+    public final static float shadowCycle = 0.25f;
+
+    public final static float shamanCycle = .25f;
+
     public interface ConfirmButton{
         float xOkLeft = 530;
         float xCancelLeft = 249;

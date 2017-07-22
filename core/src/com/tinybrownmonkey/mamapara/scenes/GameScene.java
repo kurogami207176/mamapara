@@ -130,8 +130,8 @@ public class GameScene implements Screen {
         }
 
         store = new Store(gameSave, gameData);
-        hud = new Hud(gameSave, gameData);
         powerUpHelper = new PowerUpHelper();
+        hud = new Hud(gameSave, gameData, powerUpHelper);
 
         musicManager = MusicManager.getInstance();
         initMenu();
@@ -221,6 +221,9 @@ public class GameScene implements Screen {
         //graphics
         Gdx.gl.glClearColor(1, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
         SpriteBatch batch = game.getSpriteBatch();
         batch.setProjectionMatrix(mainCamera.combined);
 
@@ -268,7 +271,7 @@ public class GameScene implements Screen {
             debugFont.draw(batch, "Test Mode", GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2);
         }
         batch.end();
-
+        drawShapes(shapeRenderer);
     }
 
     private float[] buttonTouched = new float[MAX_MULTI_TOUCH];
@@ -402,6 +405,7 @@ public class GameScene implements Screen {
             gameData.timeoutToGameOverAccum = gameData.timeoutToGameOverAccum + delta;
             if(gameData.timeoutToGameOverAccum > timeoutToGameOver){
                 setCurrentState(GameState.GAME_END);
+                GameManager.saveScore(gameSave);
             }
         }
 
@@ -425,6 +429,7 @@ public class GameScene implements Screen {
                 money = 1;
             }
             hud.addTimedText("$" + money,
+                    Color.GOLD,
                     1.5f,
                     scoredPassenger.getX() + scoredPassenger.getWidth() / 2,
                     scoredPassenger.getY() + scoredPassenger.getHeight() + 20,
@@ -456,10 +461,10 @@ public class GameScene implements Screen {
                 }
                 else
                 {
-                    car.setSpeedX(car.getSpeedX() * 50);
+                    car.setSpeedX(car.getSpeedX() * 2);
                 }
 
-                if(car.getY() > jeep.getY()){
+                if(car.getY() < jeep.getY()){
                     car.setSpeedY(-100);
                 }
                 else {
@@ -472,6 +477,24 @@ public class GameScene implements Screen {
         else
         {
             powerUpHelper.setEffectFlag(PowerUps.EXPLODE, false);
+        }
+        float shadowEffect = powerUpHelper.getEffectAccumulator(PowerUps.SHADOW); // getEffectAccumulator[PowerUps.RANGE.ordinal()];
+        if(shadowEffect > shadowCycle)
+        {
+            powerUpHelper.setEffectFlag(PowerUps.SHADOW, !powerUpHelper.getEffectFlag(PowerUps.SHADOW));
+            powerUpHelper.resetEffectAccumulator(PowerUps.SHADOW);
+        }
+        float shamanEffect = powerUpHelper.getEffectAccumulator(PowerUps.SHAMAN); // getEffectAccumulator[PowerUps.RANGE.ordinal()];
+        if(shamanEffect > shamanCycle)
+        {
+            hud.addTimedText(random.nextBoolean()? "*": "o",
+                    random.nextBoolean()? Color.GREEN : Color.DARK_GRAY,
+                    1.5f,
+                    jeep.getX() + (random.nextFloat() * jeep.getWidth()),
+                    jeep.getY(),
+                    -0.1f * gameData.groundSpeed,
+                    150);
+            powerUpHelper.resetEffectAccumulator(PowerUps.SHAMAN);
         }
 
         if(jeep.getX() < jeepLoc)
@@ -552,9 +575,9 @@ public class GameScene implements Screen {
                     gameData.timeoutToGameOverBool = true;
                 }
             }
-            else if (collisionOccured) {
-                powerUpHelper.setEffectFlag(PowerUps.SHADOW, true);
-            }
+//            else if (collisionOccured) {
+//                powerUpHelper.setEffectFlag(PowerUps.SHADOW, true);
+//            }
         }
         return retVal;
     }
@@ -577,9 +600,9 @@ public class GameScene implements Screen {
                     gameData.timeoutToGameOverBool = true;
                 }
             }
-            else if (collisionOccured) {
-                powerUpHelper.setEffectFlag(PowerUps.SHADOW, true);
-            }
+//            else if (collisionOccured) {
+//                powerUpHelper.setEffectFlag(PowerUps.SHADOW, true);
+//            }
 
             groundMover.move(car, delta);
 
@@ -618,15 +641,11 @@ public class GameScene implements Screen {
                 }
             }
         }
-        if(powerUpHelper.isEffectActive(PowerUps.SHADOW)
-                && powerUpHelper.getEffectFlag(PowerUps.SHADOW)
-                && random.nextInt(10)==0) {
-            float x = jeep.getX();
-            float y = jeep.getY();
-            jeep.setPosition(x + random.nextInt(50) - 25, y + random.nextInt(50) - 25);
-            jeep.draw(batch);
-            jeep.setPosition(x, y);
-            powerUpHelper.setEffectFlag(PowerUps.SHADOW, false);
+        if(powerUpHelper.isEffectActive(PowerUps.SHADOW)) {
+            if(powerUpHelper.getEffectFlag(PowerUps.SHADOW))
+            {
+                jeep.draw(batch);
+            }
         }
         else{
             jeep.draw(batch);
@@ -644,24 +663,36 @@ public class GameScene implements Screen {
         jeep.getGrabber(powerUpHelper.getEffectTime(PowerUps.RANGE)).draw(batch);
         hud.drawMainHud(batch, gameSave);
 
+    }
+
+    private void drawShapes(ShapeRenderer shapeRenderer)
+    {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setProjectionMatrix(mainCamera.combined);
         if(collission && !prevCollission)
         {
             System.out.println("Collission print!");
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             shapeRenderer.setColor(Color.WHITE);
             shapeRenderer.rect(0, 0, GameInfo.WIDTH * 10, GameInfo.HEIGHT * 10);
-            shapeRenderer.end();
-            //collission = false;
         }
         prevCollission = collission;
         if(powerUpHelper.getEffectFlag(PowerUps.EXPLODE)){
             System.out.println("Boom print!");
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             shapeRenderer.setColor(Color.RED);
             shapeRenderer.rect(0, 0, GameInfo.WIDTH * 10, GameInfo.HEIGHT * 10);
-            shapeRenderer.end();
         }
-
+        List<PowerUpHelper.ActivePowerUp> apuList = powerUpHelper.getActivePowerupList();
+        float rad = 25;
+        if(apuList != null && apuList.size() > 0){
+            float initX = rad;
+            int i= 0;
+            for(PowerUpHelper.ActivePowerUp apu: apuList){
+                shapeRenderer.setColor(apu.pu.getColor());
+                shapeRenderer.arc(initX + (i * 2 * rad), rad, rad, 0, 360 * (apu.timeLeft / apu.timeMax));
+                i++;
+            }
+        }
+        shapeRenderer.end();
     }
 
     private void drawMenu(SpriteBatch batch){

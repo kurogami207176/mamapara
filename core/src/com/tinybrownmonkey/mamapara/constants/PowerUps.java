@@ -1,23 +1,27 @@
 package com.tinybrownmonkey.mamapara.constants;
 
+import com.badlogic.gdx.graphics.Color;
+
 /**
  * Created by AlainAnne on 19-Jun-17.
  */
 
 public enum PowerUps {
-    EXPLODE ("Tabby", "Cars avoid you!", 100),
-    RANGE ("Barker", "Range increase.", 150),
-    SHADOW ("Side swipe", "Immunity from bumps", 200),
-    SHAMAN ("Shaman", "More passengers", 150),
-    SLOT ("SLOT", "Increase slots!", 1000);
+    EXPLODE ("Tabi", "Cars avoid you!", 100, Color.FIREBRICK),
+    RANGE ("Barker", "Range increase.", 150, Color.GOLD),
+    SHADOW ("Side swipe", "Immunity from bumps", 200, Color.NAVY),
+    SHAMAN ("Shaman", "More passengers", 150, Color.FOREST),
+    SLOT ("SLOT", "Increase slots!", 1000, Color.WHITE);
     private String title;
     private String desc;
     private int price;
+    private Color color;
 
-    PowerUps(String title, String desc, int price){
+    PowerUps(String title, String desc, int price, Color color){
         this.title = title;
         this.desc = desc;
         this.price = price;
+        this.color = new Color(color.r, color.g, color.b, 0.2f);
     }
 
     public String getTitle() {
@@ -41,5 +45,9 @@ public enum PowerUps {
             }
         }
         return -1;
+    }
+
+    public Color getColor() {
+        return color;
     }
 }
