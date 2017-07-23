@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.tinybrownmonkey.mamapara.actors.Car;
 import com.tinybrownmonkey.mamapara.actors.Person;
 import com.tinybrownmonkey.mamapara.constants.Constants;
+import com.tinybrownmonkey.mamapara.info.GameData;
 import com.tinybrownmonkey.mamapara.info.GameInfo;
 
 import java.util.Random;
@@ -40,7 +41,11 @@ public class ObjectGenerator {
 
     private static Texture copTx;
 
-    public static void loadTextures(){
+    private static GameData gameData;
+
+    public static void loadTextures(GameData gameData){
+        ObjectGenerator.gameData = gameData;
+
         personTx = new Texture[]{
                 new Texture("person_blue.png"),
                 new Texture("person_red.png"),
@@ -107,7 +112,25 @@ public class ObjectGenerator {
     public static Car generateCar() {
         if(carIntervalCounter <= 0)
         {
-            float y = Constants.lanePositions[random.nextInt(Constants.lanePositions.length)];
+            int index = gameData.laneIndex;
+            int dice = random.nextInt(100);
+            int adder = 0;
+            if(dice > 90){
+                adder = 2;
+            }
+            else if(dice > 70){
+                adder = 1;
+            }
+            adder = random.nextBoolean()? adder : -adder;
+            index = index + adder;
+            if(index < 0) {
+                index = 0;
+            }
+            else if(index > Constants.lanePositions.length - 1){
+                index = Constants.lanePositions.length - 1;
+            }
+
+            float y = Constants.lanePositions[index];
             Car car = new Car(carsTx[random.nextInt(carsTx.length)], GameInfo.WIDTH, y);
             carIntervalCounter = groundSpeed * (carIntervalMin + random.nextFloat() * carIntervalRange);
             float minSpeed = groundSpeed * carMinimumSpeedRelativeToGroundSpeed;
@@ -130,22 +153,6 @@ public class ObjectGenerator {
     }
 
     public static PersonInfo getRandomPersonInfo(){
-//        float totalLifetime = 0;
-//        for(PersonInfo pi: PersonInfo.values())
-//        {
-//            totalLifetime = totalLifetime + pi.lifetime;
-//        }
-//        float randFloat = random.nextFloat() * totalLifetime;
-//        totalLifetime = 0;
-//        for(PersonInfo pi: PersonInfo.values())
-//        {
-//            totalLifetime = totalLifetime + pi.lifetime;
-//            if(randFloat <= totalLifetime)
-//            {
-//                return  pi;
-//            }
-//        }
-//        return PersonInfo.values()[PersonInfo.values().length - 1];
         return PersonInfo.values()[random.nextInt(PersonInfo.values().length)];
     }
 

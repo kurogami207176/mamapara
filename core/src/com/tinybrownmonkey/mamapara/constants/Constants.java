@@ -9,8 +9,9 @@ import com.tinybrownmonkey.mamapara.info.GameInfo;
 public class Constants {
     public final static float skySpeedFraction = 0.25f;
     public final static float groundSpeedFraction = 1f;
-    public final static float initGroundSpeed = 400;
+    public final static float initGroundSpeed = 300;
     public final static float topGroundSpeed = 3000;
+    public final static float groundSpeedIncrement = 2;
 
     public final static int changeLaneSpeed = 300;
     private final static float topLaneY = GameInfo.HEIGHT / 2.2f;
@@ -26,7 +27,6 @@ public class Constants {
         lanePositions[laneCount - 1] = bottomLaneY;
     }
     public final static int jeepLoc = 50;
-    public final static float groundSpeedIncrement = 10;
     public final static float angleSpeed = 100;
     public final static float grabberRange = 100;
     public final static float grabberSpeed = 200;

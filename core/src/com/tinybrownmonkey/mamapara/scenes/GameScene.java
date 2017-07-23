@@ -146,7 +146,7 @@ public class GameScene implements Screen {
         Texture road = TextureManager.get("road_bg.png");
         bgMover.addBackground(sky, GameInfo.HEIGHT - sky.getHeight(), Constants.skySpeedFraction);
         bgMover.addBackground(road, 0, Constants.groundSpeedFraction);
-        ObjectGenerator.loadTextures();
+        ObjectGenerator.loadTextures(gameData);
         Texture jeepTexture = TextureManager.get("jeepney_side.png");
         Texture grabberTexture = TextureManager.get("range.png");
         Texture bigGrabberTexture = TextureManager.get("range_big.png");

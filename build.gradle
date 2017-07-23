@@ -14,7 +14,7 @@ allprojects {
     apply plugin: "eclipse"
     apply plugin: "idea"
 
-    version = '1.0'
+    version = '1.1'
     ext {
         appName = "Mamapara"
         gdxVersion = '1.9.6'
@@ -72,6 +72,7 @@ project(":android") {
         natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86"
         natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86_64"
         compile "com.google.android.gms:play-services-ads:$admobVersion"
+        compile 'com.facebook.android:facebook-android-sdk:[4,5)'
     }
 }
 
