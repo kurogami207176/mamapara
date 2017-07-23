@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Mamapara</string>
+    <string name="app_name">Mamapara!</string>
+    <string name="admob_id">ca-app-pub-1898322806059025~5050327923</string>
+    <string name="admob_gameplay_id">ca-app-pub-1898322806059025/4050083354</string>
 
 </resources>

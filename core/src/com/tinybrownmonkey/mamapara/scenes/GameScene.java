@@ -192,7 +192,7 @@ public class GameScene implements Screen {
         updateComponents(delta);
 
         //music
-        if(!gameSave.isMuted()) {
+        if(gameSave.isMuted()) {
             musicManager.mute();
         }
         else{
@@ -236,7 +236,7 @@ public class GameScene implements Screen {
                 batch.draw(playBttn, playBttn.getX(), playBttn.getY());
                 batch.draw(hsBttn, hsBttn.getX(), hsBttn.getY());
                 batch.draw(storeBttn, storeBttn.getX(), storeBttn.getY());
-                if(gameSave.isMuted()) {
+                if(!gameSave.isMuted()) {
                     batch.draw(soundOn, soundOn.getX(), soundOn.getY());
                 }
                 else {
@@ -487,8 +487,8 @@ public class GameScene implements Screen {
         float shamanEffect = powerUpHelper.getEffectAccumulator(PowerUps.SHAMAN); // getEffectAccumulator[PowerUps.RANGE.ordinal()];
         if(shamanEffect > shamanCycle)
         {
-            hud.addTimedText(random.nextBoolean()? "*": "o",
-                    random.nextBoolean()? Color.GREEN : Color.DARK_GRAY,
+            hud.addTimedText(random.nextBoolean()? "*": "#",
+                    random.nextBoolean()? Color.GREEN : Color.FOREST,
                     1.5f,
                     jeep.getX() + (random.nextFloat() * jeep.getWidth()),
                     jeep.getY(),

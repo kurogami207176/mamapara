@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.utils.Json;
 import com.tinybrownmonkey.mamapara.info.GameData;
+import com.tinybrownmonkey.mamapara.info.GameInfo;
 import com.tinybrownmonkey.mamapara.info.GameSave;
 
 /**
@@ -28,11 +29,23 @@ public class GameManager {
     }
 
     public static GameSave loadScores(){
+        if(GameInfo.DEBUG_MODE) {
+            GameSave retVal = new GameSave();
+            if (GameInfo.DEBUG_MODE) {
+                retVal.addMoney(9999999);
+                retVal.reset();
+            }
+            return retVal;
+        }
+        else
+        {
         String gdString = pref.getString("score");
         if(gdString == null || gdString.length() <= 0){
-            return new GameSave();
+            GameSave retVal = new GameSave();
+            return retVal;
         }
         return json.fromJson(GameSave.class, gdString);
+        }
     }
     public static void saveGameData(GameData gameData){
         if(gameData != null)

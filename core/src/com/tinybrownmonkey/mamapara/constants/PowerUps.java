@@ -7,21 +7,21 @@ import com.badlogic.gdx.graphics.Color;
  */
 
 public enum PowerUps {
-    EXPLODE ("Tabi", "Cars avoid you!", 100, Color.FIREBRICK),
-    RANGE ("Barker", "Range increase.", 150, Color.GOLD),
-    SHADOW ("Side swipe", "Immunity from bumps", 200, Color.NAVY),
-    SHAMAN ("Shaman", "More passengers", 150, Color.FOREST),
-    SLOT ("SLOT", "Increase slots!", 1000, Color.WHITE);
+    EXPLODE ("Tabbi", "Cars avoid you!", Color.FIREBRICK, 100, 300, 900),
+    RANGE ("Barker", "Range increase.", Color.GOLD, 150, 450, 1050),
+    SHADOW ("iLag", "Immunity from bumps", Color.NAVY, 200, 800, 2500),
+    SHAMAN ("Shaman", "More passengers", Color.FOREST, 180, 600, 1600),
+    SLOT ("SLOT", "Increase slots!", Color.WHITE, 1000, 3000, 10000, 25000, 100000, 500000);
     private String title;
     private String desc;
-    private int price;
+    private int[] price;
     private Color color;
 
-    PowerUps(String title, String desc, int price, Color color){
+    PowerUps(String title, String desc, Color color, int... price){
         this.title = title;
         this.desc = desc;
         this.price = price;
-        this.color = new Color(color.r, color.g, color.b, 0.2f);
+        this.color = new Color(color.r, color.g, color.b, 0.5f);
     }
 
     public String getTitle() {
@@ -32,8 +32,8 @@ public enum PowerUps {
         return desc;
     }
 
-    public int getPrice() {
-        return price;
+    public int getPrice(int level) {
+        return price[level - 1];
     }
 
     public static int getIndex(PowerUps pu){

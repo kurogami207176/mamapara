@@ -48,6 +48,8 @@ public class Store {
     private GameSave gameSave;
     private GameData gameData;
 
+    private float storeBottomY = 40;
+
     private float frontOffset = 219;
     private float frontGap = 5;
     private float frontY = 261;
@@ -137,7 +139,8 @@ public class Store {
 
     }
 
-    public boolean processInput(float x, float y) {
+    public boolean processInput(float x, float yO) {
+        float y = yO - storeBottomY;
         if (Util.isAreaTouched(x, y, backX, backY, backWidth, backHeight)) {
             main = State.TRANSITION_OUT;
             return true;
@@ -154,11 +157,17 @@ public class Store {
                     candyTouch = Util.isAreaTouched(x, y, xC, yC, candyWidth, candyHeight);
                     if (candyTouch) {
                         if(gameSave.getSlotCount() > gameSave.getPowerUps().size()) {
-                            selected = PowerUps.values()[xi];
-                            level = 3 - yi;
-                            main = State.DIALOG;
-                            System.out.println("POWER UP: " + selected);
-                            System.out.println("Level: " + level);
+                            if(gameSave.getMoneyTotal() > PowerUps.values()[xi].getPrice(3 - yi)) {
+                                selected = PowerUps.values()[xi];
+                                level = 3 - yi;
+                                main = State.DIALOG;
+                                System.out.println("POWER UP: " + selected);
+                                System.out.println("Level: " + level);
+                            }
+                            else
+                            {
+                                showWarning("Not enough money!");
+                            }
                             break candyLoop;
                         }
                         else
@@ -174,8 +183,15 @@ public class Store {
                 float yC = 0;
                 sigTouch = Util.isAreaTouched(x, y, xC, yC, cigSide.getWidth(), cigSide.getHeight());
                 if (sigTouch) {
-                    main = State.DIALOG;
-                    System.out.println("Touched sig # " + (i + 1));
+                    if(gameSave.getMoneyTotal() > PowerUps.SLOT.getPrice(gameSave.getSlotCount() + 1)) {
+                        main = State.DIALOG;
+                        level = (gameSave.getSlotCount() + 1);
+                        System.out.println("Touched sig # " + (i + 1));
+                    }
+                    else
+                    {
+                        showWarning("Not enough money!");
+                    }
                     break sigLoop;
                 }
             }
@@ -195,10 +211,14 @@ public class Store {
             if(okay){
                 if(selected == null)
                 {
+                    gameSave.addMoney(-PowerUps.SLOT.getPrice(level));
+                    gameSave.reset();
                     gameSave.setSlotCount(gameSave.getSlotCount() + 1);
                 }
                 else
                 {
+                    gameSave.addMoney(-selected.getPrice(level));
+                    gameSave.reset();
                     gameSave.addPowerUp(selected, level);
                 }
                 GameManager.saveScore(gameSave);
@@ -238,9 +258,9 @@ public class Store {
             case TRANSITION_IN:
                 offsetY = offsetY - Constants.transitionSpeed * delta;
                 System.out.println("TIN=" + offsetY);
-                if(offsetY <= 0) {
+                if(offsetY <= storeBottomY) {
                     main = State.MAIN;
-                    offsetY = 0;
+                    offsetY = storeBottomY;
                 }
                 break;
             case TRANSITION_OUT:
@@ -293,15 +313,13 @@ public class Store {
             if(selected != null) {
                 batch.draw(icons.get(selected), iconX, iconY);
                 titleFont.draw(batch, selected.getTitle() + " - " + level, titleX, titleY);
-                priceFont.draw(batch, String.valueOf(priceCalculator(selected.getPrice(), level)),
-                        priceX, priceY);
+                priceFont.draw(batch, String.valueOf(selected.getPrice(level)), priceX, priceY);
                 descFont.draw(batch, selected.getDesc(), descX, descY);
             }
             else
             {
-                titleFont.draw(batch, PowerUps.SLOT.getTitle() + " - " + (gameSave.getSlotCount() + 1), titleX, titleY);
-                priceFont.draw(batch, String.valueOf(priceCalculator(PowerUps.SLOT.getPrice(), level)),
-                        priceX, priceY);
+                titleFont.draw(batch, PowerUps.SLOT.getTitle() + " - " + level, titleX, titleY);
+                priceFont.draw(batch, String.valueOf(PowerUps.SLOT.getPrice(level)), priceX, priceY);
                 descFont.draw(batch, PowerUps.SLOT.getDesc(), descX, descY);
             }
         }
@@ -310,10 +328,6 @@ public class Store {
             priceFont.draw(batch, showWarning, GameInfo.WIDTH / 2 - 150, GameInfo.HEIGHT / 2 + 180);
         }
    }
-
-    private int priceCalculator(int price, int level){
-        return price * level;
-    }
 
     private void showWarning(String warning){
         showWarning = warning;
