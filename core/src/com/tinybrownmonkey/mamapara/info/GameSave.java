@@ -26,6 +26,8 @@ public class GameSave {
     private int lastRatingAsk = 0;
     private boolean disableRatingAsk = false;
 
+    private String lastVersionNo;
+
     private int slotCount = 0;
     private int powerUpType1 = -1;
     private int powerUpType2 = -1;
@@ -329,5 +331,13 @@ public class GameSave {
 
     public void clearAllPowerUps(){
         setPowerUps(new ArrayList<EquippedPowerUp>());
+    }
+
+    public String getLastVersionNo() {
+        return lastVersionNo;
+    }
+
+    public void setLastVersionNo(String lastVersionNo) {
+        this.lastVersionNo = lastVersionNo;
     }
 }

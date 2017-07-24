@@ -19,7 +19,7 @@ android {
     }
     defaultConfig {
         applicationId "com.tinybrownmonkey.mamapara"
-        minSdkVersion 14
+        minSdkVersion 15
         targetSdkVersion 26
     }
 }

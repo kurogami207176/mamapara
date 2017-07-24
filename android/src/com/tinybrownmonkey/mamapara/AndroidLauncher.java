@@ -1,5 +1,11 @@
 package com.tinybrownmonkey.mamapara;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -14,10 +20,13 @@ import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.tinybrownmonkey.mamapara.MamaParaGame;
+import com.tinybrownmonkey.mamapara.helper.GameManager;
+import com.tinybrownmonkey.mamapara.info.GameSave;
 
 public class AndroidLauncher extends AndroidApplication {
 	private static final String TAG = "AndroidLauncher";
 	protected AdView adView;
+    private static final String PLAY_STORE_LINK = "https://play.google.com/store/apps/details?id=com.tinybrownmonkey.mamapara";
 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
@@ -59,4 +68,67 @@ public class AndroidLauncher extends AndroidApplication {
         setContentView(layout);
 
 	}
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        checkGameCount();
+    }
+
+    private void checkGameCount(){
+        String currentVersion = null;
+        try {
+            PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
+            currentVersion = pInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        final GameSave gameSave = GameManager.loadScores();
+        if(gameSave.getLastVersionNo() == null || gameSave.getLastVersionNo().equalsIgnoreCase(currentVersion)) {
+            gameSave.setDisableRatingAsk(false);
+            gameSave.setDisableShareAsk(false);
+        }
+        if(!gameSave.isDisableShareAsk() && gameSave.getLaunchCount() % 7 == 6){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(R.string.share_question);
+            builder.setPositiveButton(R.string.share_positive, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    gameSave.setDisableShareAsk(true);
+                    Intent sendIntent = new Intent();
+                    sendIntent.setAction(Intent.ACTION_SEND);
+                    sendIntent.putExtra(Intent.EXTRA_TEXT, PLAY_STORE_LINK);
+                    sendIntent.setType("text/plain");
+                    startActivity(sendIntent);
+                }
+            });
+            builder.setNegativeButton(R.string.share_negative, null);
+            builder.setNeutralButton(R.string.share_neutral, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    gameSave.setDisableShareAsk(true);
+                }
+            });
+            builder.create().show();
+        } else if(!gameSave.isDisableRatingAsk() && gameSave.getLaunchCount() % 5 == 4){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(R.string.rate_question);
+            builder.setPositiveButton(R.string.rate_positive, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    gameSave.setDisableRatingAsk(true);
+                    Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(PLAY_STORE_LINK));
+                    startActivity(sendIntent);
+                }
+            });
+            builder.setNegativeButton(R.string.rate_negative, null);
+            builder.setNeutralButton(R.string.rate_neutral, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    gameSave.setDisableRatingAsk(true);
+                }
+            });
+            builder.create().show();
+        }
+    }
 }
