@@ -100,6 +100,7 @@ public class AndroidLauncher extends AndroidApplication {
                     sendIntent.putExtra(Intent.EXTRA_TEXT, PLAY_STORE_LINK);
                     sendIntent.setType("text/plain");
                     startActivity(sendIntent);
+                    dialogInterface.dismiss();
                 }
             });
             builder.setNegativeButton(R.string.share_negative, null);
@@ -107,6 +108,7 @@ public class AndroidLauncher extends AndroidApplication {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
                     gameSave.setDisableShareAsk(true);
+                    dialogInterface.dismiss();
                 }
             });
             builder.create().show();
@@ -119,13 +121,27 @@ public class AndroidLauncher extends AndroidApplication {
                     gameSave.setDisableRatingAsk(true);
                     Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(PLAY_STORE_LINK));
                     startActivity(sendIntent);
+                    dialogInterface.dismiss();
                 }
             });
-            builder.setNegativeButton(R.string.rate_negative, null);
+            builder.setNegativeButton(R.string.rate_negative, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    Intent intent = new Intent(Intent.ACTION_SENDTO);
+                    intent.setData(Uri.parse("mailto:tinybrownmonkey@gmail.com")); // only email apps should handle this
+                    intent.putExtra(Intent.EXTRA_EMAIL, "tinybrownmonkey@gmail.com");
+                    intent.putExtra(Intent.EXTRA_SUBJECT, "Suggestions for Mamapara!");
+                    if (intent.resolveActivity(getPackageManager()) != null) {
+                        startActivity(intent);
+                    }
+                    dialogInterface.dismiss();
+                }
+            });
             builder.setNeutralButton(R.string.rate_neutral, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
                     gameSave.setDisableRatingAsk(true);
+                    dialogInterface.dismiss();
                 }
             });
             builder.create().show();

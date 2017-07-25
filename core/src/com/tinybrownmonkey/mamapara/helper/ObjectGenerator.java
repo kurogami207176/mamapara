@@ -19,8 +19,8 @@ import static com.tinybrownmonkey.mamapara.constants.Constants.carMinimumSpeedRe
 public class ObjectGenerator {
     private static Random random = new Random();
     private static float personIntervalCounter = 0;
-    private static float personIntervalMin = 0.01f;
-    private static float personIntervalRange = 0.055f;
+    private static float personIntervalMin = 0.05f;
+    private static float personIntervalRange = 0.2f;
 
     private static float carIntervalCounter = 0;
     private static float carIntervalMin = 1f;
@@ -29,7 +29,12 @@ public class ObjectGenerator {
     private static float personRangeMax = GameInfo.HEIGHT * 0.656f;
     private static float personRangeMin = 0;
 
-    private static float personRange = 60;
+    private static float personRange = 40;
+    private static float personMovingRange = 200;
+
+    private static int pedestrianGenMax = 200;
+    private static int pedestrianGenMin = 20;
+    private static int pedestrianGenCtr = 0;
 
     private static float totalTime;
     private static float delta;
@@ -85,12 +90,31 @@ public class ObjectGenerator {
         totalTime = 0;
     }
 
-    public static Person generatePerson(float speedX, float speedY, float angle) {
+    public static Person generatePerson(float angle) {
+        float speedX = 0;
+        float speedY = 0;
         if(personIntervalCounter <= 0)
         {
+            int pedestrianGen = pedestrianGenMax - pedestrianGenCtr;
+            if(pedestrianGen < pedestrianGenMin){
+                pedestrianGen = pedestrianGenMin;
+            }
+            int ran = random.nextInt(pedestrianGen);
             boolean up = random.nextBoolean();
             float randFloat = random.nextFloat();
-            float y = up? (personRangeMax - personRange * randFloat) : (personRangeMin + personRange * randFloat);
+            float y;
+            if(ran == 0)
+            {
+                pedestrianGenCtr++;
+                speedY = up? -50 : 50;
+                y = up? (personRangeMax - personMovingRange * randFloat) : (personRangeMin + personMovingRange * randFloat);
+            }
+            else
+            {
+                speedY = 0;
+                y = up? (personRangeMax - personRange * randFloat) : (personRangeMin + personRange * randFloat);
+            }
+
             PersonInfo pi = getRandomPersonInfo();
             Person person = new Person(personTx[pi.index], GameInfo.WIDTH, y);
             personIntervalCounter = groundSpeed * (personIntervalMin + random.nextFloat() * personIntervalRange);

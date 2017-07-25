@@ -541,7 +541,7 @@ public class GameScene implements Screen {
     }
 
     private void generatePerson(float delta) {
-        Person person = ObjectGenerator.generatePerson(0, 0, 0);
+        Person person = ObjectGenerator.generatePerson(0);
         if(person != null) {
             persons.add(person);
         }

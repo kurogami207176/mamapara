@@ -5,10 +5,11 @@
     <string name="admob_id">ca-app-pub-1898322806059025~5050327923</string>
     <string name="admob_gameplay_id">ca-app-pub-1898322806059025/4050083354</string>
     <string name="facebook_app_id">104898060190732</string>
+    <string name="fb_login_protocol_scheme">fb104898060190732</string>
 
-    <string name="rate_question">Would you like to give the game a rating?</string>
-    <string name="rate_positive">Rate!</string>
-    <string name="rate_negative">Next time</string>
+    <string name="rate_question">Rate the game?</string>
+    <string name="rate_positive">5 stars!</string>
+    <string name="rate_negative">Suggestions..</string>
     <string name="rate_neutral">Disable</string>
     <string name="share_question">Wanna share the fun to your friends?</string>
     <string name="share_positive">Share!</string>
