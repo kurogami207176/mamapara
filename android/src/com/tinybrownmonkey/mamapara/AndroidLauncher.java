@@ -87,6 +87,7 @@ public class AndroidLauncher extends AndroidApplication {
         if(gameSave.getLastVersionNo() == null || gameSave.getLastVersionNo().equalsIgnoreCase(currentVersion)) {
             gameSave.setDisableRatingAsk(false);
             gameSave.setDisableShareAsk(false);
+            gameSave.setLastVersionNo(currentVersion);
         }
         if(!gameSave.isDisableShareAsk() && gameSave.getLaunchCount() % 7 == 6){
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
