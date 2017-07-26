@@ -65,6 +65,10 @@ public class Constants {
 
     public final static float shamanCycle = .25f;
 
+    public final static int tutMaxPersons = 5;
+    public final static int tutMaxCars = 3;
+    public final static int tutBonusMoney = 1200;
+
     public interface ConfirmButton{
         float xOkLeft = 530;
         float xCancelLeft = 249;

@@ -43,6 +43,25 @@ public class GameSave {
     private int level5 = 0;
     private int level6 = 0;
 
+    //tutorial
+    private boolean tutMainMenu = false;
+    private boolean tutShop = false;
+    private boolean tutPersons = false;
+    private boolean tutCar = false;
+    private boolean tutChangeLane = false;
+    private boolean tutPowerUp = false;
+    private boolean tutBonus = false;
+
+    public void enableTutorials(){
+        tutMainMenu = false;
+        tutShop = false;
+        tutPersons = false;
+        tutCar = false;
+        tutChangeLane = false;
+        tutPowerUp = false;
+        tutBonus = false;
+    }
+
     public void addDistance(float distance){
         this.distance = this.distance + distance;
         if(this.distance > highScore)
@@ -339,5 +358,62 @@ public class GameSave {
 
     public void setLastVersionNo(String lastVersionNo) {
         this.lastVersionNo = lastVersionNo;
+    }
+
+
+    public boolean isTutMainMenu() {
+        return tutMainMenu;
+    }
+
+    public void setTutMainMenu(boolean tutMainMenu) {
+        this.tutMainMenu = tutMainMenu;
+    }
+
+    public boolean isTutShop() {
+        return tutShop;
+    }
+
+    public void setTutShop(boolean tutShop) {
+        this.tutShop = tutShop;
+    }
+
+    public boolean isTutChangeLane() {
+        return tutChangeLane;
+    }
+
+    public void setTutChangeLane(boolean tutChangeLane) {
+        this.tutChangeLane = tutChangeLane;
+    }
+
+    public boolean isTutPowerUp() {
+        return tutPowerUp;
+    }
+
+    public void setTutPowerUp(boolean tutPowerUp) {
+        this.tutPowerUp = tutPowerUp;
+    }
+
+    public boolean isTutPersons() {
+        return tutPersons;
+    }
+
+    public void setTutPersons(boolean tutPersons) {
+        this.tutPersons = tutPersons;
+    }
+
+    public boolean isTutCar() {
+        return tutCar;
+    }
+
+    public void setTutCar(boolean tutCar) {
+        this.tutCar = tutCar;
+    }
+
+    public boolean isTutBonus() {
+        return tutBonus;
+    }
+
+    public void setTutBonus(boolean tutBonus) {
+        this.tutBonus = tutBonus;
     }
 }

@@ -201,6 +201,7 @@ public class Store {
         }
         else if (main == State.DIALOG)
         {
+            y = yO;
             boolean okay = Util.isAreaTouched(x, y, Constants.ConfirmButton.xOkLeft,
                     Constants.ConfirmButton.yDown,
                     Constants.ConfirmButton.buttonWidth,
@@ -259,7 +260,6 @@ public class Store {
         {
             case TRANSITION_IN:
                 offsetY = offsetY - Constants.transitionSpeed * delta;
-                System.out.println("TIN=" + offsetY);
                 if(offsetY <= storeBottomY) {
                     main = State.MAIN;
                     offsetY = storeBottomY;
@@ -267,7 +267,6 @@ public class Store {
                 break;
             case TRANSITION_OUT:
                 offsetY = offsetY + Constants.transitionSpeed * delta;
-                System.out.println("TOUT=" + offsetY);
                 if(offsetY > GameInfo.HEIGHT) {
                     main = State.TRANSITION_IN;
                     gameData.currState = GameState.MAIN_MENU;
@@ -359,5 +358,21 @@ public class Store {
     private enum State
     {
         TRANSITION_IN, TRANSITION_OUT, MAIN, DIALOG;
+    }
+
+    public float getMoneyX() {
+        return moneyX;
+    }
+
+    public void setMoneyX(float moneyX) {
+        this.moneyX = moneyX;
+    }
+
+    public float getMoneyY() {
+        return moneyY;
+    }
+
+    public void setMoneyY(float moneyY) {
+        this.moneyY = moneyY;
     }
 }

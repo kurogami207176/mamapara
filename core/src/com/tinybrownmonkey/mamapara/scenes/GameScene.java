@@ -20,6 +20,7 @@ import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.tinybrownmonkey.mamapara.MamaParaGame;
 import com.tinybrownmonkey.mamapara.actors.Car;
+import com.tinybrownmonkey.mamapara.actors.Labeller;
 import com.tinybrownmonkey.mamapara.constants.PowerUps;
 import com.tinybrownmonkey.mamapara.helper.BackgroundMover;
 import com.tinybrownmonkey.mamapara.helper.EquippedPowerUp;
@@ -84,8 +85,8 @@ public class GameScene implements Screen {
     private GameData gameData;
 
     private BitmapFont highScoreFont;
-
     private BitmapFont debugFont;
+    private BitmapFont tutorialFont;
 
     private Hud hud;
     private Store store;
@@ -96,9 +97,17 @@ public class GameScene implements Screen {
 
     private Random random = new Random();
     private MusicManager musicManager;
-    ShapeRenderer shapeRenderer;
+    private ShapeRenderer shapeRenderer;
 
     private int MAX_MULTI_TOUCH = 2;
+
+    private List<Labeller> labels = new ArrayList<Labeller>();
+    private List<Labeller> removableLabels = new ArrayList<Labeller>();
+
+    private Color tutColor = Color.DARK_GRAY;
+    private int tutPersonCounter = 0;
+    private int tutCarCounter = 0;
+
 
     public GameScene(MamaParaGame game) {
         this.game = game;
@@ -118,6 +127,11 @@ public class GameScene implements Screen {
         highScoreFont = generator.generateFont(parameter0);
         highScoreFont.setColor(Color.DARK_GRAY);
 
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter1 = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter1.size = 35;
+        tutorialFont = generator.generateFont(parameter1);
+        tutorialFont.setColor(Color.ROYAL);
+
         gameSave = GameManager.loadScores();
         System.out.println("Launched " + gameSave.getLaunchCount() + " times!");
         gameSave.setLaunchCount(gameSave.getLaunchCount() + 1);
@@ -135,11 +149,15 @@ public class GameScene implements Screen {
         powerUpHelper = new PowerUpHelper();
         hud = new Hud(gameSave, gameData, powerUpHelper);
 
+        labels = new ArrayList<Labeller>();
+
         musicManager = MusicManager.getInstance();
         initMenu();
 
         initGameplay();
 
+        //gameSave.enableTutorials();
+        initLabels();
     }
 
     private void initGameplay() {
@@ -193,6 +211,195 @@ public class GameScene implements Screen {
         rateBttn.setPosition(50,190);
     }
 
+    private void initLabels(){
+        System.out.println("isTutMainMenu?" + gameSave.isTutMainMenu());
+        System.out.println("isTutShop?" + gameSave.isTutShop());
+        System.out.println("isTutChangeLane?" + gameSave.isTutChangeLane());
+        System.out.println("isTutPowerUp?" + gameSave.isTutPowerUp());
+        System.out.println("isTutPersons?" + gameSave.isTutPersons());
+        System.out.println("isTutCar?" + gameSave.isTutCar());
+        if(!gameSave.isTutMainMenu()){
+            Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
+                @Override
+                public void onShow(Labeller label) {
+                    gameSave.setTutMainMenu(true);
+                }
+
+                @Override
+                public void onEnd(Labeller label) {
+
+                }
+            };
+            labels.add(new Labeller(tutorialFont,
+                    tutColor,
+                    "PLAY!",
+                    playBttn,
+                    playBttn.getX() + 100,
+                    playBttn.getY() - 150,
+                    5f,
+                    onShowInterface,
+                    GameState.MAIN_MENU));
+            labels.add(new Labeller(tutorialFont,
+                    tutColor,
+                    "POWERUP STORE",
+                    storeBttn,
+                    storeBttn.getX() + 100,
+                    storeBttn.getY() - 100,
+                    5f,
+                    onShowInterface,
+                    GameState.MAIN_MENU));
+            labels.add(new Labeller(tutorialFont,
+                    tutColor,
+                    "BEST SCORE",
+                    hsBttn,
+                    hsBttn.getX() + 100,
+                    hsBttn.getY() - 50,
+                    5f,
+                    onShowInterface,
+                    GameState.MAIN_MENU));
+            //gameSave.setTutMainMenu(true);
+        }
+        if(!gameSave.isTutShop()){
+            Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
+                @Override
+                public void onShow(Labeller label) {
+                    gameSave.setTutShop(true);
+                }
+
+                @Override
+                public void onEnd(Labeller label) {
+                    System.out.println(label.getLabel() + ".onEnd()");
+                    if(!gameSave.isTutBonus()){
+                        System.out.println("Bonus!");
+                        gameSave.setTutBonus(true);
+                        hud.addTimedText("$" + tutBonusMoney + " bonus!",
+                                Color.GOLD,
+                                2f,
+                                store.getMoneyX(),
+                                store.getMoneyY(),
+                                0,
+                                75);
+                        gameSave.addMoney(tutBonusMoney);
+                        gameSave.reset();
+                    }
+                }
+            };
+            labels.add(new Labeller(tutorialFont,
+                    tutColor,
+                    "Your money",
+                    store.getMoneyX() + 50,
+                    store.getMoneyY() + 20,
+                    store.getMoneyX() + 70,
+                    store.getMoneyY() + 70,
+                    10f,
+                    onShowInterface,
+                    GameState.STORE));
+            labels.add(new Labeller(tutorialFont,
+                    tutColor,
+                    "Power ups",
+                    (GameInfo.WIDTH / 2) - 20,
+                    (GameInfo.HEIGHT / 2) - 20,
+                    (GameInfo.WIDTH / 2) + 50,
+                    (GameInfo.HEIGHT / 2)+ 50,
+                    10f,
+                    onShowInterface,
+                    GameState.STORE));
+            labels.add(new Labeller(tutorialFont,
+                    tutColor,
+                    "Available Slots",
+                    (GameInfo.WIDTH / 2),
+                    (GameInfo.HEIGHT * 3 / 4) - 50,
+                    (GameInfo.WIDTH / 2) + 50,
+                    (GameInfo.HEIGHT * 3 / 4) + 50,
+                    10f,
+                    onShowInterface,
+                    GameState.STORE));
+            labels.add(new Labeller(tutorialFont,
+                    tutColor,
+                    "Purchase Slots here",
+                    (GameInfo.WIDTH * 3 / 4) - 100,
+                    GameInfo.HEIGHT / 4,
+                    (GameInfo.WIDTH * 3 / 4) - 150,
+                    (GameInfo.HEIGHT / 4) - 50,
+                    10f,
+                    onShowInterface,
+                    GameState.STORE));
+            //gameSave.setTutShop(true);
+        }
+        if(!gameSave.isTutChangeLane()){
+            Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
+                @Override
+                public void onShow(Labeller label) {
+                    gameSave.setTutChangeLane(true);
+                }
+
+                @Override
+                public void onEnd(Labeller label) {
+
+                }
+            };
+
+            for(int i = 0; i < lanePositions.length; i++){
+                float laneY = lanePositions[i];
+                labels.add(new Labeller(tutorialFont,
+                        tutColor,
+                        "Touch to change lane",
+                        (GameInfo.WIDTH / 2) - (i * 30),
+                        laneY,
+                        (GameInfo.WIDTH / 2) + 50 - (i * 30),
+                        laneY + 50,
+                        3f + (i/2),
+                        onShowInterface,
+                        GameState.GAME_PLAY));
+            }
+            //gameSave.setTutChangeLane(true);
+        }
+        if(!gameSave.isTutPowerUp()){
+            Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
+                @Override
+                public void onShow(Labeller label) {
+                    gameSave.setTutPowerUp(true);
+                }
+
+                @Override
+                public void onEnd(Labeller label) {
+
+                }
+            };
+            labels.add(new Labeller(tutorialFont,
+                    tutColor,
+                    "Available POWER UPS",
+                    GameInfo.WIDTH - hud.getCandyXOffset() - 200,
+                    hud.getCandyY(),
+                    (GameInfo.WIDTH - hud.getCandyXOffset()) - 350,
+                    hud.getCandyY() - 20,
+                    5f,
+                    onShowInterface,
+                    GameState.GAME_PLAY));
+            labels.add(new Labeller(tutorialFont,
+                    tutColor,
+                    "Distance",
+                    (GameInfo.WIDTH * 1/20) + 30,
+                    (GameInfo.HEIGHT  * 19/20) - 20,
+                    (GameInfo.WIDTH * 1/20) + 80,
+                    (GameInfo.HEIGHT  * 19/20) - 50,
+                    7f,
+                    onShowInterface,
+                    GameState.GAME_PLAY));
+            labels.add(new Labeller(tutorialFont,
+                    tutColor,
+                    "Money",
+                    (GameInfo.WIDTH * 1/20) + 30,
+                    (GameInfo.HEIGHT  * 8/10) - 20,
+                    (GameInfo.WIDTH * 1/20) + 80,
+                    (GameInfo.HEIGHT  * 8/10) - 50,
+                    7f,
+                    onShowInterface,
+                    GameState.GAME_PLAY));
+            //gameSave.setTutPowerUp(true);
+        }
+    }
+
     @Override
     public void render(float delta) {
 
@@ -206,10 +413,21 @@ public class GameScene implements Screen {
         else{
             musicManager.unmute();
         }
+        removableLabels.clear();
+        for(Labeller label: labels){
+            label.update(delta, gameData.currState);
+            if(label.isExpired())
+            {
+                label.onExpire();
+                removableLabels.add(label);
+            }
+        }
+        if(removableLabels.size() > 0){
+            labels.removeAll(removableLabels);
+        }
 
         // draw
         drawComponents();
-
 
         if(GameInfo.DEBUG_MODE) {
             shapeRenderer.setColor(Color.RED);
@@ -276,6 +494,10 @@ public class GameScene implements Screen {
                 break;
             default:
         }
+        hud.drawTimedTexts(batch);
+        for(Labeller label: labels){
+            label.draw(batch, gameData.currState);
+        }
 //        debugRenderer.render(world, debugMatrix);
         if(GameInfo.DEBUG_MODE) {
             debugFont.draw(batch, "Test Mode", GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2);
@@ -303,6 +525,7 @@ public class GameScene implements Screen {
                 y = v3.y;
                 pressed = true;
             }
+            hud.update(delta);
 
             if(gameData.currState == GameState.GAME_PLAY && moving)
             {
@@ -528,7 +751,6 @@ public class GameScene implements Screen {
 
             collission = colPerson || colCar;
         }
-        hud.update(delta);
 
         powerUpHelper.update(delta);
 //        for(int i=0; i < effectTime.length; i++){
@@ -551,6 +773,32 @@ public class GameScene implements Screen {
         Car car = ObjectGenerator.generateCar();
         if(car != null) {
             cars.add(car);
+            if(!gameSave.isTutCar()){
+                Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
+                    @Override
+                    public void onShow(Labeller label) {
+                        tutCarCounter++;
+                        if(tutCarCounter > tutMaxCars){
+                            gameSave.setTutCar(true);
+                        }
+                    }
+
+                    @Override
+                    public void onEnd(Labeller label) {
+
+                    }
+                };
+                labels.add(new Labeller(tutorialFont,
+                        tutColor,
+                        "Avoid!",
+                        car,
+                        100,
+                        100,
+                        5f,
+                        onShowInterface,
+                        GameState.GAME_PLAY));
+                //gameSave.setTutCar(true);
+            }
         }
     }
 
@@ -558,6 +806,33 @@ public class GameScene implements Screen {
         Person person = ObjectGenerator.generatePerson(0);
         if(person != null) {
             persons.add(person);
+            if(!gameSave.isTutPersons()){
+                Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
+                    @Override
+                    public void onShow(Labeller label) {
+                        tutPersonCounter++;
+                        if(tutPersonCounter > tutMaxPersons) {
+                            gameSave.setTutPersons(true);
+                        }
+                    }
+
+                    @Override
+                    public void onEnd(Labeller label) {
+
+                    }
+                };
+                labels.add(new Labeller(tutorialFont,
+                        tutColor,
+                        "Rider",
+                        person,
+                        100,
+                        100,
+                        5f,
+                        onShowInterface,
+                        GameState.GAME_PLAY));
+                //gameSave.setTutPersons(false);
+            }
+
         }
     }
 
@@ -705,6 +980,9 @@ public class GameScene implements Screen {
                 shapeRenderer.arc(initX + (i * 2 * rad), rad, rad, 0, 360 * (apu.timeLeft / apu.timeMax));
                 i++;
             }
+        }
+        for(Labeller label: labels){
+            label.draw(shapeRenderer, gameData.currState);
         }
         shapeRenderer.end();
     }

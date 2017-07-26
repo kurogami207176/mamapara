@@ -118,11 +118,12 @@ public class Hud {
             float x = GameInfo.WIDTH - sprite.getWidth() - (candyXOffset + (candyXGap + sprite.getWidth()) * i);
             batch.draw(sprite, x, candyY);
         }
+    }
+    public void drawTimedTexts(SpriteBatch batch){
         for(TimedText timedText: timedTexts){
             dollarFont.setColor(timedText.getColor());
             dollarFont.draw(batch, timedText.getText(), timedText.getX(), timedText.getY());
         }
-
     }
 
     public void drawGameOver(SpriteBatch batch){
