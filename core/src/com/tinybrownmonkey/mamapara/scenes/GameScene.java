@@ -272,6 +272,7 @@ public class GameScene implements Screen {
                     if(!gameSave.isTutBonus()){
                         System.out.println("Bonus!");
                         gameSave.setTutBonus(true);
+                        musicManager.playSound(MusicManager.SoundState.COIN);
                         hud.addTimedText("$" + tutBonusMoney + " bonus!",
                                 Color.GOLD,
                                 2f,

@@ -41,17 +41,18 @@ public class MusicManager {
             prevState = currState;
             currState = musicState;
             Music music = musicMap.get(currState);
-            if(muted)
-            {
-                music.setVolume(0);
+            if(music != null) {
+                if (muted) {
+                    music.setVolume(0);
+                } else {
+                    music.setVolume(1f);
+                }
+                music.play();
             }
-            else
-            {
-                music.setVolume(1f);
-            }
-            musicMap.get(currState).play();
             if(prevState != null) {
-                musicMap.get(prevState).stop();
+                if(musicMap.get(prevState) != null){
+                    musicMap.get(prevState).stop();
+                }
             }
         }
     }
