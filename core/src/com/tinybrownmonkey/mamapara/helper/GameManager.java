@@ -15,6 +15,7 @@ public class GameManager {
     private static GameManager instance = new GameManager();
     private static Json json = new Json();
     private static Preferences pref = Gdx.app.getPreferences("MyPrefs");
+    private static ModuleInterface moduleInterface;
 //    private static FileHandle scoreFileHandle = Gdx.files.internal("bin/Scores.json");
 //    private static FileHandle gameDataFileHandle = Gdx.files.internal("bin/GameData.json");
 
@@ -64,4 +65,11 @@ public class GameManager {
         return json.fromJson(GameData.class, gdString);
     }
 
+    public static ModuleInterface getModuleInterface() {
+        return moduleInterface;
+    }
+
+    public static void setModuleInterface(ModuleInterface moduleInterface) {
+        GameManager.moduleInterface = moduleInterface;
+    }
 }

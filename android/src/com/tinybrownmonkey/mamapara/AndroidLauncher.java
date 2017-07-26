@@ -21,6 +21,7 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.tinybrownmonkey.mamapara.MamaParaGame;
 import com.tinybrownmonkey.mamapara.helper.GameManager;
+import com.tinybrownmonkey.mamapara.helper.ModuleInterface;
 import com.tinybrownmonkey.mamapara.info.GameSave;
 
 public class AndroidLauncher extends AndroidApplication {
@@ -146,6 +147,26 @@ public class AndroidLauncher extends AndroidApplication {
                 }
             });
             builder.create().show();
+        }
+        AndroidModuleInterface ami = new AndroidModuleInterface();
+        GameManager.setModuleInterface(ami);
+    }
+
+    private class AndroidModuleInterface implements ModuleInterface{
+
+        @Override
+        public void share() {
+            Intent sendIntent = new Intent();
+            sendIntent.setAction(Intent.ACTION_SEND);
+            sendIntent.putExtra(Intent.EXTRA_TEXT, PLAY_STORE_LINK);
+            sendIntent.setType("text/plain");
+            startActivity(sendIntent);
+        }
+
+        @Override
+        public void rate() {
+            Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(PLAY_STORE_LINK));
+            startActivity(sendIntent);
         }
     }
 }
