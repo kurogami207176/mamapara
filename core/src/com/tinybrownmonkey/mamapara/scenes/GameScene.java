@@ -67,6 +67,8 @@ public class GameScene implements Screen {
     private Sprite storeBttn;
     private Sprite soundOff;
     private Sprite soundOn;
+    private Sprite shareBttn;
+    private Sprite rateBttn;
 
     //private Sprite jeep;
     private Jeepney jeep;
@@ -183,6 +185,12 @@ public class GameScene implements Screen {
         soundOn.setPosition(50,50);
         soundOff = new Sprite(TextureManager.get("button_sound_off.png"));
         soundOff.setPosition(50,50);
+
+        shareBttn = new Sprite(TextureManager.get("button_share.png"));
+        shareBttn.setPosition(50,120);
+
+        rateBttn = new Sprite(TextureManager.get("button_rate.png"));
+        rateBttn.setPosition(50,190);
     }
 
     @Override
@@ -242,6 +250,8 @@ public class GameScene implements Screen {
                 else {
                     batch.draw(soundOff, soundOff.getX(), soundOff.getY());
                 }
+                batch.draw(shareBttn, shareBttn.getX(), shareBttn.getY());
+                batch.draw(rateBttn, rateBttn.getX(), rateBttn.getY());
                 break;
             case STORE:
                 drawMenu(batch);
@@ -360,6 +370,10 @@ public class GameScene implements Screen {
                     System.out.println("End Main menu pressed " + tx);
                     setCurrentState(GameState.MAIN_MENU);
                     buttonTouched[tx] = buttonTouchedDelay;
+                } else if(Util.isButtonTouched(shareBttn, x, y))
+                {
+                    buttonTouched[0] = buttonTouchedDelay;
+                    GameManager.getModuleInterface().share();
                 }
             }
             else if(gameData.currState == GameState.TRANSITION_TO_GAME){
@@ -743,6 +757,16 @@ public class GameScene implements Screen {
             buttonTouched[0] = buttonTouchedDelay;
             gameSave.setMuted(!gameSave.isMuted());
             GameManager.saveScore(gameSave);
+        }
+        else if(Util.isButtonTouched(shareBttn, x, y))
+        {
+            buttonTouched[0] = buttonTouchedDelay;
+            GameManager.getModuleInterface().share();
+        }
+        else if(Util.isButtonTouched(rateBttn, x, y))
+        {
+            buttonTouched[0] = buttonTouchedDelay;
+            GameManager.getModuleInterface().rate();
         }
     }
 

@@ -152,7 +152,7 @@ public class AndroidLauncher extends AndroidApplication {
         GameManager.setModuleInterface(ami);
     }
 
-    private class AndroidModuleInterface implements ModuleInterface{
+    private class AndroidModuleInterface extends ModuleInterface{
 
         @Override
         public void share() {

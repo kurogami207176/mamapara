@@ -4,7 +4,11 @@ package com.tinybrownmonkey.mamapara.helper;
  * Created by alaguipo on 26/07/2017.
  */
 
-public interface ModuleInterface {
-    void share();
-    void rate();
+public class ModuleInterface {
+    public void share(){
+        System.out.println("ModuleInterface.share()");
+    }
+    public void rate(){
+        System.out.println("ModuleInterface.rate()");
+    }
 }
