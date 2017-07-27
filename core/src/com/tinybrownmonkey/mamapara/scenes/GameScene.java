@@ -884,7 +884,7 @@ public class GameScene implements Screen {
             if(!powerUpHelper.isEffectActive(PowerUps.SHADOW)) {
                 if (collisionOccured) {
                     car.setSpeedX(bumpXMult * gameData.groundSpeed + carBumpX);
-                    car.setSpeedY(carBumpY * (float) Math.log(jeep.getWeight() / car.getWeight()));
+                    car.setSpeedY(carBumpY * (1 + (float) Math.log(jeep.getWeight() / car.getWeight())));
                     car.setRotation(carBumpRotation);
                     musicManager.playSound(MusicManager.SoundState.HIT_CAR);
                     if(car.getWeight() >= 0.1f) {
