@@ -36,4 +36,6 @@ public interface MovingObject {
 
     float[] getCollisionVertices();
 
+    float getWeight();
+
 }

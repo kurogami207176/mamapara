@@ -58,6 +58,11 @@ public class Person extends Sprite implements MovingObject {
     }
 
     @Override
+    public float getWeight() {
+        return 0.1f;
+    }
+
+    @Override
     public int hashCode(){
         return (int) id % 100;
     }

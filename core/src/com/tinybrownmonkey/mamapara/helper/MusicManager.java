@@ -31,7 +31,7 @@ public class MusicManager {
 
     public void playSound(SoundState soundState)
     {
-        if(!muted) {
+        if(!muted && soundMap.get(soundState) != null) {
             soundMap.get(soundState).play();
         }
     }

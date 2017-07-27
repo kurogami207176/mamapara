@@ -7,10 +7,13 @@ import com.tinybrownmonkey.mamapara.constants.Constants;
 import com.tinybrownmonkey.mamapara.info.GameData;
 import com.tinybrownmonkey.mamapara.info.GameInfo;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import static com.tinybrownmonkey.mamapara.constants.Constants.carMaxSpeedRelativeToGroundSpeed;
 import static com.tinybrownmonkey.mamapara.constants.Constants.carMinimumSpeedRelativeToGroundSpeed;
+import static com.tinybrownmonkey.mamapara.constants.Constants.lanePositions;
 
 /**
  * Created by alaguipo on 17/06/2017.
@@ -25,6 +28,11 @@ public class ObjectGenerator {
     private static float carIntervalCounter = 0;
     private static float carIntervalMin = 1f;
     private static float carIntervalRange = 5f;
+
+    private static float constructionMinTimer = 10f; //300f
+    private static float constructionIntervalCounter = 0;
+    private static float constructionIntervalMin = 45f;
+    private static float constructionIntervalRange = 180f;
 
     private static float personRangeMax = GameInfo.HEIGHT * 0.656f;
     private static float personRangeMin = 0;
@@ -42,7 +50,6 @@ public class ObjectGenerator {
 
     private static long counter = 0;
     private static Texture[] personTx;
-    private static Texture[] carsTx;
 
     private static Texture copTx;
 
@@ -58,25 +65,52 @@ public class ObjectGenerator {
                 new Texture("person_white.png")
         };
         copTx = new Texture("person_cop.png");
-        carsTx = new Texture[]{
-                new Texture("car_sedan_blue.png"),
-                new Texture("car_sedan_green.png"),
-                new Texture("car_sedan_red.png"),
-                new Texture("car_sedan_pink.png"),
-                new Texture("car_sedan_black.png"),
-                new Texture("motorcycle_blue.png"),
-                new Texture("motorcycle_red.png"),
-                new Texture("motorcycle_green.png"),
-                new Texture("jeepney_grey.png")
-        };
+        for(Obstructions obs: Obstructions.values()){
+            obs.loadTexture();
+        }
+    }
+
+    private enum Obstructions{
+        SEDAN_BLUE("car_sedan_blue.png", 1f),
+        SEDAN_GREEN("car_sedan_green.png", 1f),
+        SEDAN_RED("car_sedan_red.png", 1f),
+        SEDAN_PINK("car_sedan_pink.png", 1f),
+        SEDAN_BLACK("car_sedan_black.png", 1f),
+        MOTORCYCLE_BLUE("motorcycle_blue.png", 1f),
+        MOTORCYCLE_RED("motorcycle_red.png", 1f),
+        MOTORCYCLE_GREEN("motorcycle_green.png", 1f),
+        JEEPNEY_GREY("jeepney_grey.png", 1f),
+        CONE("cone.png", 0.01f),
+        MMDA_BARRIER("mmda_barrier.png", 0.7f),
+        CONCRETE_BARRIER("concrete_barrier.png", 2f),
+        STEAMROLLER("steamroller.png", 3f);
+        private Texture texture;
+        private String textureFile;
+        private float weight;
+        Obstructions(String textureFile, float weight){
+            this.textureFile = textureFile;
+            this.weight = weight;
+        }
+
+        public void loadTexture(){
+            this.texture = new Texture(textureFile);
+        }
+
+        public float getWeight() {
+            return weight;
+        }
+
+        public Texture getTexture() {
+            return texture;
+        }
     }
 
     public static void dispose() {
         for (Texture texture : personTx) {
             texture.dispose();
         }
-        for (Texture texture : carsTx) {
-            texture.dispose();
+        for (Obstructions texture : Obstructions.values()) {
+            texture.getTexture().dispose();
         }
     }
 
@@ -88,6 +122,9 @@ public class ObjectGenerator {
 
     public static void resetTime(){
         totalTime = 0;
+        personIntervalCounter = 0;
+        carIntervalCounter = 0;
+        constructionIntervalCounter = 0;
     }
 
     public static Person generatePerson(float angle) {
@@ -132,8 +169,10 @@ public class ObjectGenerator {
         }
         return null;
     }
-
-    public static Car generateCar() {
+    private static List<Car> generatedCars = new ArrayList<Car>();
+    public static List<Car> generateCar() {
+        generatedCars.clear();
+        int carIndex = -1;
         if(carIntervalCounter <= 0)
         {
             int index = gameData.laneIndex;
@@ -153,9 +192,11 @@ public class ObjectGenerator {
             else if(index > Constants.lanePositions.length - 1){
                 index = Constants.lanePositions.length - 1;
             }
-
+            //car
+            carIndex = index;
             float y = Constants.lanePositions[index];
-            Car car = new Car(carsTx[random.nextInt(carsTx.length)], GameInfo.WIDTH, y);
+            Obstructions obs = Obstructions.values()[random.nextInt(9)];
+            Car car = new Car(obs.getTexture(), GameInfo.WIDTH, y, obs.getWeight());
             carIntervalCounter = groundSpeed * (carIntervalMin + random.nextFloat() * carIntervalRange);
             float minSpeed = groundSpeed * carMinimumSpeedRelativeToGroundSpeed;
             float maxSpeed = groundSpeed * carMaxSpeedRelativeToGroundSpeed;
@@ -167,13 +208,33 @@ public class ObjectGenerator {
             car.setCountdownTime(10);
             car.setId(counter);
             counter++;
-            return car;
+            generatedCars.add(car);
         }
         else
         {
             carIntervalCounter = carIntervalCounter - delta * groundSpeed;
         }
-        return null;
+        if(totalTime > constructionMinTimer){
+            if(constructionIntervalCounter <= 0) {
+                constructionIntervalCounter = groundSpeed * (constructionIntervalMin + random.nextFloat() * constructionIntervalRange);
+                int laneIndex = random.nextInt(lanePositions.length - 1);
+                while(laneIndex == carIndex){
+                    laneIndex = random.nextInt(lanePositions.length - 1);
+                }
+                Car cone1 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH, lanePositions[laneIndex], Obstructions.CONE.getWeight());
+                Car cone2 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 50, lanePositions[laneIndex], Obstructions.CONE.getWeight());
+                Car cone3 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH+ 100, lanePositions[laneIndex], Obstructions.CONE.getWeight());
+
+                generatedCars.add(cone1);
+                generatedCars.add(cone2);
+                generatedCars.add(cone3);
+            }
+            else
+            {
+                constructionIntervalCounter = constructionIntervalCounter - delta * groundSpeed;
+            }
+        }
+        return generatedCars;
     }
 
     public static PersonInfo getRandomPersonInfo(){

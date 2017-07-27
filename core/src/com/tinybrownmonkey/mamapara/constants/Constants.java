@@ -18,11 +18,11 @@ public class Constants {
     private final static float bottomLaneY = GameInfo.HEIGHT / 10;
     public final static int laneCount = 5;
     public final static float[] lanePositions = new float[laneCount] ;
+    public final static float laneWidth = (topLaneY - bottomLaneY) / (laneCount - 1);
     static {
-        float interval = (topLaneY - bottomLaneY) / (laneCount - 1);
         lanePositions[0] = topLaneY;
         for(int i = 1; i <laneCount - 1; i++){
-            lanePositions[i] = lanePositions[i - 1] - interval;
+            lanePositions[i] = lanePositions[i - 1] - laneWidth;
         }
         lanePositions[laneCount - 1] = bottomLaneY;
     }

@@ -11,11 +11,13 @@ public class Car extends Sprite implements MovingObject {
     private float speedX;
 
     private float speedY;
+    private float weight;
     private long id;
 
-    public Car(Texture texture, float x, float y){
+    public Car(Texture texture, float x, float y, float weight){
         super(texture);
         this.setPosition(x, y);
+        this.weight = weight;
     }
 
     @Override
@@ -70,6 +72,11 @@ public class Car extends Sprite implements MovingObject {
         float x2 = getX() + getWidth();
         float y2 = getY() + getHeight() * 1/3;
         return new float[] {x1,y1, x1,y2, x2,y2, x2,y1};
+    }
+
+    @Override
+    public float getWeight() {
+        return weight;
     }
 
     @Override

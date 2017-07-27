@@ -259,6 +259,11 @@ public class Jeepney extends Sprite implements MovingObject {
                 aY(x2, y1, x1, y1, getRotation())};
     }
 
+    @Override
+    public float getWeight() {
+        return 1;
+    }
+
     private float aX(float x, float y, float xC, float yC, float angle){
         float xRet = (x - xC) * MathUtils.cosDeg(angle) - (y - yC) * MathUtils.sinDeg(angle) + xC;
         return xRet;

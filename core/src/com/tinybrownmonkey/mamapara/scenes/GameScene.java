@@ -122,14 +122,17 @@ public class GameScene implements Screen {
         debugFont = new BitmapFont();
 
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("pricedown bl.ttf"));
+        FreeTypeFontGenerator generatorSimp = new FreeTypeFontGenerator(Gdx.files.internal("siml023.ttf"));
+
         FreeTypeFontGenerator.FreeTypeFontParameter parameter0 = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter0.size = 55;
         highScoreFont = generator.generateFont(parameter0);
         highScoreFont.setColor(Color.DARK_GRAY);
 
+
         FreeTypeFontGenerator.FreeTypeFontParameter parameter1 = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter1.size = 35;
-        tutorialFont = generator.generateFont(parameter1);
+        tutorialFont = generatorSimp.generateFont(parameter1);
         tutorialFont.setColor(Color.ROYAL);
 
         gameSave = GameManager.loadScores();
@@ -771,9 +774,9 @@ public class GameScene implements Screen {
     }
 
     private void generateCar(float delta) {
-        Car car = ObjectGenerator.generateCar();
-        if(car != null) {
-            cars.add(car);
+        List<Car> car = ObjectGenerator.generateCar();
+        if(car != null && car.size() > 0) {
+            cars.addAll(car);
             if(!gameSave.isTutCar()){
                 Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
                     @Override
@@ -792,7 +795,7 @@ public class GameScene implements Screen {
                 labels.add(new Labeller(tutorialFont,
                         tutColor,
                         "Avoid!",
-                        car,
+                        car.get(0),
                         100,
                         100,
                         5f,
@@ -881,18 +884,17 @@ public class GameScene implements Screen {
             if(!powerUpHelper.isEffectActive(PowerUps.SHADOW)) {
                 if (collisionOccured) {
                     car.setSpeedX(bumpXMult * gameData.groundSpeed + carBumpX);
-                    car.setSpeedY(carBumpY);
+                    car.setSpeedY(carBumpY * (float) Math.log(jeep.getWeight() / car.getWeight()));
                     car.setRotation(carBumpRotation);
                     musicManager.playSound(MusicManager.SoundState.HIT_CAR);
-                    retVal = true;
+                    if(car.getWeight() >= 0.1f) {
+                        retVal = true;
+                    }
                 }
-                if (!gameData.timeoutToGameOverBool && collisionOccured) {
+                if (!gameData.timeoutToGameOverBool && collisionOccured && retVal) {
                     gameData.timeoutToGameOverBool = true;
                 }
             }
-//            else if (collisionOccured) {
-//                powerUpHelper.setEffectFlag(PowerUps.SHADOW, true);
-//            }
 
             groundMover.move(car, delta);
 
