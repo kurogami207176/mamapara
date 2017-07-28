@@ -21,6 +21,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.tinybrownmonkey.mamapara.MamaParaGame;
 import com.tinybrownmonkey.mamapara.actors.Car;
 import com.tinybrownmonkey.mamapara.actors.Labeller;
+import com.tinybrownmonkey.mamapara.actors.SequenceLabeller;
 import com.tinybrownmonkey.mamapara.constants.PowerUps;
 import com.tinybrownmonkey.mamapara.helper.BackgroundMover;
 import com.tinybrownmonkey.mamapara.helper.EquippedPowerUp;
@@ -101,8 +102,9 @@ public class GameScene implements Screen {
 
     private int MAX_MULTI_TOUCH = 2;
 
-    private List<Labeller> labels = new ArrayList<Labeller>();
+    private List<Labeller> labelsDisp = new ArrayList<Labeller>();
     private List<Labeller> removableLabels = new ArrayList<Labeller>();
+    private SequenceLabeller gamePLayLabels = new SequenceLabeller();
 
     private Color tutColor = Color.DARK_GRAY;
     private int tutPersonCounter = 0;
@@ -152,7 +154,7 @@ public class GameScene implements Screen {
         powerUpHelper = new PowerUpHelper();
         hud = new Hud(gameSave, gameData, powerUpHelper);
 
-        labels = new ArrayList<Labeller>();
+        labelsDisp = new ArrayList<Labeller>();
 
         musicManager = MusicManager.getInstance();
         initMenu();
@@ -233,6 +235,7 @@ public class GameScene implements Screen {
 
                 }
             };
+            SequenceLabeller labels = new SequenceLabeller();
             labels.add(new Labeller(tutorialFont,
                     tutColor,
                     "PLAY!",
@@ -248,7 +251,7 @@ public class GameScene implements Screen {
                     storeBttn,
                     storeBttn.getX() + 100,
                     storeBttn.getY() - 100,
-                    5f,
+                    3f,
                     onShowInterface,
                     GameState.MAIN_MENU));
             labels.add(new Labeller(tutorialFont,
@@ -257,10 +260,11 @@ public class GameScene implements Screen {
                     hsBttn,
                     hsBttn.getX() + 100,
                     hsBttn.getY() - 50,
-                    5f,
+                    3f,
                     onShowInterface,
                     GameState.MAIN_MENU));
             //gameSave.setTutMainMenu(true);
+            labelsDisp.add(labels);
         }
         if(!gameSave.isTutShop()){
             Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
@@ -288,6 +292,7 @@ public class GameScene implements Screen {
                     }
                 }
             };
+            SequenceLabeller labels = new SequenceLabeller();
             labels.add(new Labeller(tutorialFont,
                     tutColor,
                     "Your money",
@@ -295,7 +300,7 @@ public class GameScene implements Screen {
                     store.getMoneyY() + 20,
                     store.getMoneyX() + 70,
                     store.getMoneyY() + 70,
-                    10f,
+                    3f,
                     onShowInterface,
                     GameState.STORE));
             labels.add(new Labeller(tutorialFont,
@@ -305,7 +310,7 @@ public class GameScene implements Screen {
                     (GameInfo.HEIGHT / 2) - 20,
                     (GameInfo.WIDTH / 2) + 50,
                     (GameInfo.HEIGHT / 2)+ 50,
-                    10f,
+                    3f,
                     onShowInterface,
                     GameState.STORE));
             labels.add(new Labeller(tutorialFont,
@@ -315,7 +320,7 @@ public class GameScene implements Screen {
                     (GameInfo.HEIGHT * 3 / 4) - 50,
                     (GameInfo.WIDTH / 2) + 50,
                     (GameInfo.HEIGHT * 3 / 4) + 50,
-                    10f,
+                    3f,
                     onShowInterface,
                     GameState.STORE));
             labels.add(new Labeller(tutorialFont,
@@ -325,11 +330,14 @@ public class GameScene implements Screen {
                     GameInfo.HEIGHT / 4,
                     (GameInfo.WIDTH * 3 / 4) - 150,
                     (GameInfo.HEIGHT / 4) - 50,
-                    10f,
+                    3f,
                     onShowInterface,
                     GameState.STORE));
+            labelsDisp.add(labels);
             //gameSave.setTutShop(true);
         }
+
+
         if(!gameSave.isTutChangeLane()){
             Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
                 @Override
@@ -342,17 +350,16 @@ public class GameScene implements Screen {
 
                 }
             };
-
             for(int i = 0; i < lanePositions.length; i++){
                 float laneY = lanePositions[i];
-                labels.add(new Labeller(tutorialFont,
+                gamePLayLabels.add(new Labeller(tutorialFont,
                         tutColor,
                         "Touch to change lane",
                         (GameInfo.WIDTH / 2) - (i * 30),
                         laneY,
                         (GameInfo.WIDTH / 2) + 50 - (i * 30),
                         laneY + 50,
-                        3f + (i/2),
+                        1f,
                         onShowInterface,
                         GameState.GAME_PLAY));
             }
@@ -370,38 +377,39 @@ public class GameScene implements Screen {
 
                 }
             };
-            labels.add(new Labeller(tutorialFont,
+            gamePLayLabels.add(new Labeller(tutorialFont,
                     tutColor,
                     "Available POWER UPS",
                     GameInfo.WIDTH - hud.getCandyXOffset() - 200,
                     hud.getCandyY(),
                     (GameInfo.WIDTH - hud.getCandyXOffset()) - 350,
                     hud.getCandyY() - 20,
-                    5f,
+                    3f,
                     onShowInterface,
                     GameState.GAME_PLAY));
-            labels.add(new Labeller(tutorialFont,
+            gamePLayLabels.add(new Labeller(tutorialFont,
                     tutColor,
                     "Distance",
                     (GameInfo.WIDTH * 1/20) + 30,
                     (GameInfo.HEIGHT  * 19/20) - 20,
                     (GameInfo.WIDTH * 1/20) + 80,
                     (GameInfo.HEIGHT  * 19/20) - 50,
-                    7f,
+                    3f,
                     onShowInterface,
                     GameState.GAME_PLAY));
-            labels.add(new Labeller(tutorialFont,
+            gamePLayLabels.add(new Labeller(tutorialFont,
                     tutColor,
                     "Money",
                     (GameInfo.WIDTH * 1/20) + 30,
                     (GameInfo.HEIGHT  * 8/10) - 20,
                     (GameInfo.WIDTH * 1/20) + 80,
                     (GameInfo.HEIGHT  * 8/10) - 50,
-                    7f,
+                    3f,
                     onShowInterface,
                     GameState.GAME_PLAY));
             //gameSave.setTutPowerUp(true);
         }
+        labelsDisp.add(gamePLayLabels);
     }
 
     @Override
@@ -418,7 +426,7 @@ public class GameScene implements Screen {
             musicManager.unmute();
         }
         removableLabels.clear();
-        for(Labeller label: labels){
+        for(Labeller label: labelsDisp){
             label.update(delta, gameData.currState);
             if(label.isExpired())
             {
@@ -427,7 +435,7 @@ public class GameScene implements Screen {
             }
         }
         if(removableLabels.size() > 0){
-            labels.removeAll(removableLabels);
+            labelsDisp.removeAll(removableLabels);
         }
 
         // draw
@@ -499,7 +507,7 @@ public class GameScene implements Screen {
             default:
         }
         hud.drawTimedTexts(batch);
-        for(Labeller label: labels){
+        for(Labeller label: labelsDisp){
             label.draw(batch, gameData.currState);
         }
 //        debugRenderer.render(world, debugMatrix);
@@ -792,13 +800,13 @@ public class GameScene implements Screen {
 
                     }
                 };
-                labels.add(new Labeller(tutorialFont,
+                gamePLayLabels.add(new Labeller(tutorialFont,
                         tutColor,
                         "Avoid!",
                         car.get(0),
                         100,
                         100,
-                        5f,
+                        3f,
                         onShowInterface,
                         GameState.GAME_PLAY));
                 //gameSave.setTutCar(true);
@@ -825,13 +833,13 @@ public class GameScene implements Screen {
 
                     }
                 };
-                labels.add(new Labeller(tutorialFont,
+                gamePLayLabels.add(new Labeller(tutorialFont,
                         tutColor,
-                        "Rider",
+                        "Pick-up!",
                         person,
                         100,
                         100,
-                        5f,
+                        3f,
                         onShowInterface,
                         GameState.GAME_PLAY));
                 //gameSave.setTutPersons(false);
@@ -984,7 +992,7 @@ public class GameScene implements Screen {
                 i++;
             }
         }
-        for(Labeller label: labels){
+        for(Labeller label: labelsDisp){
             label.draw(shapeRenderer, gameData.currState);
         }
         shapeRenderer.end();

@@ -41,6 +41,9 @@ public class Labeller {
     private Sprite labeled;
     private OnShowInterface onShowInterface;
     private boolean shown = false;
+    public Labeller(){
+
+    }
 
     public Labeller(BitmapFont font, Color color, String label, float xPoint, float yPoint,
                     float xLabel, float yLabel, float timer,
