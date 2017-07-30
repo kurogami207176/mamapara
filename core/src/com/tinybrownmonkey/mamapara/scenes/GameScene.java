@@ -64,6 +64,7 @@ public class GameScene implements Screen {
 
     private Sprite homeBg;
     private Sprite logo;
+    private Sprite hood;
     private Sprite playBttn;
     private Sprite hsBttn;
     private Sprite storeBttn;
@@ -110,6 +111,7 @@ public class GameScene implements Screen {
     private int tutPersonCounter = 0;
     private int tutCarCounter = 0;
 
+    private float hoodY;
 
     public GameScene(MamaParaGame game) {
         this.game = game;
@@ -156,7 +158,7 @@ public class GameScene implements Screen {
 
         labelsDisp = new ArrayList<Labeller>();
 
-        musicManager = MusicManager.getInstance();
+        musicManager = new MusicManager();
         initMenu();
 
         initGameplay();
@@ -188,9 +190,13 @@ public class GameScene implements Screen {
 
     private void initMenu() {
         homeBg = new Sprite(TextureManager.get("home_bg.png"));
-        logo = new Sprite(TextureManager.get("logo.png"));
+        logo = new Sprite(TextureManager.get("logo2.png"));
         float logoX = (GameInfo.WIDTH - logo.getWidth()) / 2;
         logo.setPosition(logoX, logo.getY());
+        hood = new Sprite(TextureManager.get("hood_horse.png"));
+        hoodY = ((GameInfo.HEIGHT - hood.getHeight()) / 2) - 65;
+        hood.setPosition((GameInfo.WIDTH - hood.getWidth()) / 2,
+                hoodY);
 
         float newY = GameInfo.HEIGHT / 2 - (GameInfo.HEIGHT / 13f);
 
@@ -352,7 +358,7 @@ public class GameScene implements Screen {
             };
             for(int i = 0; i < lanePositions.length; i++){
                 float laneY = lanePositions[i];
-                gamePLayLabels.add(new Labeller(tutorialFont,
+                Labeller labeller = new Labeller(tutorialFont,
                         tutColor,
                         "Touch to change lane",
                         (GameInfo.WIDTH / 2) - (i * 30),
@@ -361,7 +367,12 @@ public class GameScene implements Screen {
                         laneY + 50,
                         1f,
                         onShowInterface,
-                        GameState.GAME_PLAY));
+                        GameState.GAME_PLAY);
+                labeller.setRect(5,
+                        laneY + laneWidth - 5,
+                        GameInfo.WIDTH - 5,
+                        laneY - 5);
+                gamePLayLabels.add(labeller);
             }
             //gameSave.setTutChangeLane(true);
         }
@@ -587,6 +598,7 @@ public class GameScene implements Screen {
                     if(prc)
                     {
                         buttonTouched[tx] = buttonTouchedDelay;
+                        musicManager.playSound(MusicManager.SoundState.BUTTON);
                     }
                 }
                 store.update(delta);
@@ -605,10 +617,12 @@ public class GameScene implements Screen {
                     System.out.println("End Main menu pressed " + tx);
                     setCurrentState(GameState.MAIN_MENU);
                     buttonTouched[tx] = buttonTouchedDelay;
+                    musicManager.playSound(MusicManager.SoundState.BUTTON);
                 } else if(Util.isButtonTouched(shareBttn, x, y))
                 {
-                    buttonTouched[0] = buttonTouchedDelay;
+                    buttonTouched[tx] = buttonTouchedDelay;
                     GameManager.getModuleInterface().share();
+                    musicManager.playSound(MusicManager.SoundState.BUTTON);
                 }
             }
             else if(gameData.currState == GameState.TRANSITION_TO_GAME){
@@ -636,12 +650,14 @@ public class GameScene implements Screen {
                         GameManager.saveScore(gameSave);
                         resetScore();
                         setCurrentState(GameState.GAME_PLAY);
+                        musicManager.playSound(MusicManager.SoundState.BUTTON);
                     }
                     if(cancel)
                     {
                         GameManager.saveScore(gameSave);
                         resetScore();
                         setCurrentState(GameState.TRANSITION_TO_MENU);
+                        musicManager.playSound(MusicManager.SoundState.BUTTON);
                     }
                 }
             }
@@ -1000,13 +1016,9 @@ public class GameScene implements Screen {
 
     private void drawMenu(SpriteBatch batch){
         batch.draw(homeBg, homeBg.getX(), homeBg.getY());
-        //if(gameData.currState != GameState.STORE) {
-            batch.draw(logo, logo.getX(), logo.getY());
-        //}
-        //if(gameData.currState == GameState.STORE) {
-            store.draw(batch);
-        //}
-
+        batch.draw(logo, logo.getX(), logo.getY());
+        batch.draw(hood, hood.getX(), hood.getY());
+        store.draw(batch);
     }
 
     private void processInput() {
@@ -1030,32 +1042,38 @@ public class GameScene implements Screen {
         {
             buttonTouched[0] = buttonTouchedDelay;
             setCurrentState(GameState.TRANSITION_TO_GAME);
+            musicManager.playSound(MusicManager.SoundState.BUTTON);
         }
         else if(Util.isButtonTouched(hsBttn, x, y))
         {
             buttonTouched[0] = buttonTouchedDelay;
             setCurrentState(GameState.HIGH_SCORE);
+            musicManager.playSound(MusicManager.SoundState.BUTTON);
         }
         else if(Util.isButtonTouched(storeBttn, x, y))
         {
             buttonTouched[0] = buttonTouchedDelay;
             setCurrentState(GameState.STORE);
+            musicManager.playSound(MusicManager.SoundState.BUTTON);
         }
         else if(Util.isButtonTouched(soundOn, x, y))
         {
             buttonTouched[0] = buttonTouchedDelay;
             gameSave.setMuted(!gameSave.isMuted());
             GameManager.saveScore(gameSave);
+            musicManager.playSound(MusicManager.SoundState.BUTTON);
         }
         else if(Util.isButtonTouched(shareBttn, x, y))
         {
             buttonTouched[0] = buttonTouchedDelay;
             GameManager.getModuleInterface().share();
+            musicManager.playSound(MusicManager.SoundState.BUTTON);
         }
         else if(Util.isButtonTouched(rateBttn, x, y))
         {
             buttonTouched[0] = buttonTouchedDelay;
             GameManager.getModuleInterface().rate();
+            musicManager.playSound(MusicManager.SoundState.BUTTON);
         }
     }
 
@@ -1068,6 +1086,7 @@ public class GameScene implements Screen {
             logo.setY(-logo.getHeight()-10);
             setCurrentState(GameState.GAME_PLAY);
         }
+        hood.setY(hood.getY() - dt);
     }
 
     private void transitionToMenu(float delta){
@@ -1086,6 +1105,10 @@ public class GameScene implements Screen {
             setCurrentState(GameState.MAIN_MENU);
             resetScore();
             GameManager.saveScore(gameSave);
+        }
+        hood.setY(hood.getY() + dt);
+        if(hood.getY() > hoodY){
+            hood.setY(hoodY);
         }
     }
 

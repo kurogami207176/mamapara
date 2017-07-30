@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.tinybrownmonkey.mamapara.constants.GameState;
 import com.tinybrownmonkey.mamapara.info.GameInfo;
 
@@ -41,13 +42,17 @@ public class Labeller {
     private Sprite labeled;
     private OnShowInterface onShowInterface;
     private boolean shown = false;
+
+    private Vector2 rect1;
+    private Vector2 rect2;
+
     public Labeller(){
 
     }
 
     public Labeller(BitmapFont font, Color color, String label, float xPoint, float yPoint,
                     float xLabel, float yLabel, float timer,
-                    OnShowInterface onShowInterface, GameState... states){
+                    OnShowInterface onShowInterface, GameState states){
         this.id = Labeller.idGenerator++;
         this.font = font;
         this.label= label;
@@ -63,7 +68,7 @@ public class Labeller {
 
     public Labeller(BitmapFont font, Color color, String label, Sprite labeled,
                     float xLabel, float yLabel, float timer,
-                    OnShowInterface onShowInterface, GameState... states){
+                    OnShowInterface onShowInterface, GameState states){
         this.font = font;
         this.label= label;
         this.labeled = labeled;
@@ -78,7 +83,7 @@ public class Labeller {
     public Labeller(BitmapFont font, Color color, String label, Sprite labeled,
                     int xOffset, int yOffset, float timer,
                     OnShowInterface onShowInterface,
-                    GameState... states){
+                    GameState states){
         this.font = font;
         this.label= label;
         this.labeled = labeled;
@@ -88,6 +93,16 @@ public class Labeller {
         this.color = color;
         this.onShowInterface = onShowInterface;
         this.states = new HashSet<GameState>(Arrays.asList(states));
+    }
+
+    public void setRect(Vector2 rect1, Vector2 rect2){
+        this.rect1 = rect1;
+        this.rect2 = rect2;
+    }
+
+    public void setRect(float x1, float y1, float x2, float y2){
+        this.rect1 = new Vector2(x1, y1);
+        this.rect2 = new Vector2(x2, y2);
     }
 
     public void update(float delta, GameState state){
@@ -147,12 +162,20 @@ public class Labeller {
                     yLabel = yPoint + yOffset;
                 }
             }
+            float lineWidth = 3;
             if(xPoint >= 0 && xPoint <= GameInfo.WIDTH
                 && yPoint >= 0 && yPoint <= GameInfo.HEIGHT) {
                 float yMid = (yPoint + yLabel) / 2;
 //                shapeRenderer.line(xPoint, yPoint, xLabel, yMid);
 //                shapeRenderer.line(xLabel, yMid, xLabel, yLabel);
-                shapeRenderer.line(xPoint, yPoint, xLabel, yLabel);
+                shapeRenderer.rectLine(xPoint, yPoint, xLabel, yLabel, lineWidth);
+            }
+            if(rect1 != null && rect2 != null){
+                shapeRenderer.rectLine(rect1.x, rect1.y, rect2.x, rect1.y, lineWidth);
+                shapeRenderer.rectLine(rect2.x, rect1.y, rect2.x, rect2.y, lineWidth);
+                shapeRenderer.rectLine(rect1.x, rect2.y, rect2.x, rect2.y, lineWidth);
+                shapeRenderer.rectLine(rect1.x, rect1.y, rect1.x, rect2.y, lineWidth);
+                //shapeRenderer.rectLine(rect1, rect2, lineWidth);
             }
         }
     }

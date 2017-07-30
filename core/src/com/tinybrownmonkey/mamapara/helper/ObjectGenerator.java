@@ -30,10 +30,12 @@ public class ObjectGenerator {
     private static float carIntervalMin = 1f;
     private static float carIntervalRange = 5f;
 
-    private static float sedanMinTimer = 30f;
-    private static float truckMinTimer = 200f;
+    private static float tricycleMinTimer = 30f;
+    private static float sedanMinTimer = 45f;
+    private static float vansMinTimer = 120;
+    private static float truckMinTimer = 180f;
 
-    private static float constructionMinTimer = 300f;
+    private static float constructionMinTimer = 240f;
     private static float constructionIntervalCounter = 0;
     private static float constructionIntervalMin = 45f;
     private static float constructionIntervalRange = 180f;
@@ -76,16 +78,26 @@ public class ObjectGenerator {
     }
 
     private enum Obstructions{
-        MOTORCYCLE_BLUE("motorcycle_blue.png", 1f),
-        MOTORCYCLE_RED("motorcycle_red.png", 1f),
-        MOTORCYCLE_GREEN("motorcycle_green.png", 1f),
+        MOTORCYCLE_BLUE("motorcycle_blue.png", 0.8f),
+        MOTORCYCLE_RED("motorcycle_red.png", 0.8f),
+        MOTORCYCLE_GREEN("motorcycle_green.png", 0.8f),
+
+        TRICYCLE_BLUE("tricycle_blue.png", 1f),
+        TRICYCLE_GREEN("tricycle_green.png", 1f),
+        TRICYCLE_RED("tricycle_red.png", 1f),
+
         SEDAN_BLUE("car_sedan_blue.png", 1f),
         SEDAN_GREEN("car_sedan_green.png", 1f),
         SEDAN_RED("car_sedan_red.png", 1f),
         SEDAN_PINK("car_sedan_pink.png", 1f),
         SEDAN_BLACK("car_sedan_black.png", 1f),
+
+        AMBULANCE("ambulance.png", 1f),
+        DELIVERY_VAN("sbcvan.png", 1f),
         JEEPNEY_GREY("jeepney_grey.png", 1f),
+
         TRUCK("truck.png", 7f),
+
         CONE("cone.png", 0.01f),
         MMDA_BARRIER("mmda_barrier.png", 0.7f),
         CONCRETE_BARRIER("concrete_barrier.png", 2f),
@@ -182,11 +194,17 @@ public class ObjectGenerator {
         int level = 3;
         if(carIntervalCounter <= 0)
         {
+            if(totalTime >= tricycleMinTimer){
+                level = 6;
+            }
             if(totalTime >= sedanMinTimer){
-                level = 9;
+                level = 11;
+            }
+            if(totalTime >= vansMinTimer){
+                level = 14;
             }
             if(totalTime >= truckMinTimer){
-                level = 10;
+                level = 15;
             }
             int index = gameData.laneIndex;
             int dice = random.nextInt(100);

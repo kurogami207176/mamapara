@@ -12,10 +12,10 @@ import java.util.Map;
  */
 
 public class MusicManager {
-    private static MusicManager instance = new MusicManager();
-    public static MusicManager getInstance(){
-        return instance;
-    }
+//    private static MusicManager instance = new MusicManager();
+//    public static MusicManager getInstance(){
+//        return instance;
+//    }
 
     private MusicState currState;
     private MusicState prevState;
@@ -72,6 +72,7 @@ public class MusicManager {
         soundMap.put(SoundState.COIN, Gdx.audio.newSound(Gdx.files.internal("sound/money.wav")));
         soundMap.put(SoundState.HIT_PERSON, Gdx.audio.newSound(Gdx.files.internal("sound/hit_human.wav")));
         soundMap.put(SoundState.HIT_CAR, Gdx.audio.newSound(Gdx.files.internal("sound/hit_car.wav")));
+        soundMap.put(SoundState.BUTTON, Gdx.audio.newSound(Gdx.files.internal("sound/button.wav")));
     }
 
     boolean muted = false;
@@ -111,6 +112,6 @@ public class MusicManager {
     }
 
     public enum SoundState{
-        COIN, HIT_PERSON, HIT_CAR;
+        COIN, HIT_PERSON, HIT_CAR, BUTTON;
     }
 }

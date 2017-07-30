@@ -158,7 +158,7 @@ public class Store {
                     if (candyTouch) {
                         if(gameSave.getSlotCount() > gameSave.getPowerUps().size()) {
                             int money = PowerUps.values()[xi].getPrice(3 - yi);
-                            if(gameSave.getMoneyTotal() > money) {
+                            if(gameSave.getMoneyTotal() >= money) {
                                 selected = PowerUps.values()[xi];
                                 level = 3 - yi;
                                 main = State.DIALOG;
@@ -167,7 +167,7 @@ public class Store {
                             }
                             else
                             {
-                                showWarning("Not enough money ($"+money+")!");
+                                showWarning("Needs $"+money+"!");
                             }
                             break candyLoop;
                         }
@@ -185,14 +185,14 @@ public class Store {
                 sigTouch = Util.isAreaTouched(x, y, xC, yC, cigSide.getWidth(), cigSide.getHeight());
                 if (sigTouch) {
                     int money = PowerUps.SLOT.getPrice(gameSave.getSlotCount() + 1);
-                    if(gameSave.getMoneyTotal() > money) {
+                    if(gameSave.getMoneyTotal() >= money) {
                         main = State.DIALOG;
                         level = (gameSave.getSlotCount() + 1);
                         System.out.println("Touched sig # " + (i + 1));
                     }
                     else
                     {
-                        showWarning("Not enough money ($"+money+")!");
+                        showWarning("Needs $"+money+"!");
                     }
                     break sigLoop;
                 }
