@@ -50,8 +50,12 @@ public class SequenceLabeller extends Labeller {
 
     @Override
     public boolean isExpired() {
-        if(labels.size() <= 0) return true;
-        return currentLabel == labels.size() - 1 && labels.get(currentLabel).isExpired();
+        boolean retVal;
+        if(labels.size() <= 0) retVal = true;
+        retVal = currentLabel == labels.size() - 1 && labels.get(currentLabel).isExpired();
+        currentLabel = 0;
+        labels.clear();
+        return retVal;
     }
 
     @Override
@@ -64,6 +68,8 @@ public class SequenceLabeller extends Labeller {
     public void onExpire(){
         if(labels.size() <= 0) return;
         labels.get(currentLabel).onExpire();
+        currentLabel = 0;
+        labels.clear();
     }
 
 }

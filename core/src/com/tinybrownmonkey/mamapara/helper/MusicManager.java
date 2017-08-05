@@ -73,6 +73,7 @@ public class MusicManager {
         soundMap.put(SoundState.HIT_PERSON, Gdx.audio.newSound(Gdx.files.internal("sound/hit_human.wav")));
         soundMap.put(SoundState.HIT_CAR, Gdx.audio.newSound(Gdx.files.internal("sound/hit_car.wav")));
         soundMap.put(SoundState.BUTTON, Gdx.audio.newSound(Gdx.files.internal("sound/button.wav")));
+        soundMap.put(SoundState.TUTORIAL, Gdx.audio.newSound(Gdx.files.internal("sound/tut.wav")));
     }
 
     boolean muted = false;
@@ -112,6 +113,6 @@ public class MusicManager {
     }
 
     public enum SoundState{
-        COIN, HIT_PERSON, HIT_CAR, BUTTON;
+        COIN, HIT_PERSON, HIT_CAR, BUTTON, TUTORIAL;
     }
 }

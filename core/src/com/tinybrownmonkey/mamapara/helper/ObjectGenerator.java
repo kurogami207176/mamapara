@@ -288,6 +288,10 @@ public class ObjectGenerator {
         return generatedCars;
     }
 
+    public static float getTotalTime(){
+        return totalTime;
+    }
+
     public static PersonInfo getRandomPersonInfo(){
         return PersonInfo.values()[random.nextInt(PersonInfo.values().length)];
     }

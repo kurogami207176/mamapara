@@ -49,8 +49,10 @@ public class GameSave {
     private boolean tutPersons = false;
     private boolean tutCar = false;
     private boolean tutChangeLane = false;
-    private boolean tutPowerUp = false;
     private boolean tutBonus = false;
+    private boolean tutPowerUp = false;
+    private boolean tutDistance = false;
+    private boolean tutMoney = false;
 
     public void enableTutorials(){
         tutMainMenu = false;
@@ -415,5 +417,21 @@ public class GameSave {
 
     public void setTutBonus(boolean tutBonus) {
         this.tutBonus = tutBonus;
+    }
+
+    public boolean isTutDistance() {
+        return tutDistance;
+    }
+
+    public void setTutDistance(boolean tutDistance) {
+        this.tutDistance = tutDistance;
+    }
+
+    public boolean isTutMoney() {
+        return tutMoney;
+    }
+
+    public void setTutMoney(boolean tutMoney) {
+        this.tutMoney = tutMoney;
     }
 }

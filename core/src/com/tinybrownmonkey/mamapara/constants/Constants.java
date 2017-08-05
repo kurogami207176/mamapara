@@ -9,8 +9,9 @@ import com.tinybrownmonkey.mamapara.info.GameInfo;
 public class Constants {
     public final static float skySpeedFraction = 0.25f;
     public final static float groundSpeedFraction = 1f;
-    public final static float initGroundSpeed = 300;
-    public final static float topGroundSpeed = 3000;
+    public final static float initGroundSpeed = 300;// 200;
+    public final static float topGroundSpeed = 1200;
+
     public final static float groundSpeedIncrement = 2;
 
     public final static int changeLaneSpeed = 300;
@@ -72,6 +73,16 @@ public class Constants {
     public interface ConfirmButton{
         float xOkLeft = 530;
         float xCancelLeft = 249;
+        float buttonWidth = 175;
+
+        float yDown = 168;
+        float buttonHeight = 79;
+    }
+
+    public interface ConfirmButtonTrance{
+        float xOkLeft = 580;
+        float xCancelLeft = 199;
+        float xShare = 349;
         float buttonWidth = 175;
 
         float yDown = 168;

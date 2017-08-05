@@ -5,9 +5,13 @@ import static com.tinybrownmonkey.mamapara.constants.Constants.*;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -16,16 +20,20 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.BufferUtils;
+import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.tinybrownmonkey.mamapara.MamaParaGame;
 import com.tinybrownmonkey.mamapara.actors.Car;
 import com.tinybrownmonkey.mamapara.actors.Labeller;
 import com.tinybrownmonkey.mamapara.actors.SequenceLabeller;
+import com.tinybrownmonkey.mamapara.actors.TimedShape;
 import com.tinybrownmonkey.mamapara.constants.PowerUps;
 import com.tinybrownmonkey.mamapara.helper.BackgroundMover;
 import com.tinybrownmonkey.mamapara.helper.EquippedPowerUp;
 import com.tinybrownmonkey.mamapara.helper.Hud;
+import com.tinybrownmonkey.mamapara.helper.ParticleManager;
 import com.tinybrownmonkey.mamapara.helper.PowerUpHelper;
 import com.tinybrownmonkey.mamapara.helper.Store;
 import com.tinybrownmonkey.mamapara.constants.Constants;
@@ -43,6 +51,7 @@ import com.tinybrownmonkey.mamapara.info.GameSave;
 import com.tinybrownmonkey.mamapara.helper.TextureManager;
 import com.tinybrownmonkey.mamapara.helper.Util;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -99,6 +108,7 @@ public class GameScene implements Screen {
 
     private Random random = new Random();
     private MusicManager musicManager;
+    private ParticleManager particleManager;
     private ShapeRenderer shapeRenderer;
 
     private int MAX_MULTI_TOUCH = 2;
@@ -112,6 +122,12 @@ public class GameScene implements Screen {
     private int tutCarCounter = 0;
 
     private float hoodY;
+    private float maxHoodY = 10;
+    private boolean hoodUp = true;
+
+    private float logoY;
+    private float maxLogoY = 5;
+    private boolean logoUp = true;
 
     public GameScene(MamaParaGame game) {
         this.game = game;
@@ -159,6 +175,9 @@ public class GameScene implements Screen {
         labelsDisp = new ArrayList<Labeller>();
 
         musicManager = new MusicManager();
+        particleManager = new ParticleManager();
+        particleManager.init();
+
         initMenu();
 
         initGameplay();
@@ -190,13 +209,12 @@ public class GameScene implements Screen {
 
     private void initMenu() {
         homeBg = new Sprite(TextureManager.get("home_bg.png"));
-        logo = new Sprite(TextureManager.get("logo2.png"));
+        logo = new Sprite(TextureManager.get("logo4.png"));
         float logoX = (GameInfo.WIDTH - logo.getWidth()) / 2;
         logo.setPosition(logoX, logo.getY());
-        hood = new Sprite(TextureManager.get("hood_horse.png"));
-        hoodY = ((GameInfo.HEIGHT - hood.getHeight()) / 2) - 65;
+        hood = new Sprite(TextureManager.get("hood.png"));
         hood.setPosition((GameInfo.WIDTH - hood.getWidth()) / 2,
-                hoodY);
+                hood.getY());
 
         float newY = GameInfo.HEIGHT / 2 - (GameInfo.HEIGHT / 13f);
 
@@ -242,29 +260,32 @@ public class GameScene implements Screen {
                 }
             };
             SequenceLabeller labels = new SequenceLabeller();
-            labels.add(new Labeller(tutorialFont,
+            labels.add(new Labeller(musicManager,
+                    tutorialFont,
                     tutColor,
                     "PLAY!",
                     playBttn,
-                    playBttn.getX() + 100,
-                    playBttn.getY() - 150,
+                    playBttn.getX() + 50,
+                    playBttn.getY() - 50,
                     5f,
                     onShowInterface,
                     GameState.MAIN_MENU));
-            labels.add(new Labeller(tutorialFont,
+            labels.add(new Labeller(musicManager,
+                    tutorialFont,
                     tutColor,
                     "POWERUP STORE",
                     storeBttn,
-                    storeBttn.getX() + 100,
-                    storeBttn.getY() - 100,
+                    storeBttn.getX() + 50,
+                    storeBttn.getY() - 50,
                     3f,
                     onShowInterface,
                     GameState.MAIN_MENU));
-            labels.add(new Labeller(tutorialFont,
+            labels.add(new Labeller(musicManager,
+                    tutorialFont,
                     tutColor,
                     "BEST SCORE",
                     hsBttn,
-                    hsBttn.getX() + 100,
+                    hsBttn.getX() + 50,
                     hsBttn.getY() - 50,
                     3f,
                     onShowInterface,
@@ -299,7 +320,8 @@ public class GameScene implements Screen {
                 }
             };
             SequenceLabeller labels = new SequenceLabeller();
-            labels.add(new Labeller(tutorialFont,
+            labels.add(new Labeller(musicManager,
+                    tutorialFont,
                     tutColor,
                     "Your money",
                     store.getMoneyX() + 50,
@@ -309,7 +331,8 @@ public class GameScene implements Screen {
                     3f,
                     onShowInterface,
                     GameState.STORE));
-            labels.add(new Labeller(tutorialFont,
+            labels.add(new Labeller(musicManager,
+                    tutorialFont,
                     tutColor,
                     "Power ups",
                     (GameInfo.WIDTH / 2) - 20,
@@ -319,7 +342,8 @@ public class GameScene implements Screen {
                     3f,
                     onShowInterface,
                     GameState.STORE));
-            labels.add(new Labeller(tutorialFont,
+            labels.add(new Labeller(musicManager,
+                    tutorialFont,
                     tutColor,
                     "Available Slots",
                     (GameInfo.WIDTH / 2),
@@ -329,7 +353,8 @@ public class GameScene implements Screen {
                     3f,
                     onShowInterface,
                     GameState.STORE));
-            labels.add(new Labeller(tutorialFont,
+            labels.add(new Labeller(musicManager,
+                    tutorialFont,
                     tutColor,
                     "Purchase Slots here",
                     (GameInfo.WIDTH * 3 / 4) - 100,
@@ -358,9 +383,10 @@ public class GameScene implements Screen {
             };
             for(int i = 0; i < lanePositions.length; i++){
                 float laneY = lanePositions[i];
-                Labeller labeller = new Labeller(tutorialFont,
+                Labeller labeller = new Labeller(musicManager,
+                        tutorialFont,
                         tutColor,
-                        "Touch to change lane",
+                        "Slide to change lane",
                         (GameInfo.WIDTH / 2) - (i * 30),
                         laneY,
                         (GameInfo.WIDTH / 2) + 50 - (i * 30),
@@ -376,7 +402,7 @@ public class GameScene implements Screen {
             }
             //gameSave.setTutChangeLane(true);
         }
-        if(!gameSave.isTutPowerUp()){
+        if(!gameSave.isTutPowerUp() && gameSave.getPowerUps().size() > 0) {
             Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
                 @Override
                 public void onShow(Labeller label) {
@@ -388,7 +414,8 @@ public class GameScene implements Screen {
 
                 }
             };
-            gamePLayLabels.add(new Labeller(tutorialFont,
+            gamePLayLabels.add(new Labeller(musicManager,
+                    tutorialFont,
                     tutColor,
                     "Available POWER UPS",
                     GameInfo.WIDTH - hud.getCandyXOffset() - 200,
@@ -398,17 +425,45 @@ public class GameScene implements Screen {
                     3f,
                     onShowInterface,
                     GameState.GAME_PLAY));
-            gamePLayLabels.add(new Labeller(tutorialFont,
+        }
+        if(!gameSave.isTutDistance()) {
+            Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
+                @Override
+                public void onShow(Labeller label) {
+                    gameSave.setTutDistance(true);
+                }
+
+                @Override
+                public void onEnd(Labeller label) {
+
+                }
+            };
+            gamePLayLabels.add(new Labeller(musicManager,
+                    tutorialFont,
                     tutColor,
                     "Distance",
-                    (GameInfo.WIDTH * 1/20) + 30,
-                    (GameInfo.HEIGHT  * 19/20) - 20,
-                    (GameInfo.WIDTH * 1/20) + 80,
-                    (GameInfo.HEIGHT  * 19/20) - 50,
+                    (GameInfo.WIDTH * 1 / 20) + 30,
+                    (GameInfo.HEIGHT * 19 / 20) - 20,
+                    (GameInfo.WIDTH * 1 / 20) + 80,
+                    (GameInfo.HEIGHT * 19 / 20) - 50,
                     3f,
                     onShowInterface,
                     GameState.GAME_PLAY));
-            gamePLayLabels.add(new Labeller(tutorialFont,
+        }
+        if(!gameSave.isTutMoney()){
+            Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
+                @Override
+                public void onShow(Labeller label) {
+                    gameSave.setTutMoney(true);
+                }
+
+                @Override
+                public void onEnd(Labeller label) {
+
+                }
+            };
+            gamePLayLabels.add(new Labeller(musicManager,
+                    tutorialFont,
                     tutColor,
                     "Money",
                     (GameInfo.WIDTH * 1/20) + 30,
@@ -469,9 +524,7 @@ public class GameScene implements Screen {
     private void drawComponents() {
         //graphics
         Gdx.gl.glClearColor(1, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        Gdx.gl.glClear(GL30.GL_COLOR_BUFFER_BIT);
 
         SpriteBatch batch = game.getSpriteBatch();
         batch.setProjectionMatrix(mainCamera.combined);
@@ -481,10 +534,12 @@ public class GameScene implements Screen {
         switch (gameData.currState)
         {
             case MAIN_MENU:
-                drawMenu(batch);
-                batch.draw(playBttn, playBttn.getX(), playBttn.getY());
-                batch.draw(hsBttn, hsBttn.getX(), hsBttn.getY());
-                batch.draw(storeBttn, storeBttn.getX(), storeBttn.getY());
+                batch.draw(homeBg, homeBg.getX(), homeBg.getY());
+                batch.draw(logo, logo.getX(), logo.getY() + logoY);
+                batch.draw(playBttn, playBttn.getX(), playBttn.getY() + logoY);
+                batch.draw(hsBttn, hsBttn.getX(), hsBttn.getY() + logoY);
+                batch.draw(storeBttn, storeBttn.getX(), storeBttn.getY() + logoY);
+                batch.draw(hood, hood.getX(), hood.getY() + hoodY);
                 if(!gameSave.isMuted()) {
                     batch.draw(soundOn, soundOn.getX(), soundOn.getY());
                 }
@@ -495,7 +550,10 @@ public class GameScene implements Screen {
                 batch.draw(rateBttn, rateBttn.getX(), rateBttn.getY());
                 break;
             case STORE:
-                drawMenu(batch);
+                batch.draw(homeBg, homeBg.getX(), homeBg.getY());
+                batch.draw(logo, logo.getX(), logo.getY() + logoY);
+                batch.draw(hood, hood.getX(), hood.getY() + hoodY);
+                store.draw(batch);
                 break;
             case GAME_PLAY:
                 drawGame(batch);
@@ -503,12 +561,18 @@ public class GameScene implements Screen {
             case TRANSITION_TO_GAME:
             case TRANSITION_TO_MENU:
                 drawGame(batch);
-                drawMenu(batch);
+                batch.draw(homeBg, homeBg.getX(), homeBg.getY());
+                batch.draw(logo, logo.getX(), logo.getY() + logoY);
+                batch.draw(hood, hood.getX(), hood.getY() + hoodY);
+                store.draw(batch);
                 break;
             case HIGH_SCORE:
-                drawMenu(batch);
+                batch.draw(homeBg, homeBg.getX(), homeBg.getY());
+                batch.draw(logo, logo.getX(), logo.getY() + logoY);
+                batch.draw(hood, hood.getX(), hood.getY() + hoodY);
+                store.draw(batch);
                 String highScoreText = gameSave.getHighScore() + " m";
-                highScoreFont.draw(batch, highScoreText, GameInfo.WIDTH / 2 - 50, GameInfo.HEIGHT / 2);
+                highScoreFont.draw(batch, highScoreText, GameInfo.WIDTH / 2 - 50, (GameInfo.HEIGHT / 2) + logoY);
                 break;
             case GAME_END:
                 drawGame(batch);
@@ -526,7 +590,10 @@ public class GameScene implements Screen {
             debugFont.draw(batch, "Test Mode", GameInfo.WIDTH / 2, GameInfo.HEIGHT / 2);
         }
         batch.end();
+        Gdx.gl.glEnable(GL30.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL30.GL_SRC_ALPHA, GL30.GL_ONE_MINUS_SRC_ALPHA);
         drawShapes(shapeRenderer);
+        Gdx.gl.glDisable(GL30.GL_BLEND);
     }
 
     private float[] buttonTouched = new float[MAX_MULTI_TOUCH];
@@ -534,6 +601,7 @@ public class GameScene implements Screen {
 
     private void updateComponents(float delta) {
         boolean changeLaneDone = false;
+        hud.update(delta);
         for(int tx = 0; tx < MAX_MULTI_TOUCH; tx++){
             if(buttonTouched[tx] > 0) {
                 buttonTouched[tx] = buttonTouched[tx] - delta;
@@ -548,7 +616,6 @@ public class GameScene implements Screen {
                 y = v3.y;
                 pressed = true;
             }
-            hud.update(delta);
 
             if(gameData.currState == GameState.GAME_PLAY && moving)
             {
@@ -571,6 +638,7 @@ public class GameScene implements Screen {
                             // effectAccum[ordinal] = 0;
                             gameSave.removePowerUp(i);
                             buttonTouched[tx] = buttonTouchedDelay;
+                            musicManager.playSound(MusicManager.SoundState.BUTTON);
                             break;
                         }
                     }
@@ -609,48 +677,63 @@ public class GameScene implements Screen {
                     System.out.println("Main menu pressed " + tx);
                     processMenuButton(delta, x, y);
                 }
+                updateHoodAnim(delta);
             }
             else if(gameData.currState == GameState.HIGH_SCORE)
             {
+                String cat = "highscore";
                 musicManager.setMusic(MusicManager.MusicState.TITLE);
                 if(pressed){
                     System.out.println("End Main menu pressed " + tx);
                     setCurrentState(GameState.MAIN_MENU);
                     buttonTouched[tx] = buttonTouchedDelay;
                     musicManager.playSound(MusicManager.SoundState.BUTTON);
+                    GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click end");
                 } else if(Util.isButtonTouched(shareBttn, x, y))
                 {
                     buttonTouched[tx] = buttonTouchedDelay;
+                    GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click share");
                     GameManager.getModuleInterface().share();
                     musicManager.playSound(MusicManager.SoundState.BUTTON);
                 }
+                updateHoodAnim(delta);
             }
             else if(gameData.currState == GameState.TRANSITION_TO_GAME){
                 musicManager.setMusic(MusicManager.MusicState.L2);
+                updateHoodAnim(delta);
                 transitionToGame(delta);
             }
             else if(gameData.currState == GameState.TRANSITION_TO_MENU){
                 musicManager.setMusic(MusicManager.MusicState.TITLE);
+                updateHoodAnim(delta);
                 transitionToMenu(delta);
             }
             else if(gameData.currState == GameState.GAME_END){
+                String cat = "game end";
                 musicManager.setMusic(MusicManager.MusicState.END);
                 if(pressed)
                 {
-                    boolean okay = Util.isAreaTouched(x, y, Constants.ConfirmButton.xOkLeft,
-                            Constants.ConfirmButton.yDown,
-                            Constants.ConfirmButton.buttonWidth,
-                            Constants.ConfirmButton.buttonHeight);
+                    boolean okay = Util.isAreaTouched(x, y, Constants.ConfirmButtonTrance.xOkLeft,
+                            Constants.ConfirmButtonTrance.yDown,
+                            Constants.ConfirmButtonTrance.buttonWidth,
+                            Constants.ConfirmButtonTrance.buttonHeight);
                     boolean cancel = Util.isAreaTouched(x, y,
-                            Constants.ConfirmButton.xCancelLeft,
-                            Constants.ConfirmButton.yDown,
-                            Constants.ConfirmButton.buttonWidth,
-                            Constants.ConfirmButton.buttonHeight);
+                            Constants.ConfirmButtonTrance.xCancelLeft,
+                            Constants.ConfirmButtonTrance.yDown,
+                            Constants.ConfirmButtonTrance.buttonWidth,
+                            Constants.ConfirmButtonTrance.buttonHeight);
+                    boolean share = false;
+//                            Util.isAreaTouched(x, y,
+//                            Constants.ConfirmButtonTrance.xShare,
+//                            Constants.ConfirmButtonTrance.yDown,
+//                            Constants.ConfirmButtonTrance.buttonWidth,
+//                            Constants.ConfirmButtonTrance.buttonHeight);
                     if(okay){
                         GameManager.saveScore(gameSave);
                         resetScore();
                         setCurrentState(GameState.GAME_PLAY);
                         musicManager.playSound(MusicManager.SoundState.BUTTON);
+                        GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click okay");
                     }
                     if(cancel)
                     {
@@ -658,11 +741,50 @@ public class GameScene implements Screen {
                         resetScore();
                         setCurrentState(GameState.TRANSITION_TO_MENU);
                         musicManager.playSound(MusicManager.SoundState.BUTTON);
+                        GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click cancel");
+                    }
+                    if(share)
+                    {
+                        musicManager.playSound(MusicManager.SoundState.BUTTON);
+                        byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), true);
+                        GameManager.getModuleInterface().share(pixels);
+                        GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click share");
                     }
                 }
             }
 
         }
+    }
+
+    private void updateHoodAnim(float delta){
+        if(hoodUp){
+            hoodY = hoodY + 2 * delta;
+            if(hoodY >= maxHoodY){
+                hoodUp = false;
+                hoodY = maxHoodY;
+            }
+        }
+        else{
+            hoodY = hoodY - 2 * delta;
+            if(hoodY <= 0){
+                hoodUp = true;
+                hoodY = 0;
+            }
+        }
+//        if(logoUp){
+//                logoY = logoY + 1 * delta;
+//                if(logoY >= maxLogoY){
+//                    logoUp = false;
+//                    logoY = maxLogoY;
+//                }
+//            }
+//            else{
+//                logoY = logoY - 1 * delta;
+//                if(logoY <= 0){
+//                    logoUp = true;
+//                    logoY = 0;
+//                }
+//        }
     }
 
     private void gamePlayUpdate(float delta) {
@@ -738,6 +860,28 @@ public class GameScene implements Screen {
             }
             powerUpHelper.setEffectFlag(PowerUps.EXPLODE, true);
             powerUpHelper.resetEffectAccumulator(PowerUps.EXPLODE);
+            int rand = random.nextInt(particleManager.getTextureSize(ParticleManager.Particles.ENERGY));
+            for(int xSpeed = -1; xSpeed <= 1; xSpeed++){
+                for(int ySpeed = -1; ySpeed <= 1; ySpeed++){
+                    if(xSpeed == 0 && ySpeed == 0) continue;
+                    Sprite sprite = particleManager.getSprite(ParticleManager.Particles.ENERGY, rand);
+                    sprite.setX(jeep.getX() + (random.nextFloat() * jeep.getWidth()));
+                    sprite.setY(jeep.getY());
+                    hud.addTimedSprite(1.5f,
+                            sprite,
+                            xSpeed * 400f,
+                            ySpeed * 400f
+                    );
+                }
+            }
+            hud.addTimedShape(
+                    TimedShape.Shape.RECT,
+                    Color.RED,
+                    0.05f,
+                    0, 0, 0, 0,
+                    GameInfo.WIDTH,
+                    GameInfo.HEIGHT
+            );
         }
         else
         {
@@ -752,13 +896,22 @@ public class GameScene implements Screen {
         float shamanEffect = powerUpHelper.getEffectAccumulator(PowerUps.SHAMAN); // getEffectAccumulator[PowerUps.RANGE.ordinal()];
         if(shamanEffect > shamanCycle)
         {
-            hud.addTimedText(random.nextBoolean()? "*": "#",
-                    random.nextBoolean()? Color.GREEN : Color.FOREST,
-                    1.5f,
-                    jeep.getX() + (random.nextFloat() * jeep.getWidth()),
-                    jeep.getY(),
-                    -0.1f * gameData.groundSpeed,
-                    150);
+//            hud.addTimedText(random.nextBoolean()? "*": "#",
+//                    random.nextBoolean()? Color.GREEN : Color.FOREST,
+//                    1.5f,
+//                    jeep.getX() + (random.nextFloat() * jeep.getWidth()),
+//                    jeep.getY(),
+//                    -0.1f * gameData.groundSpeed,
+//                    150);
+            int rand = random.nextInt(particleManager.getTextureSize(ParticleManager.Particles.SHAMAN));
+            Sprite sprite = particleManager.getSprite(ParticleManager.Particles.SHAMAN, rand);
+            sprite.setX(jeep.getX() + (random.nextFloat() * jeep.getWidth()));
+            sprite.setY(jeep.getY());
+            hud.addTimedSprite(1.5f,
+                    sprite,
+                    -0.5f * gameData.groundSpeed,
+                    150
+                    );
             powerUpHelper.resetEffectAccumulator(PowerUps.SHAMAN);
         }
 
@@ -778,6 +931,20 @@ public class GameScene implements Screen {
             generateCar(delta);
 
             collission = colPerson || colCar;
+            if(collission && !prevCollission)
+            {
+                hud.addTimedShape(
+                        TimedShape.Shape.RECT,
+                        Color.WHITE,
+                        0.1f,
+                        0, 0, 0, 0,
+                        GameInfo.WIDTH,
+                        GameInfo.HEIGHT
+                );
+                System.out.println("Collission print!");
+            }
+            prevCollission = collission;
+
         }
 
         powerUpHelper.update(delta);
@@ -790,6 +957,7 @@ public class GameScene implements Screen {
         gameSave.addDistance((delta * (gameData.groundSpeed / 50)));
         if(gameData.groundSpeed < topGroundSpeed) {
             gameData.groundSpeed = gameData.groundSpeed + groundSpeedIncrement * delta;
+            // gameData.groundSpeed = initGroundSpeed + ((topGroundSpeed - initGroundSpeed) * (float) Math.log(ObjectGenerator.getTotalTime()));
         }else {
             gameData.groundSpeed = topGroundSpeed;
         }
@@ -816,7 +984,8 @@ public class GameScene implements Screen {
 
                     }
                 };
-                gamePLayLabels.add(new Labeller(tutorialFont,
+                gamePLayLabels.add(new Labeller(musicManager,
+                        tutorialFont,
                         tutColor,
                         "Avoid!",
                         car.get(0),
@@ -849,7 +1018,8 @@ public class GameScene implements Screen {
 
                     }
                 };
-                gamePLayLabels.add(new Labeller(tutorialFont,
+                gamePLayLabels.add(new Labeller(musicManager,
+                        tutorialFont,
                         tutColor,
                         "Pick-up!",
                         person,
@@ -985,18 +1155,7 @@ public class GameScene implements Screen {
     {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setProjectionMatrix(mainCamera.combined);
-        if(collission && !prevCollission)
-        {
-            System.out.println("Collission print!");
-            shapeRenderer.setColor(Color.WHITE);
-            shapeRenderer.rect(0, 0, GameInfo.WIDTH * 10, GameInfo.HEIGHT * 10);
-        }
-        prevCollission = collission;
-        if(powerUpHelper.getEffectFlag(PowerUps.EXPLODE)){
-            System.out.println("Boom print!");
-            shapeRenderer.setColor(Color.RED);
-            shapeRenderer.rect(0, 0, GameInfo.WIDTH * 10, GameInfo.HEIGHT * 10);
-        }
+        hud.drawTimedTexts(shapeRenderer);
         List<PowerUpHelper.ActivePowerUp> apuList = powerUpHelper.getActivePowerupList();
         float rad = 25;
         if(apuList != null && apuList.size() > 0){
@@ -1011,14 +1170,11 @@ public class GameScene implements Screen {
         for(Labeller label: labelsDisp){
             label.draw(shapeRenderer, gameData.currState);
         }
-        shapeRenderer.end();
-    }
 
-    private void drawMenu(SpriteBatch batch){
-        batch.draw(homeBg, homeBg.getX(), homeBg.getY());
-        batch.draw(logo, logo.getX(), logo.getY());
-        batch.draw(hood, hood.getX(), hood.getY());
-        store.draw(batch);
+//        shapeRenderer.set(ShapeRenderer.ShapeType.Filled);
+//        shapeRenderer.setColor(0f, 0f, 0f, 0.3f);
+//        shapeRenderer.rect(0, 0, GameInfo.WIDTH, GameInfo.HEIGHT);
+        shapeRenderer.end();
     }
 
     private void processInput() {
@@ -1038,23 +1194,27 @@ public class GameScene implements Screen {
     }
 
     private void processMenuButton(float delta, float x, float y) {
+        String cat = "main";
         if(Util.isButtonTouched(playBttn, x, y))
         {
             buttonTouched[0] = buttonTouchedDelay;
             setCurrentState(GameState.TRANSITION_TO_GAME);
             musicManager.playSound(MusicManager.SoundState.BUTTON);
+            GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click play");
         }
         else if(Util.isButtonTouched(hsBttn, x, y))
         {
             buttonTouched[0] = buttonTouchedDelay;
             setCurrentState(GameState.HIGH_SCORE);
             musicManager.playSound(MusicManager.SoundState.BUTTON);
+            GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click highscore");
         }
         else if(Util.isButtonTouched(storeBttn, x, y))
         {
             buttonTouched[0] = buttonTouchedDelay;
             setCurrentState(GameState.STORE);
             musicManager.playSound(MusicManager.SoundState.BUTTON);
+            GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click store");
         }
         else if(Util.isButtonTouched(soundOn, x, y))
         {
@@ -1062,18 +1222,21 @@ public class GameScene implements Screen {
             gameSave.setMuted(!gameSave.isMuted());
             GameManager.saveScore(gameSave);
             musicManager.playSound(MusicManager.SoundState.BUTTON);
+            GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click sound on/off");
         }
         else if(Util.isButtonTouched(shareBttn, x, y))
         {
             buttonTouched[0] = buttonTouchedDelay;
             GameManager.getModuleInterface().share();
             musicManager.playSound(MusicManager.SoundState.BUTTON);
+            GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click share");
         }
         else if(Util.isButtonTouched(rateBttn, x, y))
         {
             buttonTouched[0] = buttonTouchedDelay;
             GameManager.getModuleInterface().rate();
             musicManager.playSound(MusicManager.SoundState.BUTTON);
+            GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click rate");
         }
     }
 
@@ -1086,7 +1249,7 @@ public class GameScene implements Screen {
             logo.setY(-logo.getHeight()-10);
             setCurrentState(GameState.GAME_PLAY);
         }
-        hood.setY(hood.getY() - dt);
+        hood.setY(hood.getY() - dt + hoodY);
     }
 
     private void transitionToMenu(float delta){
@@ -1106,9 +1269,9 @@ public class GameScene implements Screen {
             resetScore();
             GameManager.saveScore(gameSave);
         }
-        hood.setY(hood.getY() + dt);
-        if(hood.getY() > hoodY){
-            hood.setY(hoodY);
+        hood.setY(hood.getY() + dt + hoodY);
+        if(hood.getY() > 0){
+            hood.setY(0);
         }
     }
 
@@ -1150,6 +1313,7 @@ public class GameScene implements Screen {
         bgMover.dispose();
         ObjectGenerator.dispose();
         musicManager.dispose();
+        particleManager.dispose();
         hud.dispose();
         store.dispose();
 
@@ -1166,6 +1330,7 @@ public class GameScene implements Screen {
             Gdx.input.setCatchBackKey(false);
         }
         gameData.currState = nextState;
+        GameManager.getModuleInterface().setAnalyticsScreen(nextState.name());
     }
 
     private void resetScore(){

@@ -162,6 +162,9 @@ public class Store {
                                 selected = PowerUps.values()[xi];
                                 level = 3 - yi;
                                 main = State.DIALOG;
+                                GameManager.getModuleInterface().sendAnalyticsEvent(
+                                        main.name(),
+                                        selected.name() + ":" + level);
                                 System.out.println("POWER UP: " + selected);
                                 System.out.println("Level: " + level);
                             }
@@ -189,6 +192,8 @@ public class Store {
                         main = State.DIALOG;
                         level = (gameSave.getSlotCount() + 1);
                         System.out.println("Touched sig # " + (i + 1));
+                        GameManager.getModuleInterface().sendAnalyticsEvent(main.name(),
+                                PowerUps.SLOT.name() + ":" + level);
                     }
                     else
                     {
@@ -217,12 +222,18 @@ public class Store {
                     gameSave.addMoney(-PowerUps.SLOT.getPrice(level));
                     gameSave.reset();
                     gameSave.setSlotCount(gameSave.getSlotCount() + 1);
+                    GameManager.getModuleInterface().sendAnalyticsEvent(
+                            main.name(),
+                            PowerUps.SLOT.name() + ":" + level);
                 }
                 else
                 {
                     gameSave.addMoney(-selected.getPrice(level));
                     gameSave.reset();
                     gameSave.addPowerUp(selected, level);
+                    GameManager.getModuleInterface().sendAnalyticsEvent(
+                            main.name(),
+                            selected.name() + ":" + level);
                 }
                 GameManager.saveScore(gameSave);
                 System.out.println("Done!");

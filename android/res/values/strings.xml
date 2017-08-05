@@ -16,4 +16,6 @@
     <string name="share_negative">Later</string>
     <string name="share_neutral">Never</string>
 
+    <string name="send_to">Share to</string>
+
 </resources>

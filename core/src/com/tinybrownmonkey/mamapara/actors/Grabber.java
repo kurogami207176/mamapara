@@ -97,6 +97,9 @@ public class Grabber extends Sprite{
 //        float dy = multiplierY * (yDiff < deltaGrabSpeed? yDiff: deltaGrabSpeed);
         float dx = multiplierX * (xDiff < deltaGrabSpeed? xDiff: deltaGrabSpeed);
         float dy = multiplierY * (yDiff < deltaGrabSpeed? yDiff: deltaGrabSpeed);
+        if(cx < obj.getX()){
+            dy = 0;
+        }
         obj.setPosition(
                 obj.getX() - dx,
                 obj.getY() - dy);

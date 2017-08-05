@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.tinybrownmonkey.mamapara.constants.GameState;
+import com.tinybrownmonkey.mamapara.helper.MusicManager;
 import com.tinybrownmonkey.mamapara.info.GameInfo;
 
 import java.util.Arrays;
@@ -46,11 +47,15 @@ public class Labeller {
     private Vector2 rect1;
     private Vector2 rect2;
 
+    private boolean sounded = false;
+    private MusicManager musicManager;
+
     public Labeller(){
 
     }
 
-    public Labeller(BitmapFont font, Color color, String label, float xPoint, float yPoint,
+    public Labeller(MusicManager musicManager, BitmapFont font, Color color, String label,
+                    float xPoint, float yPoint,
                     float xLabel, float yLabel, float timer,
                     OnShowInterface onShowInterface, GameState states){
         this.id = Labeller.idGenerator++;
@@ -64,9 +69,11 @@ public class Labeller {
         this.color = color;
         this.onShowInterface = onShowInterface;
         this.states = new HashSet<GameState>(Arrays.asList(states));
+        this.musicManager = musicManager;
     }
 
-    public Labeller(BitmapFont font, Color color, String label, Sprite labeled,
+    public Labeller(MusicManager musicManager, BitmapFont font, Color color,
+                    String label, Sprite labeled,
                     float xLabel, float yLabel, float timer,
                     OnShowInterface onShowInterface, GameState states){
         this.font = font;
@@ -78,9 +85,11 @@ public class Labeller {
         this.color = color;
         this.onShowInterface = onShowInterface;
         this.states = new HashSet<GameState>(Arrays.asList(states));
+        this.musicManager = musicManager;
     }
 
-    public Labeller(BitmapFont font, Color color, String label, Sprite labeled,
+    public Labeller(MusicManager musicManager, BitmapFont font, Color color,
+                    String label, Sprite labeled,
                     int xOffset, int yOffset, float timer,
                     OnShowInterface onShowInterface,
                     GameState states){
@@ -93,6 +102,7 @@ public class Labeller {
         this.color = color;
         this.onShowInterface = onShowInterface;
         this.states = new HashSet<GameState>(Arrays.asList(states));
+        this.musicManager = musicManager;
     }
 
     public void setRect(Vector2 rect1, Vector2 rect2){
@@ -135,6 +145,10 @@ public class Labeller {
 
     public void draw(SpriteBatch spriteBatch, GameState state){
         if(isVisible(state)) {
+            if(!sounded){
+                musicManager.playSound(MusicManager.SoundState.TUTORIAL);
+                sounded = true;
+            }
             if(!shown && onShowInterface != null){
                 shown = true;
                 onShowInterface.onShow(this);

@@ -1,55 +1,48 @@
 package com.tinybrownmonkey.mamapara.actors;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 /**
  * Created by alaguipo on 17/06/2017.
  */
 
-public class TimedText {
+public class TimedText extends TimedAbstract <SpriteBatch> {
     private String text;
     private Color color;
-    private float countDownTimer;
-    private float initCountDownTimer;
-    private float x;
-    private float y;
-    private float xSpeed;
-    private float ySpeed;
+    private BitmapFont font;
 
-    public TimedText(String text, Color color, float countDownTimer, float x, float y, float xSpeed, float ySpeed){
+    public TimedText(BitmapFont font, String text, Color color, float countDownTimer, float x, float y, float xSpeed, float ySpeed){
+        super(countDownTimer, x, y, xSpeed, ySpeed);
         this.text = text;
-        this.countDownTimer = countDownTimer;
-        this.initCountDownTimer = countDownTimer;
-        this.x = x;
-        this.y = y;
-        this.xSpeed = xSpeed;
-        this.ySpeed = ySpeed;
         this.color = color;
+        this.font = font;
     }
 
     public String getText(){
         return text;
     }
 
-    public float getAlpha(){
-        return 1 - (countDownTimer / initCountDownTimer);
-    }
-
-    public boolean countDown(float deltaTime){
-        countDownTimer = countDownTimer - deltaTime;
-        x = x + xSpeed * deltaTime;
-        y = y + ySpeed * deltaTime;
-        return  countDownTimer <= 0;
-    }
-
-    public float getX(){
-        return x;
-    }
-    public float getY(){
-        return y;
-    }
-
     public Color getColor() {
         return color;
     }
+
+    @Override
+    public boolean countDown(float deltaTime){
+        System.out.print("dx:" + getXSpeed() + "/dy:" + getYSpeed() + "-");
+        System.out.println("dx:" + getXSpeed(deltaTime) + "/dy:" + getYSpeed(deltaTime) + "-");
+        System.out.println("<<" + getId() + "/" + getText() + ": " + getX() + "," + getY());
+        boolean retVal = super.countDown(deltaTime);
+        System.out.println("->>" + getId() + "/" + getText() + ": " + getX() + "," + getY());
+
+        return retVal;
+    }
+
+    @Override
+    public void drawInner(SpriteBatch drawer) {
+        font.setColor(color);
+        font.draw(drawer, getText(), getX(), getY());
+        System.out.println("==" + getId() + "/" + getText() + ": " + getX() + "," + getY());    }
 }

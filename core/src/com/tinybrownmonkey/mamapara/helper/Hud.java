@@ -8,6 +8,9 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.tinybrownmonkey.mamapara.actors.TimedAbstract;
+import com.tinybrownmonkey.mamapara.actors.TimedShape;
+import com.tinybrownmonkey.mamapara.actors.TimedSprite;
 import com.tinybrownmonkey.mamapara.actors.TimedText;
 import com.tinybrownmonkey.mamapara.constants.PowerUps;
 import com.tinybrownmonkey.mamapara.info.GameData;
@@ -23,10 +26,15 @@ import java.util.List;
 
 public class Hud {
 
-    private List<TimedText> timedTexts;
+//    private List<TimedText> timedTexts;
+//    private List<TimedSprite> timedSprites;
+    private List<TimedAbstract> timedObj;
     private BitmapFont scoreFont;
+    private BitmapFont finalScoreFont;
     private BitmapFont moneyFont;
     private BitmapFont dollarFont;
+
+    private BitmapFont tryAgainFont;
 
     private Sprite[][] spriteMatrix;
 
@@ -43,17 +51,15 @@ public class Hud {
     private float candyWidth;
     private float candyHeight;
 
-    private PowerUpHelper powerUpHelper;
-
-
     public Hud(GameSave gameSave, GameData gameData, PowerUpHelper powerUpHelper){
         this.gameSave = gameSave;
         this.gameData = gameData;
-        this.powerUpHelper = powerUpHelper;
 
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("pricedown bl.ttf"));
+        FreeTypeFontGenerator generatorSimp = new FreeTypeFontGenerator(Gdx.files.internal("siml023.ttf"));
+
         FreeTypeFontGenerator.FreeTypeFontParameter parameter0 = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter0.size = 55;
+        parameter0.size = 70;
         scoreFont = generator.generateFont(parameter0);
         scoreFont.setColor(Color.GOLD);
 
@@ -67,7 +73,17 @@ public class Hud {
         dollarFont = generator.generateFont(parameter2);
         dollarFont.setColor(Color.GOLD);
 
-        timedTexts = new ArrayList<TimedText>();
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter3 = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter3.size = 120;
+        finalScoreFont = generator.generateFont(parameter3);
+        finalScoreFont.setColor(Color.GOLD);
+
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter4 = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter4.size = 30;
+        tryAgainFont = generatorSimp.generateFont(parameter4);
+        tryAgainFont.setColor(Color.GOLD);
+
+        timedObj = new ArrayList<TimedAbstract>();
 
         spriteMatrix = new Sprite[PowerUps.values().length - 1][3];
 
@@ -90,25 +106,25 @@ public class Hud {
         candyWidth = spriteMatrix[0][0].getWidth();
         candyHeight  = spriteMatrix[0][0].getHeight();
 
-        this.confirmDialogBox  = new Sprite(new Texture("confirm.png"));
+        this.confirmDialogBox  = new Sprite(new Texture("confirm_t.png"));
         this.confirmDialogBox.setX((GameInfo.WIDTH - confirmDialogBox.getWidth()) / 2);
         this.confirmDialogBox.setY((GameInfo.HEIGHT - confirmDialogBox.getHeight()) / 2);
 
     }
 
     public void update(float deltaTime){
-        List<TimedText> removable = new ArrayList<TimedText>();
-        for(TimedText tt: timedTexts){
+        List<TimedAbstract> removable = new ArrayList<TimedAbstract>();
+        for(TimedAbstract tt: timedObj){
             boolean done = tt.countDown(deltaTime);
             if(done){
                 removable.add(tt);
             }
         }
-        timedTexts.removeAll(removable);
+        timedObj.removeAll(removable);
     }
 
     public void drawMainHud(SpriteBatch batch, GameSave gameSave){
-        scoreFont.setColor(Color.GOLD);
+        scoreFont.setColor(Color.CHARTREUSE);
         moneyFont.setColor(Color.GOLD);
         scoreFont.draw(batch, gameSave.getDistance() + " m", GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 19/20);
         moneyFont.draw(batch, "$ " + gameSave.getMoney(), GameInfo.WIDTH * 1/20, GameInfo.HEIGHT  * 8/10);
@@ -119,24 +135,30 @@ public class Hud {
             batch.draw(sprite, x, candyY);
         }
     }
+
     public void drawTimedTexts(SpriteBatch batch){
-        for(TimedText timedText: timedTexts){
-            dollarFont.setColor(timedText.getColor());
-            dollarFont.draw(batch, timedText.getText(), timedText.getX(), timedText.getY());
+        for(TimedAbstract timedText: timedObj){
+            timedText.draw(batch);
+        }
+    }
+
+    public void drawTimedTexts(ShapeRenderer batch){
+        for(TimedAbstract timedText: timedObj){
+            timedText.draw(batch);
         }
     }
 
     public void drawGameOver(SpriteBatch batch){
         confirmDialogBox.draw(batch);
-        scoreFont.setColor(Color.BLACK);
+        finalScoreFont.setColor(Color.BLACK);
         moneyFont.setColor(Color.BLACK);
         dollarFont.setColor(Color.BLACK);
-        scoreFont.draw(batch, gameSave.getDistance()+ " m", GameInfo.WIDTH / 2 - 150, GameInfo.HEIGHT  /2+70 );
-        dollarFont.draw(batch, "Try again?", GameInfo.WIDTH / 2 - 150, GameInfo.HEIGHT  / 2 + 10);
+        finalScoreFont.draw(batch, gameSave.getDistance()+ " m", GameInfo.WIDTH / 2 - 150, (GameInfo.HEIGHT  / 2) + 100 );
+        tryAgainFont.draw(batch, "Try again?", GameInfo.WIDTH / 2 - 150, GameInfo.HEIGHT  / 2 + 10);
     }
 
     public void clear(){
-        timedTexts.clear();
+        timedObj.clear();
     }
 
     public void dispose(){
@@ -149,15 +171,39 @@ public class Hud {
     }
 
     public void addTimedText(String text, Color color, float countDownTimer, float x, float y, float xSpeed, float ySpeed){
-        TimedText tt = new TimedText(text,
+        TimedText tt = new TimedText(dollarFont,
+                text,
                 color,
                 countDownTimer,
                 x,
                 y,
                 xSpeed,
                 ySpeed);
-        timedTexts.add(tt);
+        timedObj.add(tt);
     }
+
+    public void addTimedSprite(float countDownTimer, Sprite sprite, float xSpeed, float ySpeed){
+        TimedSprite tt = new TimedSprite(countDownTimer,
+                sprite,
+                xSpeed,
+                ySpeed);
+        timedObj.add(tt);
+    }
+
+    public void addTimedShape(TimedShape.Shape shape, Color color,
+                              float countDownTimer, float x, float y,
+                              float xSpeed, float ySpeed, float... i){
+        TimedShape tt = new TimedShape(shape,
+                color,
+                countDownTimer,
+                x,
+                y,
+                xSpeed,
+                ySpeed,
+                i);
+        timedObj.add(tt);
+    }
+
 
     public float getCandyWidth() {
         return candyWidth;
