@@ -72,10 +72,10 @@ public class Store {
     private float titleY = 375;
 
     private float priceX = 400;
-    private float priceY = 320;
+    private float priceY = 325;
 
     private float descX = 400;
-    private float descY = 266;
+    private float descY = 275;
 
     private float moneyX = 568;
     private float moneyY = 173;
@@ -122,6 +122,8 @@ public class Store {
         this.icons.put(PowerUps.SHAMAN, new Sprite(new Texture("pow_shaman.png")));
 
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("pricedown bl.ttf"));
+        FreeTypeFontGenerator generatorSimp = new FreeTypeFontGenerator(Gdx.files.internal("siml023.ttf"));
+
         FreeTypeFontGenerator.FreeTypeFontParameter parameter0 = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter0.size = 50;
         titleFont = generator.generateFont(parameter0);
@@ -130,11 +132,11 @@ public class Store {
         FreeTypeFontGenerator.FreeTypeFontParameter parameter1 = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter1.size = 40;
         priceFont = generator.generateFont(parameter1);
-        priceFont.setColor(Color.DARK_GRAY);
+        priceFont.setColor(Color.GOLDENROD);
 
         FreeTypeFontGenerator.FreeTypeFontParameter parameter2 = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter2.size = 20;
-        descFont = generator.generateFont(parameter2);
+        descFont = generatorSimp.generateFont(parameter2);
         descFont.setColor(Color.DARK_GRAY);
 
     }

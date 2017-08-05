@@ -82,8 +82,8 @@ public class Grabber extends Sprite{
     public boolean reachCenter(MovingObject obj, float deltaTime){
         float yDiff = (obj.getY() - cy);
         float xDiff = (obj.getX() - cx);
-        float multiplierX = 1;
-        float multiplierY = 1;
+        float multiplierX = 3;
+        float multiplierY = 3;
         if(yDiff < 0) {
             yDiff = -yDiff;
             multiplierY = -1;

@@ -7,10 +7,10 @@ import com.badlogic.gdx.graphics.Color;
  */
 
 public enum PowerUps {
-    EXPLODE ("Tabbi", "Cars avoid you!", Color.FIREBRICK, 100, 300, 900),
-    RANGE ("Barker", "Range increase.", Color.GOLD, 150, 450, 1050),
-    SHADOW ("iLag", "Immunity from bumps", Color.NAVY, 200, 800, 2500),
-    SHAMAN ("Shaman", "More passengers", Color.FOREST, 180, 600, 1600),
+    EXPLODE ("Tabi", "Cars make way periodically!", Color.FIREBRICK, 100, 300, 900),
+    RANGE ("Barker", "Far away passengers want in", Color.GOLD, 150, 450, 1050),
+    SHADOW ("Ilag", "Immune from collissions", Color.NAVY, 200, 800, 2500),
+    SHAMAN ("Shaman", "Inc. passenger capacity to 18", Color.FOREST, 180, 600, 1600),
     SLOT ("SLOT", "Increase slots!", Color.WHITE, 1000, 3000, 10000, 25000, 100000, 500000);
     private String title;
     private String desc;

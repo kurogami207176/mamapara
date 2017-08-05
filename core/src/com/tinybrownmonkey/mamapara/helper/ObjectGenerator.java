@@ -27,18 +27,18 @@ public class ObjectGenerator {
     private static float personIntervalRange = 0.2f;
 
     private static float carIntervalCounter = 0;
-    private static float carIntervalMin = 1f;
-    private static float carIntervalRange = 5f;
+    private static float carIntervalMin = 0.3f;
+    private static float carIntervalRange = 1.8f;
 
-    private static float tricycleMinTimer = 30f;
-    private static float sedanMinTimer = 45f;
-    private static float vansMinTimer = 120;
-    private static float truckMinTimer = 180f;
+    private static float tricycleMinTimer = 10f;
+    private static float sedanMinTimer = 15f;
+    private static float vansMinTimer = 40;
+    private static float truckMinTimer = 60f;
 
-    private static float constructionMinTimer = 240f;
+    private static float constructionMinTimer = 80f;
     private static float constructionIntervalCounter = 0;
-    private static float constructionIntervalMin = 45f;
-    private static float constructionIntervalRange = 180f;
+    private static float constructionIntervalMin = 15f;
+    private static float constructionIntervalRange = 60f;
 
     private static float personRangeMax = GameInfo.HEIGHT * 0.656f;
     private static float personRangeMin = 0;
@@ -309,9 +309,9 @@ public class ObjectGenerator {
     private enum  PersonInfo
     {
         BLUE (0, 1f),
-        RED  (1, 5f),
-        GREEN(2, 10f),
-        WHITE(3, 20f);
+        RED  (1, 3f),
+        GREEN(2, 8f),
+        WHITE(3, 14f);
         private static float totalLifetime = 0;
 
         private int index;
