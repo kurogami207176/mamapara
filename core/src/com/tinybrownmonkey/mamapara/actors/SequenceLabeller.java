@@ -12,9 +12,8 @@ import java.util.List;
  * Created by alaguipo on 29/07/2017.
  */
 
-public class SequenceLabeller extends Labeller {
+public class SequenceLabeller { // extends Labeller {
     List<Labeller> labels;
-    int currentLabel = 0;
     public SequenceLabeller(){
         this.labels = new ArrayList<Labeller>();
     }
@@ -25,51 +24,50 @@ public class SequenceLabeller extends Labeller {
         this.labels.add(label);
     }
 
-    @Override
+    //@Override
     public void update(float delta, GameState state){
         if(labels.size() <= 0) return;
-        labels.get(currentLabel).update(delta, state);
-        if(currentLabel < labels.size() - 1 &&
-                labels.get(currentLabel).isExpired())
+        labels.get(0).update(delta, state);
+        if(labels.get(0).isExpired())
         {
-            currentLabel++;
+            labels.get(0).onExpire();
+            labels.remove(0);
         }
     }
 
-    @Override
+    //@Override
     public void draw(SpriteBatch spriteBatch, GameState state){
         if(labels.size() <= 0) return;
-        labels.get(currentLabel).draw(spriteBatch, state);
+        labels.get(0).draw(spriteBatch, state);
     }
 
-    @Override
+    //@Override
     public void draw(ShapeRenderer shapeRenderer, GameState state){
         if(labels.size() <= 0) return;
-        labels.get(currentLabel).draw(shapeRenderer, state);
+        labels.get(0).draw(shapeRenderer, state);
     }
 
-    @Override
+    //@Override
     public boolean isExpired() {
         boolean retVal;
-        if(labels.size() <= 0) retVal = true;
-        retVal = currentLabel == labels.size() - 1 && labels.get(currentLabel).isExpired();
-        currentLabel = 0;
-        labels.clear();
+        if(labels.size() <= 0) {
+            retVal = true;
+        }
+        else {
+            retVal = labels.get(0).isExpired();
+        }
         return retVal;
     }
 
-    @Override
+    //@Override
     public boolean isVisible(GameState state){
         if(labels.size() <= 0) return false;
-        return labels.get(currentLabel).isVisible(state);
+        return labels.get(0).isVisible(state);
     }
 
-    @Override
+    //@Override
     public void onExpire(){
-        if(labels.size() <= 0) return;
-        labels.get(currentLabel).onExpire();
-        currentLabel = 0;
-        labels.clear();
+
     }
 
 }

@@ -167,6 +167,10 @@ public class Labeller {
 
     public void draw(ShapeRenderer shapeRenderer, GameState state){
         if(isVisible(state)) {
+            if(!sounded){
+                musicManager.playSound(MusicManager.SoundState.TUTORIAL);
+                sounded = true;
+            }
             shapeRenderer.setColor(color);
             if(labeled != null){
                 xPoint = labeled.getX() + (labeled.getWidth() / 2);

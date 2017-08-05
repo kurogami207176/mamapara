@@ -5,13 +5,9 @@ import static com.tinybrownmonkey.mamapara.constants.Constants.*;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -20,7 +16,6 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -51,7 +46,6 @@ import com.tinybrownmonkey.mamapara.info.GameSave;
 import com.tinybrownmonkey.mamapara.helper.TextureManager;
 import com.tinybrownmonkey.mamapara.helper.Util;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -113,8 +107,8 @@ public class GameScene implements Screen {
 
     private int MAX_MULTI_TOUCH = 2;
 
-    private List<Labeller> labelsDisp = new ArrayList<Labeller>();
-    private List<Labeller> removableLabels = new ArrayList<Labeller>();
+    private List<SequenceLabeller> labelsDisp = new ArrayList<SequenceLabeller>();
+    private List<SequenceLabeller> removableLabels = new ArrayList<SequenceLabeller>();
     private SequenceLabeller gamePLayLabels = new SequenceLabeller();
 
     private Color tutColor = Color.DARK_GRAY;
@@ -152,6 +146,8 @@ public class GameScene implements Screen {
 
         FreeTypeFontGenerator.FreeTypeFontParameter parameter1 = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter1.size = 35;
+        parameter1.borderWidth = 1f;
+        parameter1.borderColor = Color.GOLD;
         tutorialFont = generatorSimp.generateFont(parameter1);
         tutorialFont.setColor(Color.ROYAL);
 
@@ -172,7 +168,7 @@ public class GameScene implements Screen {
         powerUpHelper = new PowerUpHelper();
         hud = new Hud(gameSave, gameData, powerUpHelper);
 
-        labelsDisp = new ArrayList<Labeller>();
+        labelsDisp = new ArrayList<SequenceLabeller>();
 
         musicManager = new MusicManager();
         particleManager = new ParticleManager();
@@ -247,6 +243,9 @@ public class GameScene implements Screen {
         System.out.println("isTutPowerUp?" + gameSave.isTutPowerUp());
         System.out.println("isTutPersons?" + gameSave.isTutPersons());
         System.out.println("isTutCar?" + gameSave.isTutCar());
+        System.out.println("isTutMoney?" + gameSave.isTutMoney());
+        System.out.println("isTutDistance?" + gameSave.isTutDistance());
+        System.out.println("isTutBonus?" + gameSave.isTutBonus());
         if(!gameSave.isTutMainMenu()){
             Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
                 @Override
@@ -266,7 +265,7 @@ public class GameScene implements Screen {
                     "PLAY!",
                     playBttn,
                     playBttn.getX() + 50,
-                    playBttn.getY() - 50,
+                    playBttn.getY() + 100,
                     5f,
                     onShowInterface,
                     GameState.MAIN_MENU));
@@ -276,7 +275,7 @@ public class GameScene implements Screen {
                     "POWERUP STORE",
                     storeBttn,
                     storeBttn.getX() + 50,
-                    storeBttn.getY() - 50,
+                    storeBttn.getY() + 100,
                     3f,
                     onShowInterface,
                     GameState.MAIN_MENU));
@@ -286,7 +285,7 @@ public class GameScene implements Screen {
                     "BEST SCORE",
                     hsBttn,
                     hsBttn.getX() + 50,
-                    hsBttn.getY() - 50,
+                    hsBttn.getY() + 100,
                     3f,
                     onShowInterface,
                     GameState.MAIN_MENU));
@@ -402,30 +401,6 @@ public class GameScene implements Screen {
             }
             //gameSave.setTutChangeLane(true);
         }
-        if(!gameSave.isTutPowerUp() && gameSave.getPowerUps().size() > 0) {
-            Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
-                @Override
-                public void onShow(Labeller label) {
-                    gameSave.setTutPowerUp(true);
-                }
-
-                @Override
-                public void onEnd(Labeller label) {
-
-                }
-            };
-            gamePLayLabels.add(new Labeller(musicManager,
-                    tutorialFont,
-                    tutColor,
-                    "Available POWER UPS",
-                    GameInfo.WIDTH - hud.getCandyXOffset() - 200,
-                    hud.getCandyY(),
-                    (GameInfo.WIDTH - hud.getCandyXOffset()) - 350,
-                    hud.getCandyY() - 20,
-                    3f,
-                    onShowInterface,
-                    GameState.GAME_PLAY));
-        }
         if(!gameSave.isTutDistance()) {
             Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
                 @Override
@@ -476,6 +451,7 @@ public class GameScene implements Screen {
             //gameSave.setTutPowerUp(true);
         }
         labelsDisp.add(gamePLayLabels);
+        System.out.println("LABELS - " + labelsDisp.size());
     }
 
     @Override
@@ -492,7 +468,7 @@ public class GameScene implements Screen {
             musicManager.unmute();
         }
         removableLabels.clear();
-        for(Labeller label: labelsDisp){
+        for(SequenceLabeller label: labelsDisp){
             label.update(delta, gameData.currState);
             if(label.isExpired())
             {
@@ -582,7 +558,7 @@ public class GameScene implements Screen {
             default:
         }
         hud.drawTimedTexts(batch);
-        for(Labeller label: labelsDisp){
+        for(SequenceLabeller label: labelsDisp){
             label.draw(batch, gameData.currState);
         }
 //        debugRenderer.render(world, debugMatrix);
@@ -620,7 +596,33 @@ public class GameScene implements Screen {
             if(gameData.currState == GameState.GAME_PLAY && moving)
             {
                 musicManager.setMusic(MusicManager.MusicState.L1);
-                gamePlayUpdate(delta);
+                if(!gameSave.isTutPowerUp() && gameSave.getPowerUps().size() > 0) {
+                    Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
+                        @Override
+                        public void onShow(Labeller label) {
+                            gameSave.setTutPowerUp(true);
+                        }
+
+                        @Override
+                        public void onEnd(Labeller label) {
+
+                        }
+                    };
+                    gamePLayLabels.add(new Labeller(musicManager,
+                            tutorialFont,
+                            tutColor,
+                            "Available POWER UPS",
+                            GameInfo.WIDTH - hud.getCandyXOffset() - 200,
+                            hud.getCandyY(),
+                            (GameInfo.WIDTH - hud.getCandyXOffset()) - 350,
+                            hud.getCandyY() - 20,
+                            3f,
+                            onShowInterface,
+                            GameState.GAME_PLAY));
+                    labelsDisp.add(gamePLayLabels);
+                }
+
+                gamePlayUpdate(delta / MAX_MULTI_TOUCH);
                 if(pressed) {
                     System.out.println("x=" + x);
                     System.out.println("y=" + y);
@@ -669,7 +671,7 @@ public class GameScene implements Screen {
                         musicManager.playSound(MusicManager.SoundState.BUTTON);
                     }
                 }
-                store.update(delta);
+                store.update(delta / MAX_MULTI_TOUCH);
             }
             else if(gameData.currState == GameState.MAIN_MENU){
                 musicManager.setMusic(MusicManager.MusicState.TITLE);
@@ -677,7 +679,7 @@ public class GameScene implements Screen {
                     System.out.println("Main menu pressed " + tx);
                     processMenuButton(delta, x, y);
                 }
-                updateHoodAnim(delta);
+                updateHoodAnim(delta / MAX_MULTI_TOUCH);
             }
             else if(gameData.currState == GameState.HIGH_SCORE)
             {
@@ -696,17 +698,17 @@ public class GameScene implements Screen {
                     GameManager.getModuleInterface().share();
                     musicManager.playSound(MusicManager.SoundState.BUTTON);
                 }
-                updateHoodAnim(delta);
+                updateHoodAnim(delta / MAX_MULTI_TOUCH);
             }
             else if(gameData.currState == GameState.TRANSITION_TO_GAME){
                 musicManager.setMusic(MusicManager.MusicState.L2);
-                updateHoodAnim(delta);
-                transitionToGame(delta);
+                updateHoodAnim(delta / MAX_MULTI_TOUCH);
+                transitionToGame(delta / MAX_MULTI_TOUCH);
             }
             else if(gameData.currState == GameState.TRANSITION_TO_MENU){
                 musicManager.setMusic(MusicManager.MusicState.TITLE);
-                updateHoodAnim(delta);
-                transitionToMenu(delta);
+                updateHoodAnim(delta / MAX_MULTI_TOUCH);
+                transitionToMenu(delta / MAX_MULTI_TOUCH);
             }
             else if(gameData.currState == GameState.GAME_END){
                 String cat = "game end";
@@ -969,7 +971,7 @@ public class GameScene implements Screen {
         List<Car> car = ObjectGenerator.generateCar();
         if(car != null && car.size() > 0) {
             cars.addAll(car);
-            if(!gameSave.isTutCar()){
+            if(!gameSave.isTutCar() && gamePLayLabels.isExpired()){
                 Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
                     @Override
                     public void onShow(Labeller label) {
@@ -988,7 +990,7 @@ public class GameScene implements Screen {
                         tutorialFont,
                         tutColor,
                         "Avoid!",
-                        car.get(0),
+                        (Car) cars.get(cars.size() - 1),
                         100,
                         100,
                         3f,
@@ -1003,7 +1005,7 @@ public class GameScene implements Screen {
         Person person = ObjectGenerator.generatePerson(0);
         if(person != null) {
             persons.add(person);
-            if(!gameSave.isTutPersons()){
+            if(!gameSave.isTutPersons() && gamePLayLabels.isExpired()){
                 Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
                     @Override
                     public void onShow(Labeller label) {
@@ -1022,7 +1024,7 @@ public class GameScene implements Screen {
                         tutorialFont,
                         tutColor,
                         "Pick-up!",
-                        person,
+                        (Person) persons.get(persons.size() - 1),
                         100,
                         100,
                         3f,
@@ -1167,7 +1169,7 @@ public class GameScene implements Screen {
                 i++;
             }
         }
-        for(Labeller label: labelsDisp){
+        for(SequenceLabeller label: labelsDisp){
             label.draw(shapeRenderer, gameData.currState);
         }
 

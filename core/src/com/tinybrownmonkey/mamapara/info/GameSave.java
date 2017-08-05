@@ -62,6 +62,8 @@ public class GameSave {
         tutChangeLane = false;
         tutPowerUp = false;
         tutBonus = false;
+        tutDistance = false;
+        tutMoney = false;
     }
 
     public void addDistance(float distance){

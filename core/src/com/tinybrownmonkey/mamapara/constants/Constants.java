@@ -9,12 +9,12 @@ import com.tinybrownmonkey.mamapara.info.GameInfo;
 public class Constants {
     public final static float skySpeedFraction = 0.25f;
     public final static float groundSpeedFraction = 1f;
-    public final static float initGroundSpeed = 300;// 200;
-    public final static float topGroundSpeed = 1200;
+    public final static float initGroundSpeed = 600;// 200;
+    public final static float topGroundSpeed = 3600;
 
     public final static float groundSpeedIncrement = 2;
 
-    public final static int changeLaneSpeed = 300;
+    public final static int changeLaneSpeed = 600;
     private final static float topLaneY = GameInfo.HEIGHT / 2.2f;
     private final static float bottomLaneY = GameInfo.HEIGHT / 10;
     public final static int laneCount = 5;

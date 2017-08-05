@@ -60,11 +60,15 @@ public class Hud {
 
         FreeTypeFontGenerator.FreeTypeFontParameter parameter0 = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter0.size = 70;
+        parameter0.borderWidth = 1f;
+        parameter0.borderColor = Color.BLACK;
         scoreFont = generator.generateFont(parameter0);
         scoreFont.setColor(Color.GOLD);
 
         FreeTypeFontGenerator.FreeTypeFontParameter parameter1 = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter1.size = 50;
+        parameter1.borderWidth = 1f;
+        parameter1.borderColor = Color.BLACK;
         moneyFont = generator.generateFont(parameter1);
         moneyFont.setColor(Color.GOLD);
 

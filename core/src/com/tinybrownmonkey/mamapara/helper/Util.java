@@ -49,10 +49,10 @@ public class Util {
     }
 
     public static boolean isOffscreen(MovingObject obj){
-        if(obj.getX() + obj.getWidth() + GameInfo.WIDTH < 0
-            || obj.getY() + obj.getHeight() + GameInfo.HEIGHT < 0
-            || obj.getX() - GameInfo.WIDTH > GameInfo.WIDTH
-            || obj.getY() - GameInfo.HEIGHT > GameInfo.HEIGHT
+        if(obj.getX() + obj.getWidth() + 2 * GameInfo.WIDTH < 0
+            || obj.getY() + obj.getHeight() + 2 * GameInfo.HEIGHT < 0
+            || obj.getX() - GameInfo.WIDTH > 2 * GameInfo.WIDTH
+            || obj.getY() - GameInfo.HEIGHT > 2 * GameInfo.HEIGHT
                 )
         {
             return true;
