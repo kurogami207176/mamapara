@@ -1,5 +1,6 @@
 package com.tinybrownmonkey.mamapara.constants;
 
+import com.badlogic.gdx.graphics.Color;
 import com.tinybrownmonkey.mamapara.info.GameInfo;
 
 /**
@@ -70,6 +71,8 @@ public class Constants {
     public final static int tutMaxCars = 3;
     public final static int tutBonusMoney = 1200;
 
+    public final static int adsRewardMoney = 200;
+
     public interface ConfirmButton{
         float xOkLeft = 530;
         float xCancelLeft = 249;
@@ -89,6 +92,13 @@ public class Constants {
         float buttonHeight = 79;
     }
 
+    public interface TouchData{
+        float radiusInit = 5;
+        float radiusMax = 35;
+        float radiusDelta = 200;
+        Color color = new Color(1f, 1f, 1f, 0.25f);
+    }
+
     public static float[][] effectTimeMatrix;
     static{
         effectTimeMatrix = new float[PowerUps.values().length - 1][3];
@@ -101,9 +111,9 @@ public class Constants {
         effectTimeMatrix[PowerUps.RANGE.ordinal()][1] = 60;
         effectTimeMatrix[PowerUps.RANGE.ordinal()][2] = 120;
 
-        effectTimeMatrix[PowerUps.SHADOW.ordinal()][0] = 30;
-        effectTimeMatrix[PowerUps.SHADOW.ordinal()][1] = 60;
-        effectTimeMatrix[PowerUps.SHADOW.ordinal()][2] = 120;
+        effectTimeMatrix[PowerUps.SHADOW.ordinal()][0] = 20;
+        effectTimeMatrix[PowerUps.SHADOW.ordinal()][1] = 40;
+        effectTimeMatrix[PowerUps.SHADOW.ordinal()][2] = 80;
 
         effectTimeMatrix[PowerUps.SHAMAN.ordinal()][0] = 30;
         effectTimeMatrix[PowerUps.SHAMAN.ordinal()][1] = 60;

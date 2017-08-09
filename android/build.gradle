@@ -1,4 +1,12 @@
 android {
+    signingConfigs {
+        config {
+            keyAlias 'kurogami'
+            keyPassword 'demigod123'
+            storeFile file('C:/Users/alaguipo/Downloads/kurogami')
+            storePassword 'demigod123'
+        }
+    }
     buildToolsVersion '25.0.0'
     compileSdkVersion 26
     sourceSets {
@@ -22,8 +30,19 @@ android {
         minSdkVersion 15
         targetSdkVersion 26
 
-        versionCode 7
-        versionName "1.6"
+        versionCode 9
+        versionName "1.8"
+
+        multiDexEnabled true
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.config
+        }
+    }
+    dexOptions {
+        incremental true
+        javaMaxHeapSize "2048M"
     }
 }
 
@@ -129,4 +148,7 @@ idea {
             }
         }
     }
+}
+dependencies {
+    compile 'com.android.support:multidex:1.0.0'
 }

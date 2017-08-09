@@ -11,6 +11,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -30,6 +31,11 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.reward.RewardItem;
+import com.google.android.gms.ads.reward.RewardedVideoAd;
+import com.google.android.gms.ads.reward.RewardedVideoAdListener;
+import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.example.games.basegameutils.GameHelper;
 import com.tinybrownmonkey.mamapara.helper.GameManager;
 import com.tinybrownmonkey.mamapara.helper.ModuleInterface;
 import com.tinybrownmonkey.mamapara.info.GameSave;
@@ -37,22 +43,31 @@ import com.tinybrownmonkey.mamapara.info.GameSave;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import com.google.android.gms.analytics.Tracker;
 
-public class AndroidLauncher extends AndroidApplication {
+public class AndroidLauncher extends AndroidApplication implements RewardedVideoAdListener {
 
     private static final String TAG = "AndroidLauncher";
 	protected AdView adView;
-    private static final String PLAY_STORE_LINK = "https://play.google.com/store/apps/details?id=com.tinybrownmonkey.mamapara";
-    private static final int MY_EXTERNAL_STORAGE_PERMISSION = 501;
-
+    private RewardedVideoAd mAd;
     private static byte[] bytesSave;
+
+    private GameHelper gameHelper;
+
+    private ModuleInterface.RewardAdResponse rewardAdResponse;
+
+    private static GoogleAnalytics sAnalytics;
+    private static Tracker sTracker;
 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+        sAnalytics = GoogleAnalytics.getInstance(this);
 
         MobileAds.initialize(this, "ca-app-pub-1898322806059025~5050327923");
+        mAd = MobileAds.getRewardedVideoAdInstance(this);
+        mAd.setRewardedVideoAdListener(this);
 
 		RelativeLayout layout = new RelativeLayout(this);
 
@@ -71,9 +86,6 @@ public class AndroidLauncher extends AndroidApplication {
 		adView.setAdSize(AdSize.SMART_BANNER);
         adView.setAdUnitId("ca-app-pub-1898322806059025/4050083354");
 
-        AdRequest.Builder builder = new AdRequest.Builder();
-        builder.addTestDevice("737B9F013A8CB2E7FD5100EEE11278FE");
-
         RelativeLayout.LayoutParams adParams = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
@@ -83,16 +95,45 @@ public class AndroidLauncher extends AndroidApplication {
         //layout.setGravity(Gravity.RIGHT | Gravity.BOTTOM);
 
         layout.addView(adView, adParams);
-        adView.loadAd(builder.build());
+
+        loadGameAd();
+        loadRewardedVideoAd();
 
         setContentView(layout);
 
+        gameHelper = new GameHelper(this, GameHelper.CLIENT_GAMES);
+        gameHelper.enableDebugLog(false);
+
+        GameHelper.GameHelperListener gameHelperListener = new GameHelper.GameHelperListener()
+        {
+            @Override
+            public void onSignInFailed(){ }
+
+            @Override
+            public void onSignInSucceeded(){ }
+        };
+
+        gameHelper.setup(gameHelperListener);
 	}
 
     @Override
     protected void onStart() {
         super.onStart();
+        gameHelper.onStart(this);
         checkGameCount();
+    }
+
+    private void loadGameAd(){
+        AdRequest.Builder builder = new AdRequest.Builder();
+        builder.addTestDevice("737B9F013A8CB2E7FD5100EEE11278FE");
+        adView.loadAd(builder.build());
+
+    }
+
+    private void loadRewardedVideoAd() {
+        AdRequest.Builder builder = new AdRequest.Builder();
+        builder.addTestDevice("737B9F013A8CB2E7FD5100EEE11278FE");
+        mAd.loadAd("ca-app-pub-1898322806059025/1691562025", builder.build());
     }
 
     private void checkGameCount(){
@@ -104,10 +145,11 @@ public class AndroidLauncher extends AndroidApplication {
             e.printStackTrace();
         }
         final GameSave gameSave = GameManager.loadScores();
-        if(gameSave.getLastVersionNo() == null || gameSave.getLastVersionNo().equalsIgnoreCase(currentVersion)) {
+        if(gameSave.getLastVersionNo() == null || !gameSave.getLastVersionNo().equalsIgnoreCase(currentVersion)) {
             gameSave.setDisableRatingAsk(false);
             gameSave.setDisableShareAsk(false);
             gameSave.setLastVersionNo(currentVersion);
+            GameManager.saveScore(gameSave);
         }
         if(!gameSave.isDisableShareAsk() && gameSave.getLaunchCount() % 7 == 6){
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -119,7 +161,7 @@ public class AndroidLauncher extends AndroidApplication {
                     Intent sendIntent = new Intent();
                     sendIntent.setAction(Intent.ACTION_SEND);
                     sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    sendIntent.putExtra(Intent.EXTRA_TEXT, PLAY_STORE_LINK);
+                    sendIntent.putExtra(Intent.EXTRA_TEXT, AndroidModuleInterface.PLAY_STORE_LINK);
                     sendIntent.setType("text/plain");
                     startActivity(sendIntent);
                     dialogInterface.dismiss();
@@ -130,6 +172,7 @@ public class AndroidLauncher extends AndroidApplication {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
                     gameSave.setDisableShareAsk(true);
+                    GameManager.saveScore(gameSave);
                     dialogInterface.dismiss();
                 }
             });
@@ -141,7 +184,8 @@ public class AndroidLauncher extends AndroidApplication {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
                     gameSave.setDisableRatingAsk(true);
-                    Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(PLAY_STORE_LINK));
+                    GameManager.saveScore(gameSave);
+                    Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(AndroidModuleInterface.PLAY_STORE_LINK));
                     sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(sendIntent);
                     dialogInterface.dismiss();
@@ -165,98 +209,23 @@ public class AndroidLauncher extends AndroidApplication {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
                     gameSave.setDisableRatingAsk(true);
+                    GameManager.saveScore(gameSave);
                     dialogInterface.dismiss();
                 }
             });
             builder.create().show();
         }
-        AndroidModuleInterface ami = new AndroidModuleInterface();
+        AndroidModuleInterface ami = new AndroidModuleInterface(this);
+        AndroidPlayServices playServices = new AndroidPlayServices(this);
         GameManager.setModuleInterface(ami);
-    }
-
-    private class AndroidModuleInterface extends ModuleInterface{
-
-        @Override
-        public void share(byte[] bytes) {
-            Log.i(TAG, "Share: ");
-
-// Here, thisActivity is the current activity
-            if (ContextCompat.checkSelfPermission(AndroidLauncher.this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-
-                // Should we show an explanation?
-                if (ActivityCompat.shouldShowRequestPermissionRationale(AndroidLauncher.this,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-
-                    // Show an explanation to the user *asynchronously* -- don't block
-                    // this thread waiting for the user's response! After the user
-                    // sees the explanation, try again to request the permission.
-
-                } else {
-
-                    bytesSave = bytes;
-                    // No explanation needed, we can request the permission.
-
-                    ActivityCompat.requestPermissions(AndroidLauncher.this,
-                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                            MY_EXTERNAL_STORAGE_PERMISSION);
-
-                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                    // app-defined int constant. The callback method gets the
-                    // result of the request.
-                }
-            }
-            else
-            {
-                FileUtil.shareScreenshot(AndroidLauncher.this, bytes);
-            }
-
-        }
-
-        @Override
-        public void share() {
-            Intent sendIntent = new Intent();
-            sendIntent.setAction(Intent.ACTION_SEND);
-            sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            sendIntent.putExtra(Intent.EXTRA_TEXT, PLAY_STORE_LINK);
-            sendIntent.setType("text/plain");
-            startActivity(sendIntent);
-        }
-
-        @Override
-        public void rate() {
-            Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(PLAY_STORE_LINK));
-            sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(sendIntent);
-        }
-
-        @Override
-        public void sendAnalyticsEvent(String category, String action){
-            Log.i(TAG, "Category: " + category);
-            Log.i(TAG, "Action: " + action);
-//            mTracker.send(new HitBuilders.EventBuilder()
-//                    .setCategory(category)
-//                    .setAction(action)
-//                    .build());
-
-        }
-
-        @Override
-        public void setAnalyticsScreen(String name){
-            Log.i(TAG, "Setting screen name: " + name);
-//            mTracker.setScreenName("Image~" + name);
-//            mTracker.send(new HitBuilders.ScreenViewBuilder().build());
-        }
-
-
+        GameManager.setPlayServices(playServices);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         switch (requestCode) {
-            case MY_EXTERNAL_STORAGE_PERMISSION: {
+            case AndroidModuleInterface.MY_EXTERNAL_STORAGE_PERMISSION: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -270,5 +239,116 @@ public class AndroidLauncher extends AndroidApplication {
             // other 'case' lines to check for other
             // permissions this app might request
         }
+    }
+
+    public ModuleInterface.RewardAdResponse getRewardAdResponse() {
+        return rewardAdResponse;
+    }
+
+    public void showRewardAd(ModuleInterface.RewardAdResponse adResponse) {
+        this.rewardAdResponse = adResponse;
+        Handler mainHandler = new Handler(getMainLooper());
+        mainHandler.post(new Runnable() {
+
+            @Override
+            public void run() {
+                if (mAd.isLoaded()) {
+                    mAd.show();
+                }
+            }
+        });
+    }
+
+
+    @Override
+    public void onRewarded(RewardItem rewardItem) {
+        if(rewardAdResponse != null){
+            ModuleInterface.RewardAdResponse rewardAdResponse2 = rewardAdResponse;
+            rewardAdResponse = null;
+
+            ModuleInterface.RewardItem rewardItem1 = new ModuleInterface.RewardItem();
+            rewardItem1.setType(rewardItem.getType());
+            rewardItem1.setAmount(rewardItem.getAmount());
+            rewardAdResponse2.onRewarded(rewardItem1);
+
+            loadRewardedVideoAd();
+        }
+    }
+
+    @Override
+    public void onRewardedVideoAdLoaded() {
+    }
+
+    @Override
+    public void onRewardedVideoAdOpened() {
+
+    }
+
+    @Override
+    public void onRewardedVideoStarted() {
+
+    }
+
+    @Override
+    public void onRewardedVideoAdClosed() {
+        if(!mAd.isLoaded())
+        {
+            loadRewardedVideoAd();
+        }
+    }
+
+    @Override
+    public void onRewardedVideoAdLeftApplication() {
+
+    }
+
+    @Override
+    public void onRewardedVideoAdFailedToLoad(int i) {
+        loadRewardedVideoAd();
+    }
+
+    @Override
+    protected void onStop()
+    {
+        super.onStop();
+        gameHelper.onStop();
+    }
+
+    @Override
+    public void onResume() {
+        mAd.resume(this);
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        mAd.pause(this);
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        mAd.destroy(this);
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+        gameHelper.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public GameHelper getGameHelper(){
+        return gameHelper;
+    }
+
+    synchronized public Tracker getDefaultTracker() {
+        // To enable debug logging use: adb shell setprop log.tag.GAv4 DEBUG
+        if (sTracker == null) {
+            sTracker = sAnalytics.newTracker(R.xml.global_tracker);
+        }
+
+        return sTracker;
     }
 }

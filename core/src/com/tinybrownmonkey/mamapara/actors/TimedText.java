@@ -31,11 +31,7 @@ public class TimedText extends TimedAbstract <SpriteBatch> {
 
     @Override
     public boolean countDown(float deltaTime){
-        System.out.print("dx:" + getXSpeed() + "/dy:" + getYSpeed() + "-");
-        System.out.println("dx:" + getXSpeed(deltaTime) + "/dy:" + getYSpeed(deltaTime) + "-");
-        System.out.println("<<" + getId() + "/" + getText() + ": " + getX() + "," + getY());
         boolean retVal = super.countDown(deltaTime);
-        System.out.println("->>" + getId() + "/" + getText() + ": " + getX() + "," + getY());
 
         return retVal;
     }
@@ -44,5 +40,5 @@ public class TimedText extends TimedAbstract <SpriteBatch> {
     public void drawInner(SpriteBatch drawer) {
         font.setColor(color);
         font.draw(drawer, getText(), getX(), getY());
-        System.out.println("==" + getId() + "/" + getText() + ": " + getX() + "," + getY());    }
+    }
 }

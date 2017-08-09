@@ -24,11 +24,14 @@ import com.tinybrownmonkey.mamapara.actors.Car;
 import com.tinybrownmonkey.mamapara.actors.Labeller;
 import com.tinybrownmonkey.mamapara.actors.SequenceLabeller;
 import com.tinybrownmonkey.mamapara.actors.TimedShape;
+import com.tinybrownmonkey.mamapara.actors.TouchCircle;
 import com.tinybrownmonkey.mamapara.constants.PowerUps;
 import com.tinybrownmonkey.mamapara.helper.BackgroundMover;
 import com.tinybrownmonkey.mamapara.helper.EquippedPowerUp;
 import com.tinybrownmonkey.mamapara.helper.Hud;
+import com.tinybrownmonkey.mamapara.helper.ModuleInterface;
 import com.tinybrownmonkey.mamapara.helper.ParticleManager;
+import com.tinybrownmonkey.mamapara.helper.PlayServices;
 import com.tinybrownmonkey.mamapara.helper.PowerUpHelper;
 import com.tinybrownmonkey.mamapara.helper.Store;
 import com.tinybrownmonkey.mamapara.constants.Constants;
@@ -51,9 +54,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import sun.security.provider.SHA;
-
-
 /**
  * Created by AlainAnne on 12-Jun-17.
  */
@@ -75,6 +75,8 @@ public class GameScene implements Screen {
     private Sprite soundOn;
     private Sprite shareBttn;
     private Sprite rateBttn;
+    private Sprite creditsBttn;
+    private Sprite adsBttn;
 
     //private Sprite jeep;
     private Jeepney jeep;
@@ -99,6 +101,7 @@ public class GameScene implements Screen {
 
     private BackgroundMover bgMover;
     private GroundMover<Person> groundMover;
+    private List<TouchCircle> touchCircles;
 
     private Random random = new Random();
     private MusicManager musicManager;
@@ -180,6 +183,8 @@ public class GameScene implements Screen {
 
         //gameSave.enableTutorials();
         initLabels();
+
+        touchCircles = new ArrayList<TouchCircle>();
     }
 
     private void initGameplay() {
@@ -234,6 +239,12 @@ public class GameScene implements Screen {
 
         rateBttn = new Sprite(TextureManager.get("button_rate.png"));
         rateBttn.setPosition(50,190);
+
+        adsBttn = new Sprite(TextureManager.get("button_ads.png"));
+        adsBttn.setPosition(GameInfo.WIDTH - adsBttn.getWidth() - 50,120);
+
+        creditsBttn = new Sprite(TextureManager.get("button_credits.png"));
+        creditsBttn.setPosition(GameInfo.WIDTH - creditsBttn.getWidth() - 50,190);
     }
 
     private void initLabels(){
@@ -251,6 +262,7 @@ public class GameScene implements Screen {
                 @Override
                 public void onShow(Labeller label) {
                     gameSave.setTutMainMenu(true);
+                    GameManager.saveScore(gameSave);
                 }
 
                 @Override
@@ -297,6 +309,7 @@ public class GameScene implements Screen {
                 @Override
                 public void onShow(Labeller label) {
                     gameSave.setTutShop(true);
+                    GameManager.saveScore(gameSave);
                 }
 
                 @Override
@@ -315,6 +328,7 @@ public class GameScene implements Screen {
                                 75);
                         gameSave.addMoney(tutBonusMoney);
                         gameSave.reset();
+                        GameManager.saveScore(gameSave);
                     }
                 }
             };
@@ -373,6 +387,7 @@ public class GameScene implements Screen {
                 @Override
                 public void onShow(Labeller label) {
                     gameSave.setTutChangeLane(true);
+                    GameManager.saveScore(gameSave);
                 }
 
                 @Override
@@ -406,6 +421,7 @@ public class GameScene implements Screen {
                 @Override
                 public void onShow(Labeller label) {
                     gameSave.setTutDistance(true);
+                    GameManager.saveScore(gameSave);
                 }
 
                 @Override
@@ -430,6 +446,7 @@ public class GameScene implements Screen {
                 @Override
                 public void onShow(Labeller label) {
                     gameSave.setTutMoney(true);
+                    GameManager.saveScore(gameSave);
                 }
 
                 @Override
@@ -524,6 +541,7 @@ public class GameScene implements Screen {
                 }
                 batch.draw(shareBttn, shareBttn.getX(), shareBttn.getY());
                 batch.draw(rateBttn, rateBttn.getX(), rateBttn.getY());
+                batch.draw(adsBttn, adsBttn.getX(), adsBttn.getY());
                 break;
             case STORE:
                 batch.draw(homeBg, homeBg.getX(), homeBg.getY());
@@ -578,19 +596,28 @@ public class GameScene implements Screen {
     private void updateComponents(float delta) {
         boolean changeLaneDone = false;
         hud.update(delta);
+        List<TouchCircle> removableCircles = new ArrayList<TouchCircle>();
+        for(TouchCircle tc: touchCircles){
+            tc.update(delta);
+            if(!tc.isValid()){
+                removableCircles.add(tc);
+            }
+        }
+        touchCircles.removeAll(removableCircles);
         for(int tx = 0; tx < MAX_MULTI_TOUCH; tx++){
             if(buttonTouched[tx] > 0) {
                 buttonTouched[tx] = buttonTouched[tx] - delta;
             }
             boolean pressed = false;
-            float x = 0;
-            float y = 0;
+            float x = -1;
+            float y = -1;
             //if(buttonTouched[tx] <= 0 && Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
             if(buttonTouched[tx] <= 0 && Gdx.input.isTouched(tx)) {
                 Vector3 v3 = mainCamera.unproject(new Vector3(Gdx.input.getX(tx), Gdx.input.getY(tx), 0));
                 x = v3.x;
                 y = v3.y;
                 pressed = true;
+                touch(x, y);
             }
 
             if(gameData.currState == GameState.GAME_PLAY && moving)
@@ -601,6 +628,7 @@ public class GameScene implements Screen {
                         @Override
                         public void onShow(Labeller label) {
                             gameSave.setTutPowerUp(true);
+                            GameManager.saveScore(gameSave);
                         }
 
                         @Override
@@ -611,10 +639,10 @@ public class GameScene implements Screen {
                     gamePLayLabels.add(new Labeller(musicManager,
                             tutorialFont,
                             tutColor,
-                            "Available POWER UPS",
+                            "POWER UPs. Tap to activate",
                             GameInfo.WIDTH - hud.getCandyXOffset() - 200,
                             hud.getCandyY(),
-                            (GameInfo.WIDTH - hud.getCandyXOffset()) - 350,
+                            (GameInfo.WIDTH - hud.getCandyXOffset()) - 400,
                             hud.getCandyY() - 20,
                             3f,
                             onShowInterface,
@@ -978,6 +1006,7 @@ public class GameScene implements Screen {
                         tutCarCounter++;
                         if(tutCarCounter > tutMaxCars){
                             gameSave.setTutCar(true);
+                            GameManager.saveScore(gameSave);
                         }
                     }
 
@@ -1012,6 +1041,7 @@ public class GameScene implements Screen {
                         tutPersonCounter++;
                         if(tutPersonCounter > tutMaxPersons) {
                             gameSave.setTutPersons(true);
+                            GameManager.saveScore(gameSave);
                         }
                     }
 
@@ -1172,6 +1202,9 @@ public class GameScene implements Screen {
         for(SequenceLabeller label: labelsDisp){
             label.draw(shapeRenderer, gameData.currState);
         }
+        for(TouchCircle tc: touchCircles){
+            tc.draw(shapeRenderer);
+        }
 
 //        shapeRenderer.set(ShapeRenderer.ShapeType.Filled);
 //        shapeRenderer.setColor(0f, 0f, 0f, 0.3f);
@@ -1196,7 +1229,7 @@ public class GameScene implements Screen {
     }
 
     private void processMenuButton(float delta, float x, float y) {
-        String cat = "main";
+        final String cat = "main";
         if(Util.isButtonTouched(playBttn, x, y))
         {
             buttonTouched[0] = buttonTouchedDelay;
@@ -1239,6 +1272,28 @@ public class GameScene implements Screen {
             GameManager.getModuleInterface().rate();
             musicManager.playSound(MusicManager.SoundState.BUTTON);
             GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click rate");
+        }
+        else if(Util.isButtonTouched(adsBttn, x, y))
+        {
+            buttonTouched[0] = buttonTouchedDelay;
+            GameManager.getModuleInterface().showRewardAd(new ModuleInterface.RewardAdResponse() {
+                @Override
+                public void onRewarded(ModuleInterface.RewardItem reward) {
+                    musicManager.playSound(MusicManager.SoundState.COIN);
+                    hud.addTimedText("$" + adsRewardMoney + " reward!",
+                            Color.GOLD,
+                            2f,
+                            adsBttn.getX(),
+                            adsBttn.getY(),
+                            0,
+                            75);
+                    gameSave.addMoney(adsRewardMoney);
+                    gameSave.reset();
+                    GameManager.getModuleInterface().sendAnalyticsEvent(cat, "rewarded!");
+                }
+            });
+            musicManager.playSound(MusicManager.SoundState.BUTTON);
+            GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click rewards");
         }
     }
 
@@ -1332,6 +1387,27 @@ public class GameScene implements Screen {
             Gdx.input.setCatchBackKey(false);
         }
         gameData.currState = nextState;
+        if(gameData.currState == GameState.HIGH_SCORE) {
+            PlayServices playServices = GameManager.getPlayServices();
+            if (playServices.isSignedIn())
+            {
+                playServices.showScore();
+                gameData.currState = GameState.MAIN_MENU;
+            }
+
+        }
+        else if(gameData.currState == GameState.GAME_END)
+        {
+            PlayServices playServices = GameManager.getPlayServices();
+            if(playServices.isSignedIn())
+            {
+                if (gameSave.getDistance() == gameSave.getHighScore()) {
+                    playServices.submitDistanceScore(gameSave.getHighScore());
+                }
+                playServices.submitMoneyScore(gameSave.getMoneyTotal());
+                playServices.submitMoneyTripScore(gameSave.getMoney());
+            }
+        }
         GameManager.getModuleInterface().setAnalyticsScreen(nextState.name());
     }
 
@@ -1350,5 +1426,13 @@ public class GameScene implements Screen {
         powerUpHelper.resetAll();
     }
 
+    private void touch(float x, float y){
+
+        touchCircles.add(new TouchCircle(x, y,
+                TouchData.radiusInit,
+                TouchData.color,
+                TouchData.radiusMax,
+                TouchData.radiusDelta));
+    }
 
 }

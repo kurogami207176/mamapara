@@ -27,4 +27,34 @@ public class ModuleInterface {
     public void setAnalyticsScreen(String name){
         System.out.println("setAnalyticsScreen: " + name);
     }
+    public void showRewardAd(RewardAdResponse adResponse){
+
+    }
+
+    public static class RewardItem{
+        String type;
+
+        public int getAmount() {
+            return amount;
+        }
+
+        public void setAmount(int amount) {
+            this.amount = amount;
+        }
+
+        int amount;
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+    }
+
+    public interface RewardAdResponse{
+        public void onRewarded(RewardItem reward) ;
+
+    }
 }

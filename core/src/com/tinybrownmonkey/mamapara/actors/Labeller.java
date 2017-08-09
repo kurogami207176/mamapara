@@ -33,6 +33,7 @@ public class Labeller {
     private float yLabel;
     private int xOffset;
     private int yOffset;
+    private float initTimer = -1f;
     private float timer = -1f;
     private Color color;
     private Set<GameState> states;
@@ -66,6 +67,7 @@ public class Labeller {
         this.xLabel = xLabel;
         this.yLabel = yLabel;
         this.timer = timer;
+        this.initTimer = timer;
         this.color = color;
         this.onShowInterface = onShowInterface;
         this.states = new HashSet<GameState>(Arrays.asList(states));
@@ -82,6 +84,7 @@ public class Labeller {
         this.xLabel = xLabel;
         this.yLabel = yLabel;
         this.timer = timer;
+        this.initTimer = timer;
         this.color = color;
         this.onShowInterface = onShowInterface;
         this.states = new HashSet<GameState>(Arrays.asList(states));
@@ -99,6 +102,7 @@ public class Labeller {
         this.xOffset = xOffset;
         this.yOffset = yOffset;
         this.timer = timer;
+        this.initTimer = timer;
         this.color = color;
         this.onShowInterface = onShowInterface;
         this.states = new HashSet<GameState>(Arrays.asList(states));
@@ -117,6 +121,9 @@ public class Labeller {
 
     public void update(float delta, GameState state){
         if(states.contains(state) && timer > 0){
+            if(timer == initTimer){
+                onShow();
+            }
             timer = timer - delta;
             if(timer == 0)
             {
@@ -208,6 +215,14 @@ public class Labeller {
 
     public int getId() {
         return id;
+    }
+
+    public void onShow(){
+        System.out.println(label + ".onShow()");
+        if(onShowInterface != null) {
+            onShowInterface.onShow(this);
+            System.out.println(label + ".onShow() executed");
+        }
     }
 
     public void onExpire(){

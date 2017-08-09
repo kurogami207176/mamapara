@@ -4,6 +4,7 @@
     <string name="app_name">Mamapara!</string>
     <string name="admob_id">ca-app-pub-1898322806059025~5050327923</string>
     <string name="admob_gameplay_id">ca-app-pub-1898322806059025/4050083354</string>
+    <string name="admob_reward_id">ca-app-pub-1898322806059025/1691562025</string>
     <string name="facebook_app_id">104898060190732</string>
     <string name="fb_login_protocol_scheme">fb104898060190732</string>
 

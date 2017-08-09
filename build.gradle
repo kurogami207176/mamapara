@@ -7,6 +7,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.3.3'
+        classpath 'com.google.gms:google-services:3.0.0'
     }
 }
 
@@ -73,6 +74,10 @@ project(":android") {
         natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86_64"
         compile "com.google.android.gms:play-services-ads:$admobVersion"
         compile 'com.facebook.android:facebook-android-sdk:[4,5)'
+        compile "com.google.android.gms:play-services-games:$admobVersion"
+        compile "com.google.android.gms:play-services:$admobVersion"
+        compile "com.google.android.gms:play-services-analytics:$admobVersion"
+        compile project(':BaseGameUtils')
     }
 }
 

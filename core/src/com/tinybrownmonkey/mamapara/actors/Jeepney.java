@@ -1,7 +1,9 @@
 package com.tinybrownmonkey.mamapara.actors;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 
@@ -59,7 +61,27 @@ public class Jeepney extends Sprite implements MovingObject {
             this.targetLaneY = targetLaneY;
     }
 
+    private boolean upDown = true;
+    private float deltaY = 0;
+    private float deltaYSpeed = 20;
+    private float maxDeltaY = 5;
+
     public void transitionJeep(float deltaTime){
+        if(upDown){
+            deltaY = deltaY + (deltaYSpeed * deltaTime);
+            if(deltaY > maxDeltaY){
+                deltaY = maxDeltaY;
+                upDown = false;
+            }
+        }
+        else
+        {
+            deltaY = deltaY - (deltaYSpeed * deltaTime);
+            if(deltaY < 0){
+                deltaY = 0;
+                upDown = true;
+            }
+        }
         float jeepY = getY();
         if(jeepY > targetLaneY){
             if(currAngle > -maxAngle){
@@ -271,5 +293,13 @@ public class Jeepney extends Sprite implements MovingObject {
     private float aY(float x, float y, float xC, float yC, float angle){
         float yRet = (y - yC) * MathUtils.cosDeg(angle) + (x - xC) * MathUtils.sinDeg(angle) + yC;
         return yRet;
+    }
+
+
+    @Override
+    public void draw(Batch spriteBatch){
+        this.setY(this.getY() + deltaY);
+        super.draw(spriteBatch);
+        this.setY(this.getY() - deltaY);
     }
 }

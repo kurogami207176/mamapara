@@ -64,11 +64,11 @@ public abstract class TimedAbstract <T> {
 
     public void setX(float x){
         this.x = x;
-        System.out.println(getId() + ".setX=" + getX());
+        //System.out.println(getId() + ".setX=" + getX());
     }
     public void setY(float y){
         this.y = y;
-        System.out.println(getId() + ".setY=" + getY());
+        //System.out.println(getId() + ".setY=" + getY());
     }
 
     public void draw(Object object){
