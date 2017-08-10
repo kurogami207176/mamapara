@@ -36,10 +36,8 @@ public class Labeller {
     private float initTimer = -1f;
     private float timer = -1f;
     private Color color;
+    private Color colorBox;
     private Set<GameState> states;
-
-    private float xPoint;
-    private float yPoint;
 
     private Sprite labeled;
     private OnShowInterface onShowInterface;
@@ -47,6 +45,7 @@ public class Labeller {
 
     private Vector2 rect1;
     private Vector2 rect2;
+    private PulsingRect pulsingRect;
 
     private boolean sounded = false;
     private MusicManager musicManager;
@@ -56,22 +55,25 @@ public class Labeller {
     }
 
     public Labeller(MusicManager musicManager, BitmapFont font, Color color, String label,
-                    float xPoint, float yPoint,
+                    float xPoint, float yPoint, float xWidth, float yHeight,
                     float xLabel, float yLabel, float timer,
                     OnShowInterface onShowInterface, GameState states){
         this.id = Labeller.idGenerator++;
         this.font = font;
         this.label= label;
-        this.xPoint = xPoint;
-        this.yPoint = yPoint;
         this.xLabel = xLabel;
         this.yLabel = yLabel;
         this.timer = timer;
         this.initTimer = timer;
         this.color = color;
+        this.colorBox = new Color(color.r, color.g, color.b, 0.1f);
         this.onShowInterface = onShowInterface;
         this.states = new HashSet<GameState>(Arrays.asList(states));
         this.musicManager = musicManager;
+        this.rect1 = new Vector2(xPoint, yPoint);
+        this.rect2 = new Vector2(xPoint + xWidth,
+                yPoint + yHeight);
+        setRect(rect1, rect2);
     }
 
     public Labeller(MusicManager musicManager, BitmapFont font, Color color,
@@ -86,9 +88,14 @@ public class Labeller {
         this.timer = timer;
         this.initTimer = timer;
         this.color = color;
+        this.colorBox = new Color(color.r, color.g, color.b, 0.1f);
         this.onShowInterface = onShowInterface;
         this.states = new HashSet<GameState>(Arrays.asList(states));
         this.musicManager = musicManager;
+        this.rect1 = new Vector2(labeled.getX(), labeled.getY());
+        this.rect2 = new Vector2(labeled.getX() + labeled.getWidth(),
+                labeled.getY() + labeled.getHeight());
+        setRect(rect1, rect2);
     }
 
     public Labeller(MusicManager musicManager, BitmapFont font, Color color,
@@ -104,14 +111,46 @@ public class Labeller {
         this.timer = timer;
         this.initTimer = timer;
         this.color = color;
+        this.colorBox = new Color(color.r, color.g, color.b, 0.1f);
         this.onShowInterface = onShowInterface;
         this.states = new HashSet<GameState>(Arrays.asList(states));
         this.musicManager = musicManager;
+        this.rect1 = new Vector2(labeled.getX(), labeled.getY());
+        this.rect2 = new Vector2(labeled.getX() + labeled.getWidth(),
+                labeled.getY() + labeled.getHeight());
+        setRect(rect1, rect2);
+    }
+
+    public Labeller(MusicManager musicManager, BitmapFont font, Color color,
+                    String label, Vector2 rect1, Vector2 rect2,
+                    int xOffset, int yOffset, float timer,
+                    OnShowInterface onShowInterface,
+                    GameState states){
+        this.font = font;
+        this.label= label;
+        this.xOffset = xOffset;
+        this.yOffset = yOffset;
+        this.timer = timer;
+        this.initTimer = timer;
+        this.color = color;
+        this.colorBox = new Color(color.r, color.g, color.b, 0.1f);
+        this.onShowInterface = onShowInterface;
+        this.states = new HashSet<GameState>(Arrays.asList(states));
+        this.musicManager = musicManager;
+        this.rect1 = rect1;
+        this.rect2 = rect2;
+        setRect(rect1, rect2);
     }
 
     public void setRect(Vector2 rect1, Vector2 rect2){
         this.rect1 = rect1;
         this.rect2 = rect2;
+        this.pulsingRect = new PulsingRect(
+                rect1.x,
+                rect1.y,
+                rect2.x - rect1.x,
+                rect2.y - rect1.y,
+                15, colorBox, 10, 5);
     }
 
     public void setRect(float x1, float y1, float x2, float y2){
@@ -129,16 +168,12 @@ public class Labeller {
             {
                 timer = 0f;
             }
+            pulsingRect.update(delta);
         }
     }
 
     public void updatePoint(Sprite labeled){
         this.labeled = labeled;
-    }
-
-    public void updatePoint(float xPoint, float yPoint){
-        this.xPoint = xPoint;
-        this.yPoint = yPoint;
     }
 
     public void updateLabel(String label){
@@ -173,35 +208,18 @@ public class Labeller {
     }
 
     public void draw(ShapeRenderer shapeRenderer, GameState state){
+        pulsingRect.setEnabled(false);
         if(isVisible(state)) {
             if(!sounded){
                 musicManager.playSound(MusicManager.SoundState.TUTORIAL);
                 sounded = true;
             }
             shapeRenderer.setColor(color);
-            if(labeled != null){
-                xPoint = labeled.getX() + (labeled.getWidth() / 2);
-                yPoint = labeled.getY() + (labeled.getHeight() / 2);
-                if(xOffset != 0 || yOffset != 0) {
-                    xLabel = xPoint + xOffset;
-                    yLabel = yPoint + yOffset;
-                }
+            if(rect1 != null && rect2 != null) {
+                pulsingRect.setRect(rect1, rect2);
             }
-            float lineWidth = 3;
-            if(xPoint >= 0 && xPoint <= GameInfo.WIDTH
-                && yPoint >= 0 && yPoint <= GameInfo.HEIGHT) {
-                float yMid = (yPoint + yLabel) / 2;
-//                shapeRenderer.line(xPoint, yPoint, xLabel, yMid);
-//                shapeRenderer.line(xLabel, yMid, xLabel, yLabel);
-                shapeRenderer.rectLine(xPoint, yPoint, xLabel, yLabel, lineWidth);
-            }
-            if(rect1 != null && rect2 != null){
-                shapeRenderer.rectLine(rect1.x, rect1.y, rect2.x, rect1.y, lineWidth);
-                shapeRenderer.rectLine(rect2.x, rect1.y, rect2.x, rect2.y, lineWidth);
-                shapeRenderer.rectLine(rect1.x, rect2.y, rect2.x, rect2.y, lineWidth);
-                shapeRenderer.rectLine(rect1.x, rect1.y, rect1.x, rect2.y, lineWidth);
-                //shapeRenderer.rectLine(rect1, rect2, lineWidth);
-            }
+            pulsingRect.setEnabled(true);
+            pulsingRect.draw(shapeRenderer);
         }
     }
 
@@ -226,7 +244,9 @@ public class Labeller {
     }
 
     public void onExpire(){
-        onShowInterface.onEnd(this);
+        if(onShowInterface != null) {
+            onShowInterface.onEnd(this);
+        }
         onShowInterface = null;
     }
 

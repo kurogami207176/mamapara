@@ -181,7 +181,7 @@ public class GameScene implements Screen {
 
         initGameplay();
 
-        //gameSave.enableTutorials();
+        // gameSave.enableTutorials();
         initLabels();
 
         touchCircles = new ArrayList<TouchCircle>();
@@ -337,19 +337,23 @@ public class GameScene implements Screen {
                     tutorialFont,
                     tutColor,
                     "Your money",
-                    store.getMoneyX() + 50,
-                    store.getMoneyY() + 20,
+                    store.getMoneyX(),
+                    store.getMoneyY(),
+                    130, 50,
                     store.getMoneyX() + 70,
                     store.getMoneyY() + 70,
                     3f,
                     onShowInterface,
                     GameState.STORE));
+
             labels.add(new Labeller(musicManager,
                     tutorialFont,
                     tutColor,
                     "Power ups",
-                    (GameInfo.WIDTH / 2) - 20,
-                    (GameInfo.HEIGHT / 2) - 20,
+                    Store.candyOffsetX,
+                    Store.candyOffsetY,
+                    (Store.candyWidth + Store.candyGapX) * 5,
+                    (Store.candyHeight + Store.candyGapY) * 4,
                     (GameInfo.WIDTH / 2) + 50,
                     (GameInfo.HEIGHT / 2)+ 50,
                     3f,
@@ -359,8 +363,10 @@ public class GameScene implements Screen {
                     tutorialFont,
                     tutColor,
                     "Available Slots",
-                    (GameInfo.WIDTH / 2),
-                    (GameInfo.HEIGHT * 3 / 4) - 50,
+                    store.getStoreBottom().getX() + 30,
+                    store.getStoreBottom().getY() + store.getStoreBottom().getHeight() - 100,
+                    store.getStoreBottom().getWidth() - 60,
+                    100,
                     (GameInfo.WIDTH / 2) + 50,
                     (GameInfo.HEIGHT * 3 / 4) + 50,
                     3f,
@@ -370,8 +376,10 @@ public class GameScene implements Screen {
                     tutorialFont,
                     tutColor,
                     "Purchase Slots here",
-                    (GameInfo.WIDTH * 3 / 4) - 100,
-                    GameInfo.HEIGHT / 4,
+                    store.sideOffset,
+                    Store.calculateY(0),
+                    (store.cigSide.getWidth() + store.sideGap) * 6,
+                    store.cigSide.getHeight(),
                     (GameInfo.WIDTH * 3 / 4) - 150,
                     (GameInfo.HEIGHT / 4) - 50,
                     3f,
@@ -403,6 +411,7 @@ public class GameScene implements Screen {
                         "Slide to change lane",
                         (GameInfo.WIDTH / 2) - (i * 30),
                         laneY,
+                        100, 50,
                         (GameInfo.WIDTH / 2) + 50 - (i * 30),
                         laneY + 50,
                         1f,
@@ -429,14 +438,16 @@ public class GameScene implements Screen {
 
                 }
             };
+
             gamePLayLabels.add(new Labeller(musicManager,
                     tutorialFont,
                     tutColor,
                     "Distance",
-                    (GameInfo.WIDTH * 1 / 20) + 30,
-                    (GameInfo.HEIGHT * 19 / 20) - 20,
-                    (GameInfo.WIDTH * 1 / 20) + 80,
+                    (GameInfo.WIDTH * 1 / 20),
                     (GameInfo.HEIGHT * 19 / 20) - 50,
+                    100, 50,
+                    (GameInfo.WIDTH * 1 / 20) + 80,
+                    (GameInfo.HEIGHT * 19 / 20) - 100,
                     3f,
                     onShowInterface,
                     GameState.GAME_PLAY));
@@ -458,10 +469,11 @@ public class GameScene implements Screen {
                     tutorialFont,
                     tutColor,
                     "Money",
-                    (GameInfo.WIDTH * 1/20) + 30,
-                    (GameInfo.HEIGHT  * 8/10) - 20,
-                    (GameInfo.WIDTH * 1/20) + 80,
+                    (GameInfo.WIDTH * 1/20),
                     (GameInfo.HEIGHT  * 8/10) - 50,
+                    100, 50,
+                    (GameInfo.WIDTH * 1/20) + 80,
+                    (GameInfo.HEIGHT  * 8/10) - 100,
                     3f,
                     onShowInterface,
                     GameState.GAME_PLAY));
@@ -619,36 +631,32 @@ public class GameScene implements Screen {
                 pressed = true;
                 touch(x, y);
             }
+            int powerupSize = gameSave.getPowerUps().size();
+            if(gameData.currState == GameState.GAME_PLAY && moving
+                &&!gameSave.isTutPowerUp() && powerupSize > 0) {
+                gameSave.setTutPowerUp(true);
+                GameManager.saveScore(gameSave);
+
+                Sprite sprite = hud.spriteMatrix[0][0];
+                gamePLayLabels.add(new Labeller(musicManager,
+                        tutorialFont,
+                        tutColor,
+                        "POWER UPs. Tap to activate",
+                        GameInfo.WIDTH - sprite.getWidth() - (hud.candyXOffset + (hud.candyXGap + sprite.getWidth()) * powerupSize),
+                        hud.getCandyY(),
+                        hud.candyXOffset + (hud.candyXGap + sprite.getWidth()) * powerupSize,
+                        hud.getCandyHeight(),
+                        (GameInfo.WIDTH - hud.getCandyXOffset()) - 400,
+                        hud.getCandyY() - 20,
+                        3f,
+                        null,
+                        GameState.GAME_PLAY));
+                labelsDisp.add(gamePLayLabels);
+            }
 
             if(gameData.currState == GameState.GAME_PLAY && moving)
             {
                 musicManager.setMusic(MusicManager.MusicState.L1);
-                if(!gameSave.isTutPowerUp() && gameSave.getPowerUps().size() > 0) {
-                    Labeller.OnShowInterface onShowInterface = new Labeller.OnShowInterface() {
-                        @Override
-                        public void onShow(Labeller label) {
-                            gameSave.setTutPowerUp(true);
-                            GameManager.saveScore(gameSave);
-                        }
-
-                        @Override
-                        public void onEnd(Labeller label) {
-
-                        }
-                    };
-                    gamePLayLabels.add(new Labeller(musicManager,
-                            tutorialFont,
-                            tutColor,
-                            "POWER UPs. Tap to activate",
-                            GameInfo.WIDTH - hud.getCandyXOffset() - 200,
-                            hud.getCandyY(),
-                            (GameInfo.WIDTH - hud.getCandyXOffset()) - 400,
-                            hud.getCandyY() - 20,
-                            3f,
-                            onShowInterface,
-                            GameState.GAME_PLAY));
-                    labelsDisp.add(gamePLayLabels);
-                }
 
                 gamePlayUpdate(delta / MAX_MULTI_TOUCH);
                 if(pressed) {
@@ -959,6 +967,7 @@ public class GameScene implements Screen {
             //cars
             boolean colCar = moveCars(delta);
             generateCar(delta);
+            checkCarCollssions();
 
             collission = colPerson || colCar;
             if(collission && !prevCollission)
@@ -1126,6 +1135,20 @@ public class GameScene implements Screen {
 
         }
         return retVal;
+    }
+
+    private void checkCarCollssions() {
+        for(int i=0; i < cars.size(); i++){
+            for(int j=i; j < cars.size(); j++){
+                MovingObject car1 = cars.get(i);
+                MovingObject car2 = cars.get(j);
+                if(car1 != null && car2 != null && car1 != car2
+                        && Util.checkCollisions(car1.getCollisionVertices(), car2.getCollisionVertices())){
+                    car1.setSpeedX(0);
+                    car2.setSpeedX(0);
+                }
+            }
+        }
     }
 
     private void removeOffscreenMovingObjects() {

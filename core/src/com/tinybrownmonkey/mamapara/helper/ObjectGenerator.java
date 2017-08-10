@@ -23,12 +23,14 @@ import static com.tinybrownmonkey.mamapara.constants.Constants.laneWidth;
 public class ObjectGenerator {
     private static Random random = new Random();
     private static float personIntervalCounter = 0;
-    private static float personIntervalMin = 0.05f;
-    private static float personIntervalRange = 0.2f;
+    private static float personIntervalMin = 0.2f;//0.05f;
+    private static float personIntervalRange = 0.05f;//0.5f;
+    private static boolean personUpOrDown = true;
+    private static float personUpOrDownFlip = .01f;
 
     private static float carIntervalCounter = 0;
-    private static float carIntervalMin = 0.3f;
-    private static float carIntervalRange = 1.8f;
+    private static float carIntervalMin = 0.5f;//0.3f;
+    private static float carIntervalRange = 0.2f;//1.8f;
 
     private static float tricycleMinTimer = 10f;
     private static float sedanMinTimer = 15f;
@@ -43,7 +45,7 @@ public class ObjectGenerator {
     private static float personRangeMax = GameInfo.HEIGHT * 0.656f;
     private static float personRangeMin = 0;
 
-    private static float personMovingMinTimer = 45;
+    private static float personMovingMinTimer = 30;
     private static float personRange = 40;
     private static float personMovingRange = 200;
 
@@ -150,12 +152,16 @@ public class ObjectGenerator {
         float speedY = 0;
         if(personIntervalCounter <= 0)
         {
+            if(random.nextFloat() < personUpOrDownFlip){
+                personUpOrDown = !personUpOrDown;
+            }
             int pedestrianGen = pedestrianGenMax - pedestrianGenCtr;
             if(pedestrianGen < pedestrianGenMin){
                 pedestrianGen = pedestrianGenMin;
             }
             int ran = random.nextInt(pedestrianGen);
-            boolean up = random.nextBoolean();
+            boolean up = personUpOrDown;
+
             float randFloat = random.nextFloat();
             float y;
             if(totalTime > personMovingMinTimer && ran == 0)
@@ -252,39 +258,7 @@ public class ObjectGenerator {
                     laneIndex = 2 * laneIndex;
                 }
                 float quartWidth = laneWidth / 4;
-                Car cone1 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH, lanePositions[laneIndex] - 2*quartWidth, Obstructions.CONE.getWeight());
-                Car cone2 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH, lanePositions[laneIndex], Obstructions.CONE.getWeight());
-                Car cone3 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH, lanePositions[laneIndex] + 2*quartWidth, Obstructions.CONE.getWeight());
-                Car cone4 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 400, lanePositions[laneIndex] - 2*quartWidth, Obstructions.CONE.getWeight());
-                Car cone5 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 400, lanePositions[laneIndex], Obstructions.CONE.getWeight());
-                Car cone6 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 400, lanePositions[laneIndex] + 2*quartWidth, Obstructions.CONE.getWeight());
-                Car cone7 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 800, lanePositions[laneIndex] - 2*quartWidth, Obstructions.CONE.getWeight());
-                Car cone8 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 800, lanePositions[laneIndex], Obstructions.CONE.getWeight());
-                Car cone9 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 800, lanePositions[laneIndex] + 2*quartWidth, Obstructions.CONE.getWeight());
-                Car mmda1 = new Car(Obstructions.MMDA_BARRIER.getTexture(),GameInfo.WIDTH + 1200, lanePositions[laneIndex] - 3*quartWidth, Obstructions.MMDA_BARRIER.getWeight());
-                Car mmda2 = new Car(Obstructions.MMDA_BARRIER.getTexture(),GameInfo.WIDTH + 1200, lanePositions[laneIndex], Obstructions.MMDA_BARRIER.getWeight());
-                Car mmda3 = new Car(Obstructions.MMDA_BARRIER.getTexture(),GameInfo.WIDTH + 1200, lanePositions[laneIndex] + 3*quartWidth, Obstructions.MMDA_BARRIER.getWeight());
-                Car steamroller = new Car(Obstructions.STEAMROLLER.getTexture(), GameInfo.WIDTH + 1575, lanePositions[laneIndex] + quartWidth, Obstructions.STEAMROLLER.getWeight());
-                Car bar1 = new Car(Obstructions.CONCRETE_BARRIER.getTexture(),GameInfo.WIDTH + 1555, lanePositions[laneIndex] - quartWidth, Obstructions.CONCRETE_BARRIER.getWeight());
-                Car bar2 = new Car(Obstructions.CONCRETE_BARRIER.getTexture(),GameInfo.WIDTH + 1605, lanePositions[laneIndex] - quartWidth, Obstructions.CONCRETE_BARRIER.getWeight());
-                Car bar3 = new Car(Obstructions.CONCRETE_BARRIER.getTexture(),GameInfo.WIDTH + 1655, lanePositions[laneIndex] - quartWidth, Obstructions.CONCRETE_BARRIER.getWeight());
-
-                generatedCars.add(cone1);
-                generatedCars.add(cone2);
-                generatedCars.add(cone3);
-                generatedCars.add(cone4);
-                generatedCars.add(cone5);
-                generatedCars.add(cone6);
-                generatedCars.add(cone7);
-                generatedCars.add(cone8);
-                generatedCars.add(cone9);
-                generatedCars.add(mmda1);
-                generatedCars.add(mmda2);
-                generatedCars.add(mmda3);
-                generatedCars.add(bar1);
-                generatedCars.add(bar2);
-                generatedCars.add(bar3);
-                generatedCars.add(steamroller);
+                generatedCars.addAll(generateConstruction(laneIndex, quartWidth));
             }
             else
             {
@@ -329,6 +303,46 @@ public class ObjectGenerator {
         public int getIndex(){
             return index;
         }
+    }
+
+    private static List<Car> generateConstruction(int laneIndex, float quartWidth)
+    {
+        List<Car> retVal = new ArrayList<Car>();
+        Car cone1 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH, lanePositions[laneIndex] - 2*quartWidth, Obstructions.CONE.getWeight());
+        Car cone2 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH, lanePositions[laneIndex], Obstructions.CONE.getWeight());
+        Car cone3 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH, lanePositions[laneIndex] + 2*quartWidth, Obstructions.CONE.getWeight());
+        Car cone4 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 400, lanePositions[laneIndex] - 2*quartWidth, Obstructions.CONE.getWeight());
+        Car cone5 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 400, lanePositions[laneIndex], Obstructions.CONE.getWeight());
+        Car cone6 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 400, lanePositions[laneIndex] + 2*quartWidth, Obstructions.CONE.getWeight());
+        Car cone7 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 800, lanePositions[laneIndex] - 2*quartWidth, Obstructions.CONE.getWeight());
+        Car cone8 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 800, lanePositions[laneIndex], Obstructions.CONE.getWeight());
+        Car cone9 = new Car(Obstructions.CONE.getTexture(), GameInfo.WIDTH + 800, lanePositions[laneIndex] + 2*quartWidth, Obstructions.CONE.getWeight());
+        Car mmda1 = new Car(Obstructions.MMDA_BARRIER.getTexture(),GameInfo.WIDTH + 1200, lanePositions[laneIndex] - 3*quartWidth, Obstructions.MMDA_BARRIER.getWeight());
+        Car mmda2 = new Car(Obstructions.MMDA_BARRIER.getTexture(),GameInfo.WIDTH + 1200, lanePositions[laneIndex], Obstructions.MMDA_BARRIER.getWeight());
+        Car mmda3 = new Car(Obstructions.MMDA_BARRIER.getTexture(),GameInfo.WIDTH + 1200, lanePositions[laneIndex] + 3*quartWidth, Obstructions.MMDA_BARRIER.getWeight());
+        Car steamroller = new Car(Obstructions.STEAMROLLER.getTexture(), GameInfo.WIDTH + 1575, lanePositions[laneIndex] + quartWidth, Obstructions.STEAMROLLER.getWeight());
+        Car bar1 = new Car(Obstructions.CONCRETE_BARRIER.getTexture(),GameInfo.WIDTH + 1555, lanePositions[laneIndex] - quartWidth, Obstructions.CONCRETE_BARRIER.getWeight());
+        Car bar2 = new Car(Obstructions.CONCRETE_BARRIER.getTexture(),GameInfo.WIDTH + 1605, lanePositions[laneIndex] - quartWidth, Obstructions.CONCRETE_BARRIER.getWeight());
+        Car bar3 = new Car(Obstructions.CONCRETE_BARRIER.getTexture(),GameInfo.WIDTH + 1655, lanePositions[laneIndex] - quartWidth, Obstructions.CONCRETE_BARRIER.getWeight());
+
+        retVal.add(cone1);
+        retVal.add(cone2);
+        retVal.add(cone3);
+        retVal.add(cone4);
+        retVal.add(cone5);
+        retVal.add(cone6);
+        retVal.add(cone7);
+        retVal.add(cone8);
+        retVal.add(cone9);
+        retVal.add(mmda1);
+        retVal.add(mmda2);
+        retVal.add(mmda3);
+        retVal.add(bar1);
+        retVal.add(bar2);
+        retVal.add(bar3);
+        retVal.add(steamroller);
+
+        return retVal;
     }
 
 }
