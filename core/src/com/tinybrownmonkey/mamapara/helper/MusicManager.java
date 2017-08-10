@@ -59,11 +59,16 @@ public class MusicManager {
 
     public void init(){
         musicMap = new HashMap<MusicState, Music>();
-        musicMap.put(MusicState.TITLE, Gdx.audio.newMusic(Gdx.files.internal("music/TitleScreen.wav")));
-        musicMap.put(MusicState.L1, Gdx.audio.newMusic(Gdx.files.internal("music/Level01.wav")));
-        musicMap.put(MusicState.L2, Gdx.audio.newMusic(Gdx.files.internal("music/Level02.wav")));
-        musicMap.put(MusicState.L3, Gdx.audio.newMusic(Gdx.files.internal("music/Level03.wav")));
-        musicMap.put(MusicState.END, Gdx.audio.newMusic(Gdx.files.internal("music/Ending.wav")));
+//        musicMap.put(MusicState.TITLE, Gdx.audio.newMusic(Gdx.files.internal("music/TitleScreen.wav")));
+//        musicMap.put(MusicState.L1, Gdx.audio.newMusic(Gdx.files.internal("music/Level01.wav")));
+//        musicMap.put(MusicState.L2, Gdx.audio.newMusic(Gdx.files.internal("music/Level02.wav")));
+//        musicMap.put(MusicState.L3, Gdx.audio.newMusic(Gdx.files.internal("music/Level03.wav")));
+//        musicMap.put(MusicState.END, Gdx.audio.newMusic(Gdx.files.internal("music/Ending.wav")));
+        musicMap.put(MusicState.TITLE, Gdx.audio.newMusic(Gdx.files.internal("music/titlescreen.ogg")));
+        musicMap.put(MusicState.L1, Gdx.audio.newMusic(Gdx.files.internal("music/level01.ogg")));
+        musicMap.put(MusicState.L2, Gdx.audio.newMusic(Gdx.files.internal("music/level02.ogg")));
+        musicMap.put(MusicState.L3, Gdx.audio.newMusic(Gdx.files.internal("music/level03.ogg")));
+        musicMap.put(MusicState.END, Gdx.audio.newMusic(Gdx.files.internal("music/ending.ogg")));
         for(Music music : musicMap.values()){
             music.setVolume(1f);
             music.setLooping(true);

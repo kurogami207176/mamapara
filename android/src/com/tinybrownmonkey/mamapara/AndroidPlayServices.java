@@ -68,10 +68,10 @@ public class AndroidPlayServices implements PlayServices{
     }
 
     @Override
-    public void unlockAchievement()
+    public void unlockAchievement(Achievements achievements)
     {
-//        Games.Achievements.unlock(activity.getGameHelper().getApiClient(),
-//                activity.getString(R.string.achievement_dum_dum));
+        Games.Achievements.unlock(activity.getGameHelper().getApiClient(),
+                achievements.getId());
     }
 
     @Override
@@ -108,8 +108,7 @@ public class AndroidPlayServices implements PlayServices{
     {
         if (isSignedIn() == true)
         {
-//            activity.startActivityForResult(Games.Achievements.getAchievementsIntent(activity.getGameHelper().getApiClient(),
-//                    activity.getString(R.string.achievement_dum_dum)), requestCode);
+            activity.startActivityForResult(Games.Achievements.getAchievementsIntent(activity.getGameHelper().getApiClient()), requestCode);
         }
         else
         {

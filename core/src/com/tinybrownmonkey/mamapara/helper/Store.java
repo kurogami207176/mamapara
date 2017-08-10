@@ -88,7 +88,9 @@ public class Store {
     private String showWarning;
     private float showWarningTimer;
 
-    public Store(GameSave gameSave, GameData gameData){
+    private PlayServices playServices;
+
+    public Store(GameSave gameSave, GameData gameData, PlayServices playServices){
         this.gameSave = gameSave;
         this.gameData = gameData;
         offsetY = GameInfo.HEIGHT;
@@ -138,6 +140,8 @@ public class Store {
         parameter2.size = 20;
         descFont = generatorSimp.generateFont(parameter2);
         descFont.setColor(Color.DARK_GRAY);
+
+        this.playServices = playServices;
 
     }
 
@@ -227,6 +231,12 @@ public class Store {
                     GameManager.getModuleInterface().sendAnalyticsEvent(
                             main.name(),
                             PowerUps.SLOT.name() + ":" + level);
+                    if(gameSave.getSlotCount() == 2) {
+                        playServices.unlockAchievement(PlayServices.Achievements.POWER_OF_TWO);
+                    }
+                    else if(gameSave.getSlotCount() >= 6) {
+                        playServices.unlockAchievement(PlayServices.Achievements.FULL_POWER);
+                    }
                 }
                 else
                 {
@@ -236,6 +246,7 @@ public class Store {
                     GameManager.getModuleInterface().sendAnalyticsEvent(
                             main.name(),
                             selected.name() + ":" + level);
+                    playServices.unlockAchievement(PlayServices.Achievements.POWER);
                 }
                 GameManager.saveScore(gameSave);
                 System.out.println("Done!");

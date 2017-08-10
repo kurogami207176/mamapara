@@ -167,7 +167,7 @@ public class GameScene implements Screen {
             setCurrentState(GameState.MAIN_MENU);
         }
 
-        store = new Store(gameSave, gameData);
+        store = new Store(gameSave, gameData, GameManager.getPlayServices());
         powerUpHelper = new PowerUpHelper();
         hud = new Hud(gameSave, gameData, powerUpHelper);
 
@@ -488,6 +488,19 @@ public class GameScene implements Screen {
 
         mainCamera.update();
         updateComponents(delta);
+        int distance = gameSave.getDistance();
+        if(distance >= 500){
+            GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.HALF_KILO);
+        }
+        else if(distance >= 1000){
+            GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.MILLENNIAL);
+        }
+        else if(distance >= 2000){
+            GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.Y2k);
+        }
+        else if(distance >= 50000){
+            GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.ROAD_RUNNER);
+        }
 
         //music
         if(gameSave.isMuted()) {
@@ -1410,7 +1423,10 @@ public class GameScene implements Screen {
             Gdx.input.setCatchBackKey(false);
         }
         gameData.currState = nextState;
-        if(gameData.currState == GameState.HIGH_SCORE) {
+        if(gameData.currState == GameState.GAME_PLAY){
+            GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.FIRST_DRIVE);
+        }
+        else if(gameData.currState == GameState.HIGH_SCORE) {
             PlayServices playServices = GameManager.getPlayServices();
             if (playServices.isSignedIn())
             {
