@@ -33,7 +33,7 @@ public class Store {
 
     private Map<PowerUps, Sprite> cigs;
     private Map<PowerUps, Sprite> icons;
-    private Sprite cigSide;
+    public static Sprite cigSide;
     private Sprite cigGrey;
 
     private BitmapFont titleFont;
@@ -48,37 +48,37 @@ public class Store {
     private GameSave gameSave;
     private GameData gameData;
 
-    private float storeBottomY = 40;
+    public final static float storeBottomY = 40;
 
-    private float frontOffset = 219;
-    private float frontGap = 5;
-    private float frontY = 261;
+    public final static float frontOffset = 219;
+    public final static float frontGap = 5;
+    public final static float frontY = 261;
 
-    private float sideOffset = 567;
-    private float sideGap = 2;
+    public final static float sideOffset = 567;
+    public final static float sideGap = 2;
 
-    private float candyOffsetX = 217;
-    private float candyWidth = 78;
-    private float candyGapX = 1;
+    public final static float candyOffsetX = 217;
+    public final static float candyWidth = 78;
+    public final static float candyGapX = 1;
 
-    private float candyOffsetY = 61;
-    private float candyHeight = 40;
-    private float candyGapY = 23;
+    public final static float candyOffsetY = 61;
+    public final static float candyHeight = 40;
+    public final static float candyGapY = 23;
 
     private float iconX = 250;
     private float iconY = 260;
 
-    private float titleX = 400;
-    private float titleY = 375;
+    public final static float titleX = 400;
+    public final static float titleY = 375;
 
-    private float priceX = 400;
-    private float priceY = 325;
+    public final static float priceX = 400;
+    public final static float priceY = 325;
 
-    private float descX = 400;
-    private float descY = 275;
+    public final static float descX = 400;
+    public final static float descY = 275;
 
-    private float moneyX = 568;
-    private float moneyY = 173;
+    float moneyX = 568;
+    float moneyY = 173;
 
     private float backX = 201;
     private float backY = 6;
@@ -363,8 +363,8 @@ public class Store {
         }
     }
 
-    private float offsetY;
-    private float calculateY(float y){
+    private static float offsetY;
+    public static float calculateY(float y){
         return offsetY + y;
     }
 
@@ -387,5 +387,9 @@ public class Store {
 
     public void setMoneyY(float moneyY) {
         this.moneyY = moneyY;
+    }
+
+    public Sprite getStoreBottom(){
+        return storeBottom;
     }
 }

@@ -36,15 +36,15 @@ public class Hud {
 
     private BitmapFont tryAgainFont;
 
-    private Sprite[][] spriteMatrix;
+    public static Sprite[][] spriteMatrix;
 
     private Sprite confirmDialogBox;
 
     private GameSave gameSave;
     private GameData gameData;
 
-    private float candyXOffset = 10;
-    private float candyXGap = 5;
+    public static final float candyXOffset = 10;
+    public static final float candyXGap = 5;
 
     private float candyY = GameInfo.HEIGHT * 9/ 10;
 

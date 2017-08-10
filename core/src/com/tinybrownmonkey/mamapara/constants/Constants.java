@@ -11,9 +11,9 @@ public class Constants {
     public final static float skySpeedFraction = 0.25f;
     public final static float groundSpeedFraction = 1f;
     public final static float initGroundSpeed = 600;// 200;
-    public final static float topGroundSpeed = 4000;
+    public final static float topGroundSpeed = 3000;
 
-    public final static float groundSpeedIncrement = 6;
+    public final static float groundSpeedIncrement = 10;
 
     public final static int changeLaneSpeed = 900;
     private final static float topLaneY = GameInfo.HEIGHT / 2.2f;

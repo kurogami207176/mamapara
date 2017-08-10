@@ -55,6 +55,7 @@ public class GameSave {
     private boolean tutMoney = false;
 
     public void enableTutorials(){
+        moneyTotal = 0;
         tutMainMenu = false;
         tutShop = false;
         tutPersons = false;
