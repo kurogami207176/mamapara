@@ -29,6 +29,10 @@ public class TouchCircle {
         this.y = y;
     }
 
+    public void setColor(Color color){
+        this.color = color;
+    }
+
     public void update(float delta){
         radiusCurr = radiusCurr + (delta * radiusDelta);
     }

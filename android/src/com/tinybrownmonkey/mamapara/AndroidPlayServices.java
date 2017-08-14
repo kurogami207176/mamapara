@@ -63,15 +63,18 @@ public class AndroidPlayServices implements PlayServices{
     @Override
     public void rateGame()
     {
-        String str = "Your PlayStore Link";
+        String str = AndroidModuleInterface.PLAY_STORE_LINK;
         activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(str)));
     }
 
     @Override
     public void unlockAchievement(Achievements achievements)
     {
-        Games.Achievements.unlock(activity.getGameHelper().getApiClient(),
-                achievements.getId());
+        if (!achievements.isDone() && isSignedIn() == true) {
+            Games.Achievements.unlock(activity.getGameHelper().getApiClient(),
+                    achievements.getId());
+            achievements.setDone(true);
+        }
     }
 
     @Override
@@ -123,6 +126,19 @@ public class AndroidPlayServices implements PlayServices{
         {
             activity.startActivityForResult(Games.Leaderboards.getLeaderboardIntent(activity.getGameHelper().getApiClient(),
                     activity.getString(R.string.high_score)), requestCode);
+        }
+        else
+        {
+            signIn();
+        }
+    }
+
+    @Override
+    public void showAllScore()
+    {
+        if (isSignedIn() == true)
+        {
+            activity.startActivityForResult(Games.Leaderboards.getAllLeaderboardsIntent(activity.getGameHelper().getApiClient()), requestCode);
         }
         else
         {

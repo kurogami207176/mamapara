@@ -30,7 +30,7 @@ public class ObjectGenerator {
 
     private static float carIntervalCounter = 0;
     private static float carIntervalMin = 0.5f;//0.3f;
-    private static float carIntervalRange = 0.2f;//1.8f;
+    private static float carIntervalRange = 0.5f;//1.8f;
 
     private static float tricycleMinTimer = 10f;
     private static float sedanMinTimer = 15f;

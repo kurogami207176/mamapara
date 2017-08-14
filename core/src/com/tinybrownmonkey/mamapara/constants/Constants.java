@@ -11,9 +11,11 @@ public class Constants {
     public final static float skySpeedFraction = 0.25f;
     public final static float groundSpeedFraction = 1f;
     public final static float initGroundSpeed = 600;// 200;
-    public final static float topGroundSpeed = 3000;
+    public final static float topGroundSpeed1 = 1150;
+    public final static float topGroundSpeed2 = 1300;
 
-    public final static float groundSpeedIncrement = 10;
+    public final static float groundSpeedIncrement1 = 50;
+    public final static float groundSpeedIncrement2 = 10;
 
     public final static int changeLaneSpeed = 900;
     private final static float topLaneY = GameInfo.HEIGHT / 2.2f;
@@ -97,6 +99,24 @@ public class Constants {
         float radiusMax = 35;
         float radiusDelta = 200;
         Color color = new Color(1f, 1f, 1f, 0.25f);
+    }
+
+    public interface SmokeData{
+        float radiusInit = 5;
+        float radiusMax = 35;
+        float radiusMaxRange = 50;
+
+        float radiusDelta = 10;
+        float radiusDeltaRange = 50;
+
+        float xSpeed = -10;
+        float xSpeedRange = 20;
+
+        float ySpeed = 30;
+        float ySpeedRange = 100;
+
+        float aInit = 0.5f;
+        float aFinal = 0.05f;
     }
 
     public static float[][] effectTimeMatrix;

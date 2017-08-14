@@ -23,6 +23,7 @@ import com.tinybrownmonkey.mamapara.MamaParaGame;
 import com.tinybrownmonkey.mamapara.actors.Car;
 import com.tinybrownmonkey.mamapara.actors.Labeller;
 import com.tinybrownmonkey.mamapara.actors.SequenceLabeller;
+import com.tinybrownmonkey.mamapara.actors.SmokeCloud;
 import com.tinybrownmonkey.mamapara.actors.TimedShape;
 import com.tinybrownmonkey.mamapara.actors.TouchCircle;
 import com.tinybrownmonkey.mamapara.constants.PowerUps;
@@ -70,6 +71,8 @@ public class GameScene implements Screen {
     private Sprite hood;
     private Sprite playBttn;
     private Sprite hsBttn;
+    private Sprite achBttn;
+
     private Sprite storeBttn;
     private Sprite soundOff;
     private Sprite soundOn;
@@ -157,6 +160,7 @@ public class GameScene implements Screen {
         gameSave = GameManager.loadScores();
         System.out.println("Launched " + gameSave.getLaunchCount() + " times!");
         gameSave.setLaunchCount(gameSave.getLaunchCount() + 1);
+        gameSave.reset();
         GameManager.saveScore(gameSave);
 
 //        gameSave.setSlotCount(0);
@@ -210,7 +214,7 @@ public class GameScene implements Screen {
 
     private void initMenu() {
         homeBg = new Sprite(TextureManager.get("home_bg.png"));
-        logo = new Sprite(TextureManager.get("logo4.png"));
+        logo = new Sprite(TextureManager.get("logo3.png"));
         float logoX = (GameInfo.WIDTH - logo.getWidth()) / 2;
         logo.setPosition(logoX, logo.getY());
         hood = new Sprite(TextureManager.get("hood.png"));
@@ -222,12 +226,19 @@ public class GameScene implements Screen {
         playBttn = new Sprite(TextureManager.get("button_play.png"));
         playBttn.setX((GameInfo.WIDTH - playBttn.getWidth()) / 3);
         playBttn.setY(newY);
-        hsBttn = new Sprite(TextureManager.get("button_highscore.png"));
-        hsBttn.setX((GameInfo.WIDTH - hsBttn.getWidth()) * 2 / 3);
-        hsBttn.setY(newY);
         storeBttn  = new Sprite(TextureManager.get("button_store.png"));
-        storeBttn.setX((GameInfo.WIDTH - storeBttn.getWidth()) * 1/2);
+        storeBttn.setX((GameInfo.WIDTH - storeBttn.getWidth()) * 1/2 - 20);
         storeBttn.setY(newY);
+
+        hsBttn = new Sprite(TextureManager.get("button_hs.png"));
+        hsBttn.setX((GameInfo.WIDTH - hsBttn.getWidth()) * 2 / 3 - 40);
+        hsBttn.setY(newY);
+        //achBttn.setScale(0.9f);
+        achBttn = new Sprite(TextureManager.get("button_achieve.png"));
+        achBttn.setX((GameInfo.WIDTH - achBttn.getWidth()) * 2 / 3 + 70);
+        achBttn.setY(newY);
+        //achBttn.setScale(0.9f);
+
 
         soundOn = new Sprite(TextureManager.get("button_sound_on.png"));
         soundOn.setPosition(50,50);
@@ -294,13 +305,24 @@ public class GameScene implements Screen {
             labels.add(new Labeller(musicManager,
                     tutorialFont,
                     tutColor,
-                    "BEST SCORE",
+                    "High Scores",
                     hsBttn,
                     hsBttn.getX() + 50,
                     hsBttn.getY() + 100,
                     3f,
                     onShowInterface,
                     GameState.MAIN_MENU));
+            labels.add(new Labeller(musicManager,
+                    tutorialFont,
+                    tutColor,
+                    "Achievements",
+                    achBttn,
+                    achBttn.getX() + 50,
+                    achBttn.getY() + 100,
+                    3f,
+                    onShowInterface,
+                    GameState.MAIN_MENU));
+
             //gameSave.setTutMainMenu(true);
             labelsDisp.add(labels);
         }
@@ -489,17 +511,16 @@ public class GameScene implements Screen {
         mainCamera.update();
         updateComponents(delta);
         int distance = gameSave.getDistance();
-        if(distance >= 500){
-            GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.HALF_KILO);
-        }
-        else if(distance >= 1000){
-            GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.MILLENNIAL);
-        }
-        else if(distance >= 2000){
-            GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.Y2k);
-        }
-        else if(distance >= 50000){
-            GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.ROAD_RUNNER);
+        if(gameData.currState == GameState.GAME_PLAY) {
+            if (!PlayServices.Achievements.HALF_KILO.isDone() && distance >= 500) {
+                GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.HALF_KILO);
+            } else if (!PlayServices.Achievements.MILLENNIAL.isDone() && distance >= 1000) {
+                GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.MILLENNIAL);
+            } else if (!PlayServices.Achievements.Y2k.isDone() && distance >= 2000) {
+                GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.Y2k);
+            } else if (!PlayServices.Achievements.ROAD_RUNNER.isDone() && distance >= 50000) {
+                GameManager.getPlayServices().unlockAchievement(PlayServices.Achievements.ROAD_RUNNER);
+            }
         }
 
         //music
@@ -556,6 +577,7 @@ public class GameScene implements Screen {
                 batch.draw(logo, logo.getX(), logo.getY() + logoY);
                 batch.draw(playBttn, playBttn.getX(), playBttn.getY() + logoY);
                 batch.draw(hsBttn, hsBttn.getX(), hsBttn.getY() + logoY);
+                batch.draw(achBttn, achBttn.getX(), achBttn.getY() + logoY);
                 batch.draw(storeBttn, storeBttn.getX(), storeBttn.getY() + logoY);
                 batch.draw(hood, hood.getX(), hood.getY() + hoodY);
                 if(!gameSave.isMuted()) {
@@ -1007,11 +1029,20 @@ public class GameScene implements Screen {
         removeOffscreenMovingObjects();
 
         gameSave.addDistance((delta * (gameData.groundSpeed / 50)));
-        if(gameData.groundSpeed < topGroundSpeed) {
-            gameData.groundSpeed = gameData.groundSpeed + groundSpeedIncrement * delta;
+        incrementGroundSpeed(delta);
+    }
+
+    private void incrementGroundSpeed(float delta) {
+        if(gameData.groundSpeed < topGroundSpeed1) {
+            gameData.groundSpeed = gameData.groundSpeed + groundSpeedIncrement1 * delta;
             // gameData.groundSpeed = initGroundSpeed + ((topGroundSpeed - initGroundSpeed) * (float) Math.log(ObjectGenerator.getTotalTime()));
-        }else {
-            gameData.groundSpeed = topGroundSpeed;
+        }
+        else if(gameData.groundSpeed < topGroundSpeed2) {
+            gameData.groundSpeed = gameData.groundSpeed + groundSpeedIncrement2 * delta;
+            // gameData.groundSpeed = initGroundSpeed + ((topGroundSpeed - initGroundSpeed) * (float) Math.log(ObjectGenerator.getTotalTime()));
+        }
+        else {
+            gameData.groundSpeed = topGroundSpeed1;
         }
         groundMover.setGroundSpeedX(-gameData.groundSpeed);
         bgMover.setGroundSpeed(-gameData.groundSpeed);
@@ -1159,6 +1190,15 @@ public class GameScene implements Screen {
                         && Util.checkCollisions(car1.getCollisionVertices(), car2.getCollisionVertices())){
                     car1.setSpeedX(0);
                     car2.setSpeedX(0);
+                    MovingObject car = null;
+                    if(car1.getX() < car2.getX()){
+                        car = car1;
+                    }
+                    else{
+                        car = car2;
+                    }
+                    smoke(car.getX() + car.getWidth(),
+                            car.getY() + (car.getHeight() * 0.25f));
                 }
             }
         }
@@ -1279,6 +1319,13 @@ public class GameScene implements Screen {
             setCurrentState(GameState.HIGH_SCORE);
             musicManager.playSound(MusicManager.SoundState.BUTTON);
             GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click highscore");
+        }
+        else if(Util.isButtonTouched(achBttn, x, y))
+        {
+            buttonTouched[0] = buttonTouchedDelay;
+            setCurrentState(GameState.ACHIEVEMENT);
+            musicManager.playSound(MusicManager.SoundState.BUTTON);
+            GameManager.getModuleInterface().sendAnalyticsEvent(cat, "click achievement");
         }
         else if(Util.isButtonTouched(storeBttn, x, y))
         {
@@ -1430,28 +1477,38 @@ public class GameScene implements Screen {
             PlayServices playServices = GameManager.getPlayServices();
             if (playServices.isSignedIn())
             {
-                playServices.showScore();
+                //playServices.showScore();
+                playServices.showAllScore();
                 gameData.currState = GameState.MAIN_MENU;
             }
 
         }
-        else if(gameData.currState == GameState.GAME_END)
-        {
+        else if(gameData.currState == GameState.ACHIEVEMENT) {
             PlayServices playServices = GameManager.getPlayServices();
-            if(playServices.isSignedIn())
+            if (playServices.isSignedIn())
             {
-                if (gameSave.getDistance() == gameSave.getHighScore()) {
-                    playServices.submitDistanceScore(gameSave.getHighScore());
-                }
-                playServices.submitMoneyScore(gameSave.getMoneyTotal());
-                playServices.submitMoneyTripScore(gameSave.getMoney());
+                playServices.showAchievement();
+                gameData.currState = GameState.MAIN_MENU;
             }
+            else
+            {
+                gameData.currState = GameState.HIGH_SCORE;
+            }
+
         }
         GameManager.getModuleInterface().setAnalyticsScreen(nextState.name());
     }
 
     private void resetScore(){
         ObjectGenerator.resetTime();
+        PlayServices playServices = GameManager.getPlayServices();
+        if(playServices.isSignedIn())
+        {
+            playServices.submitDistanceScore(gameSave.getHighScore());
+            playServices.submitMoneyScore(gameSave.getMoneyTotal());
+            playServices.submitMoneyTripScore(gameSave.getMoney());
+        }
+
         gameData.timeoutToGameOverAccum = 0;
         gameSave.reset();
         gameData.groundSpeed = initGroundSpeed;
@@ -1472,6 +1529,21 @@ public class GameScene implements Screen {
                 TouchData.color,
                 TouchData.radiusMax,
                 TouchData.radiusDelta));
+    }
+
+    private void smoke(float x, float y){
+        for(int i=0; i < 15; i++){
+            float c = random.nextFloat();
+            touchCircles.add(new SmokeCloud(x, y,
+                    SmokeData.radiusInit,
+                    SmokeData.radiusMax + (random.nextFloat() * SmokeData.radiusMaxRange),
+                    SmokeData.radiusDelta + (random.nextFloat() * SmokeData.radiusDeltaRange),
+                    new Color(c, c, c, SmokeData.aInit),
+                    new Color(c, c, c, SmokeData.aFinal),
+                    -gameData.groundSpeed + SmokeData.xSpeed + (random.nextFloat() * SmokeData.xSpeedRange),
+                    SmokeData.ySpeed + (random.nextFloat() * SmokeData.ySpeedRange)
+                    ));
+        }
     }
 
 }
