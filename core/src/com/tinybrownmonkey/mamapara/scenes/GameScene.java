@@ -1042,7 +1042,7 @@ public class GameScene implements Screen {
             // gameData.groundSpeed = initGroundSpeed + ((topGroundSpeed - initGroundSpeed) * (float) Math.log(ObjectGenerator.getTotalTime()));
         }
         else {
-            gameData.groundSpeed = topGroundSpeed1;
+            gameData.groundSpeed = topGroundSpeed2;
         }
         groundMover.setGroundSpeedX(-gameData.groundSpeed);
         bgMover.setGroundSpeed(-gameData.groundSpeed);
@@ -1266,12 +1266,13 @@ public class GameScene implements Screen {
         hud.drawTimedTexts(shapeRenderer);
         List<PowerUpHelper.ActivePowerUp> apuList = powerUpHelper.getActivePowerupList();
         float rad = 25;
-        if(apuList != null && apuList.size() > 0){
-            float initX = rad;
+        int apuSize;
+        if(apuList != null && (apuSize = apuList.size()) > 0){
+            float initX = (GameInfo.WIDTH  / 2) - (apuSize * rad);
             int i= 0;
             for(PowerUpHelper.ActivePowerUp apu: apuList){
                 shapeRenderer.setColor(apu.pu.getColor());
-                shapeRenderer.arc(initX + (i * 2 * rad), rad, rad, 0, 360 * (apu.timeLeft / apu.timeMax));
+                shapeRenderer.arc(initX + (i * 2 * rad), GameInfo.HEIGHT - 2*rad, rad, 0, 360 * (apu.timeLeft / apu.timeMax));
                 i++;
             }
         }
@@ -1477,8 +1478,8 @@ public class GameScene implements Screen {
             PlayServices playServices = GameManager.getPlayServices();
             if (playServices.isSignedIn())
             {
-                //playServices.showScore();
-                playServices.showAllScore();
+                playServices.showScore();
+                //playServices.showAllScore();
                 gameData.currState = GameState.MAIN_MENU;
             }
 
